@@ -10,3 +10,6 @@ serde_json = "1"
 rand = "0.9"
 simdash-ids = { path = "../ids" }
 simdash-state = { path = "../state" }
+
+[dev-dependencies]
+petgraph = { workspace = true }
