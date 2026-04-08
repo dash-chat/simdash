@@ -7,3 +7,9 @@ pub struct NodeState<R = RoutingState> {
     pub dash: DashState,
     pub routing: R,
 }
+
+impl<R> NodeState<R> {
+    pub fn dash(&self) -> &DashState {
+        &self.dash
+    }
+}

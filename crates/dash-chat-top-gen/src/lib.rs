@@ -4,13 +4,14 @@ use std::{
 };
 
 use rand::prelude::*;
+use serde::Deserialize;
 use simdash_distribution::Distribution;
 use simdash_ids::{NodeId, OpId, Size};
 use simdash_state::{
     dash::Body, dash::DashState, dash::GroupId, dash::Header, dash::Operation, graph::Graph,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     /// Seed for deterministic RNG.
     pub seed: u64,
@@ -59,94 +60,109 @@ impl Config {
     }
 }
 
-/// Generate a `DashState` for each node in the network topology.
-pub fn generate(graph: &Graph, config: &Config) -> BTreeMap<NodeId, DashState> {
-    let mut rng = StdRng::seed_from_u64(config.seed);
-    let nodes: Vec<NodeId> = graph.node_ids().collect();
-    let n = nodes.len();
-    if n == 0 {
-        return BTreeMap::new();
+/// Generates DashState for each node in a network topology from a JSON config.
+pub struct DashStateGenerator {
+    config: Config,
+}
+
+impl DashStateGenerator {
+    pub fn from_json(json: &str) -> anyhow::Result<Self> {
+        let config = serde_json::from_str(json)?;
+        Ok(Self { config })
     }
 
-    // Step 1: Estimate total number of groups.
-    // avg_groups_per_node * num_nodes / avg_group_size ≈ total groups
-    let avg_groups_per_node = config.groups_per_node.sample(&mut rng).max(1);
-    let avg_group_size = config.group_size.sample(&mut rng).max(1);
-    let num_groups = ((n as u64) * avg_groups_per_node / avg_group_size).max(1);
+    /// Generate a `DashState` for each node in the network topology.
+    pub fn generate(&self, graph: &Graph) -> BTreeMap<NodeId, DashState> {
+        let mut rng = StdRng::seed_from_u64(self.config.seed);
+        let nodes: Vec<NodeId> = graph.node_ids().collect();
+        let n = nodes.len();
+        if n == 0 {
+            return BTreeMap::new();
+        }
 
-    // Step 2: For each node, assign groups, contacts, and ops.
-    let mut op_counter: u32 = 0;
-    let mut result = BTreeMap::new();
+        // Step 1: Estimate total number of groups.
+        // avg_groups_per_node * num_nodes / avg_group_size ≈ total groups
+        let avg_groups_per_node = self.config.groups_per_node.sample(&mut rng).max(1);
+        let avg_group_size = self.config.group_size.sample(&mut rng).max(1);
+        let num_groups = ((n as u64) * avg_groups_per_node / avg_group_size).max(1);
 
-    for &node in &nodes {
-        // Groups
-        let num_groups_for_node = config.groups_per_node.sample(&mut rng).min(num_groups) as usize;
-        let groups: BTreeSet<GroupId> = (0..num_groups)
-            .collect::<Vec<_>>()
-            .choose_multiple(&mut rng, num_groups_for_node)
-            .copied()
-            .collect();
+        // Step 2: For each node, assign groups, contacts, and ops.
+        let mut op_counter: u32 = 0;
+        let mut result = BTreeMap::new();
 
-        // Contacts: pick from other nodes
-        let num_contacts = config
-            .contacts_per_node
-            .sample(&mut rng)
-            .min((n - 1) as u64) as usize;
-        let others: Vec<NodeId> = nodes.iter().copied().filter(|&id| id != node).collect();
-        let contacts: BTreeSet<NodeId> = others
-            .choose_multiple(&mut rng, num_contacts)
-            .copied()
-            .collect();
+        for &node in &nodes {
+            // Groups
+            let num_groups_for_node =
+                self.config.groups_per_node.sample(&mut rng).min(num_groups) as usize;
+            let groups: BTreeSet<GroupId> = (0..num_groups)
+                .collect::<Vec<_>>()
+                .choose_multiple(&mut rng, num_groups_for_node)
+                .copied()
+                .collect();
 
-        // Ops
-        let num_ops = config.ops_per_node.sample(&mut rng) as usize;
-        let mut op_store = BTreeMap::new();
-        for _ in 0..num_ops {
-            let op_id = OpId::from(op_counter);
-            op_counter += 1;
-            let payload_size = Size::from(config.op_payload_size.sample(&mut rng));
+            // Contacts: pick from other nodes
+            let num_contacts = self
+                .config
+                .contacts_per_node
+                .sample(&mut rng)
+                .min((n - 1) as u64) as usize;
+            let others: Vec<NodeId> = nodes.iter().copied().filter(|&id| id != node).collect();
+            let contacts: BTreeSet<NodeId> = others
+                .choose_multiple(&mut rng, num_contacts)
+                .copied()
+                .collect();
 
-            // Pick a random group for the message body (or direct message if no groups)
-            let body = if let Some(&group_id) = groups.iter().collect::<Vec<_>>().choose(&mut rng) {
-                Body::GroupMessage {
-                    group_id: *group_id,
-                }
-            } else {
-                // Fallback: direct message to a random contact or self
-                let recipient = contacts
-                    .iter()
-                    .collect::<Vec<_>>()
-                    .choose(&mut rng)
-                    .copied()
-                    .copied()
-                    .unwrap_or(node);
-                Body::DirectMessage { recipient }
-            };
+            // Ops
+            let num_ops = self.config.ops_per_node.sample(&mut rng) as usize;
+            let mut op_store = BTreeMap::new();
+            for _ in 0..num_ops {
+                let op_id = OpId::from(op_counter);
+                op_counter += 1;
+                let payload_size = Size::from(self.config.op_payload_size.sample(&mut rng));
 
-            op_store.insert(
-                op_id,
-                Operation {
-                    id: op_id,
-                    header: Header {
-                        author: node,
-                        payload_size,
+                // Pick a random group for the message body (or direct message if no groups)
+                let body =
+                    if let Some(&group_id) = groups.iter().collect::<Vec<_>>().choose(&mut rng) {
+                        Body::GroupMessage {
+                            group_id: *group_id,
+                        }
+                    } else {
+                        // Fallback: direct message to a random contact or self
+                        let recipient = contacts
+                            .iter()
+                            .collect::<Vec<_>>()
+                            .choose(&mut rng)
+                            .copied()
+                            .copied()
+                            .unwrap_or(node);
+                        Body::DirectMessage { recipient }
+                    };
+
+                op_store.insert(
+                    op_id,
+                    Operation {
+                        id: op_id,
+                        header: Header {
+                            author: node,
+                            payload_size,
+                        },
+                        body,
                     },
-                    body,
+                );
+            }
+
+            result.insert(
+                node,
+                DashState {
+                    op_store,
+                    contacts,
+                    groups,
                 },
             );
         }
 
-        result.insert(
-            node,
-            DashState {
-                op_store,
-                contacts,
-                groups,
-            },
-        );
+        result
     }
-
-    result
 }
 
 #[cfg(test)]
@@ -175,8 +191,14 @@ mod tests {
             op_payload_size: Distribution::fixed(100.0),
         };
 
-        let result1 = generate(&graph, &config);
-        let result2 = generate(&graph, &config);
+        let result1 = DashStateGenerator {
+            config: config.clone(),
+        }
+        .generate(&graph);
+        let result2 = DashStateGenerator {
+            config: config.clone(),
+        }
+        .generate(&graph);
         assert_eq!(result1, result2);
     }
 
@@ -192,7 +214,10 @@ mod tests {
             op_payload_size: Distribution::fixed(64.0),
         };
 
-        let result = generate(&graph, &config);
+        let result = DashStateGenerator {
+            config: config.clone(),
+        }
+        .generate(&graph);
         assert_eq!(result.len(), 5);
         for (_node_id, state) in &result {
             assert_eq!(state.contacts.len(), 2);
@@ -216,7 +241,10 @@ mod tests {
             op_payload_size: Distribution::normal(256.0, 50.0),
         };
 
-        let result = generate(&graph, &config);
+        let result = DashStateGenerator {
+            config: config.clone(),
+        }
+        .generate(&graph);
         assert_eq!(result.len(), 20);
         for state in result.values() {
             assert!(state.contacts.len() >= 1 && state.contacts.len() <= 5);
@@ -233,19 +261,42 @@ mod tests {
     fn disconnected_for_defaults() {
         let graph = make_graph(10);
         // 1 hour disconnected, ~0.017 msgs/min (≈25/day)
-        let config = Config::disconnected_for(
-            42,
-            Duration::from_secs(3600),
-            Distribution::fixed(0.017),
-        );
+        let config =
+            Config::disconnected_for(42, Duration::from_secs(3600), Distribution::fixed(0.017));
 
-        let result = generate(&graph, &config);
+        let result = DashStateGenerator {
+            config: config.clone(),
+        }
+        .generate(&graph);
         assert_eq!(result.len(), 10);
         for state in result.values() {
             // With Normal(20,8) contacts, should have some
             assert!(state.contacts.len() > 0);
             // 0.017 msgs/min * 60 min ≈ 1 op per node
             assert!(state.op_store.len() <= 5);
+        }
+    }
+
+    #[test]
+    fn from_json() {
+        let json = r#"{
+            "seed": 42,
+            "contacts_per_node": { "type": "fixed", "value": 3.0 },
+            "groups_per_node": { "type": "fixed", "value": 2.0 },
+            "group_size": { "type": "fixed", "value": 3.0 },
+            "ops_per_node": { "type": "uniform", "min": 1.0, "max": 5.0 },
+            "op_payload_size": { "type": "normal", "mean": 256.0, "std_dev": 50.0 }
+        }"#;
+
+        let generator = DashStateGenerator::from_json(json).unwrap();
+        let graph = make_graph(10);
+        let result = generator.generate(&graph);
+
+        assert_eq!(result.len(), 10);
+        for state in result.values() {
+            assert_eq!(state.contacts.len(), 3);
+            assert_eq!(state.groups.len(), 2);
+            assert!(state.op_store.len() >= 1 && state.op_store.len() <= 5);
         }
     }
 }
