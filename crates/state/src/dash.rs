@@ -18,7 +18,7 @@ pub struct Operation {
     // pub body: Option,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 pub struct DashState {
     pub op_store: BTreeMap<OpId, Operation>,
     pub contacts: BTreeSet<NodeId>,

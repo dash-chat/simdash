@@ -10,6 +10,12 @@ pub struct FloodingState<M: FloodingMetadata> {
     data: Vec<FloodingOp<M>>,
 }
 
+impl Default for FloodingState<Operation> {
+    fn default() -> Self {
+        Self { data: vec![] }
+    }
+}
+
 /// Metadata needed for flooding.
 pub trait FloodingMetadata {
     fn size(&self) -> Size;
