@@ -1,0 +1,10 @@
+
+[workspace]
+resolver = "2"
+
+members = ["crates/*"]
+
+[workspace.dependencies]
+anyhow = "1"
+derive_more = { version = "2", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
