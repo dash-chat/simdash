@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use simdash_ids::NodeId;
-use simdash_state::DashState;
+use simdash_state::dash::DashState;
 
 pub struct Config {
     // pub

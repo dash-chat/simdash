@@ -1,8 +1,8 @@
 pub struct DashModel;
 
 impl polestar::Machine for DashModel {
-    type State = simdash_state::DashState;
-    type Action = simdash_action::DashAction;
+    type State = simdash_state::dash::DashState;
+    type Action = simdash_action::dash::DashAction;
     type Fx = ();
     type Error = ();
 

@@ -3,13 +3,11 @@
 use simdash_ids::NodeId;
 use simdash_state::*;
 
-mod dash;
-mod node;
-mod routing;
+pub mod dash;
+pub mod node;
+pub mod routing;
 
-pub use dash::*;
-pub use node::*;
-pub use routing::*;
+use crate::node::NodeAction;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Action {

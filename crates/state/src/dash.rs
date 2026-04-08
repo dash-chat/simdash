@@ -30,7 +30,7 @@ pub struct DashState {
     pub groups: BTreeSet<GroupId>,
 }
 
-impl crate::flooding::FloodingMetadata for Operation {
+impl crate::routing::flooding::FloodingMetadata for Operation {
     fn size(&self) -> Size {
         self.header.payload_size
     }

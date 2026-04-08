@@ -1,7 +1,9 @@
 use simdash_ids::*;
 
+use crate::dash::Operation;
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct FloodingState<M: FloodingMetadata> {
+pub struct FloodingState<M: FloodingMetadata = Operation> {
     data: Vec<FloodingOp<M>>,
 }
 

@@ -5,7 +5,7 @@ use petgraph::graph::{Graph as PetGraph, NodeIndex};
 use crate::NodeState;
 
 #[derive(Debug, Clone)]
-pub struct Graph<R = crate::RoutingState, E = ()> {
+pub struct Graph<R = crate::routing::RoutingState, E = ()> {
     graph: PetGraph<NodeState<R>, E>,
     node_indices: HashMap<crate::NodeId, NodeIndex>,
 }

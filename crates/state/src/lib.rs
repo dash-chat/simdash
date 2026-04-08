@@ -2,17 +2,16 @@
 
 use std::collections::BTreeMap;
 
-mod dash;
-mod graph;
-mod node;
-mod routing;
+pub mod dash;
+pub mod graph;
+pub mod node;
+pub mod routing;
 
-pub use dash::*;
 pub use graph::*;
-pub use node::*;
-pub use routing::*;
 
 use simdash_ids::NodeId;
+
+use crate::node::NodeState;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct State {

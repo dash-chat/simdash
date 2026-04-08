@@ -6,8 +6,8 @@ pub struct NodeModel {
 }
 
 impl polestar::Machine for NodeModel {
-    type State = simdash_state::NodeState;
-    type Action = simdash_action::NodeAction;
+    type State = simdash_state::node::NodeState;
+    type Action = simdash_action::node::NodeAction;
     type Fx = ();
     type Error = ();
 

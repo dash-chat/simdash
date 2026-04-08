@@ -1,8 +1,10 @@
+use simdash_state::dash::Operation;
+
 pub struct FloodingModel;
 
 impl polestar::Machine for FloodingModel {
-    type State = simdash_state::RoutingState;
-    type Action = simdash_action::RoutingAction;
+    type State = simdash_state::routing::flooding::FloodingState<Operation>;
+    type Action = simdash_action::routing::flooding::FloodingAction;
     type Fx = ();
     type Error = ();
 

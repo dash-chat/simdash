@@ -2,7 +2,7 @@
 
 use serde::Deserialize;
 use simdash_ids::NodeId;
-use simdash_state::{Graph, NodeState};
+use simdash_state::{Graph, node::NodeState};
 
 /// Specification for a group of nodes to create.
 #[derive(Debug, Clone, Deserialize)]
