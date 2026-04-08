@@ -2,43 +2,25 @@
 
 use serde::Deserialize;
 use simdash_ids::NodeId;
-use simdash_state::{Graph, node::NodeState};
+use simdash_state::Graph;
 
-/// Specification for a group of nodes to create.
-#[derive(Debug, Clone, Deserialize)]
-pub struct NodeSpec {
-    #[serde(default = "default_strategy")]
-    pub strategy: String,
-    pub number: u32,
+pub mod link;
+pub mod node;
+
+pub use link::{Count, Destination, LinkSpec};
+pub use node::NodeSpec;
+
+/// Shared mutable state threaded through rule application.
+pub struct BuildState<'a, R: rand::Rng> {
+    pub graph: &'a mut Graph,
+    pub next_id: &'a mut u32,
+    pub all_node_ids: &'a mut Vec<NodeId>,
+    pub rng: &'a mut R,
 }
 
-/// How many links to create for a rule.
-#[derive(Debug, Clone, Deserialize)]
-#[serde(untagged)]
-pub enum Count {
-    /// A fixed number of links.
-    Fixed(u32),
-    /// A uniformly random number of links in the range `[min, max]`.
-    Range { min: u32, max: u32 },
-}
-
-/// Specification for links originating from a node group.
-#[derive(Debug, Clone, Deserialize)]
-pub struct LinkSpec {
-    pub strategy: String,
-    pub count: Count,
-    pub destination: Destination,
-}
-
-/// How link destinations are chosen.
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Destination {
-    Random,
-}
-
-fn default_strategy() -> String {
-    "default".to_string()
+/// A rule that knows how to apply itself to the topology being built.
+pub trait ApplyRule {
+    fn apply<R: rand::Rng>(&self, state: &mut BuildState<R>);
 }
 
 /// A single rule in a topology config — either a node creation rule or a link creation rule.
@@ -47,6 +29,15 @@ fn default_strategy() -> String {
 pub enum Rule {
     Node(NodeSpec),
     Link(LinkSpec),
+}
+
+impl ApplyRule for Rule {
+    fn apply<R: rand::Rng>(&self, state: &mut BuildState<R>) {
+        match self {
+            Rule::Node(spec) => spec.apply(state),
+            Rule::Link(spec) => spec.apply(state),
+        }
+    }
 }
 
 pub type TopologyConfig = Vec<Rule>;
@@ -66,9 +57,7 @@ impl TopologyGenerator {
     }
 
     pub fn generate(&self, seed: u64) -> Graph {
-        use rand::Rng;
         use rand::SeedableRng;
-        use rand::seq::IndexedRandom;
 
         let mut graph = Graph::new();
         let mut next_id: u32 = 0;
@@ -76,67 +65,12 @@ impl TopologyGenerator {
         let mut all_node_ids: Vec<NodeId> = Vec::new();
 
         for rule in &self.config {
-            match rule {
-                Rule::Node(node_spec) => {
-                    let node_ids: Vec<NodeId> = (next_id..next_id + node_spec.number)
-                        .map(NodeId::from)
-                        .collect();
-                    next_id += node_spec.number;
-
-                    for &node_id in &node_ids {
-                        graph.add_node(node_id, NodeState::default());
-                    }
-                    all_node_ids.extend_from_slice(&node_ids);
-                }
-                Rule::Link(link_spec) => {
-                    if all_node_ids.len() < 2 {
-                        continue;
-                    }
-                    match link_spec.strategy.as_str() {
-                        "per_node" => match link_spec.destination {
-                            Destination::Random => {
-                                for &node in &all_node_ids {
-                                    let n = match link_spec.count {
-                                        Count::Fixed(n) => n,
-                                        Count::Range { min, max } => rng.random_range(min..=max),
-                                    };
-                                    let candidates: Vec<NodeId> = all_node_ids
-                                        .iter()
-                                        .copied()
-                                        .filter(|&id| id != node)
-                                        .collect();
-                                    for _ in 0..n {
-                                        if let Some(&to) = candidates.choose(&mut rng) {
-                                            graph.add_edge(node, to, ());
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        _ => {
-                            let total_links = match link_spec.count {
-                                Count::Fixed(n) => n,
-                                Count::Range { min, max } => rng.random_range(min..=max),
-                            };
-                            match link_spec.destination {
-                                Destination::Random => {
-                                    for _ in 0..total_links {
-                                        let from = *all_node_ids.choose(&mut rng).unwrap();
-                                        let candidates: Vec<NodeId> = all_node_ids
-                                            .iter()
-                                            .copied()
-                                            .filter(|&id| id != from)
-                                            .collect();
-                                        if let Some(&to) = candidates.choose(&mut rng) {
-                                            graph.add_edge(from, to, ());
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            rule.apply(&mut BuildState {
+                graph: &mut graph,
+                next_id: &mut next_id,
+                all_node_ids: &mut all_node_ids,
+                rng: &mut rng,
+            });
         }
 
         graph
