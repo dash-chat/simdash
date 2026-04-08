@@ -34,7 +34,16 @@ pub struct DashState {
 }
 
 impl DashState {
+    /// DashState is timeless
     pub fn tick(&mut self) {}
+
+    pub fn store_op(&mut self, op: Operation) -> anyhow::Result<()> {
+        let existing = self.op_store.insert(op.id, op);
+        if let Some(existing) = existing {
+            anyhow::bail!("Op already exists: {:?}", existing.id);
+        }
+        Ok(())
+    }
 }
 
 impl ExtractMetadata<FloodingMetadata> for Operation {

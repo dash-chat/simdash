@@ -9,15 +9,16 @@ pub struct FloodingModel {
     pub broadcast_interval: Ticks,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
-pub struct FloodingFx {
-    pub broadcast_ops: BTreeSet<OpId>,
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum FloodingFx {
+    BroadcastOps(BTreeSet<OpId>),
+    StoreOp(Operation),
 }
 
 impl polestar::Machine for FloodingModel {
     type State = simdash_state::routing::flooding::FloodingState;
     type Action = simdash_action::routing::flooding::FloodingAction;
-    type Fx = FloodingFx;
+    type Fx = Option<FloodingFx>;
     type Error = anyhow::Error;
 
     fn transition(
@@ -25,13 +26,20 @@ impl polestar::Machine for FloodingModel {
         mut state: Self::State,
         action: Self::Action,
     ) -> polestar::TransitionResult<Self> {
-        let (state, broadcast_ops) = match action {
-            FloodingAction::StoreOp { op } | FloodingAction::ReceiveOp { from: _, op } => {
+        let (state, fx) = match action {
+            FloodingAction::StoreOp { op } => {
                 let existing = state.ops.insert(op.id, FloodingOp::new(&op));
                 if existing.is_some() {
                     anyhow::bail!("Flooding op already exists: {:?}", op.id);
                 }
-                (state, BTreeSet::new())
+                (state, None)
+            }
+            FloodingAction::ReceiveOp { from: _, op } => {
+                let existing = state.ops.insert(op.id, FloodingOp::new(&op));
+                if existing.is_some() {
+                    anyhow::bail!("Flooding op already exists: {:?}", op.id);
+                }
+                (state, Some(FloodingFx::StoreOp(op)))
             }
             FloodingAction::TriggerBroadcast => {
                 let broadcasted = state
@@ -47,10 +55,10 @@ impl polestar::Machine for FloodingModel {
                         op.id
                     })
                     .collect();
-                (state, broadcasted)
+                (state, Some(FloodingFx::BroadcastOps(broadcasted)))
             }
         };
-        Ok((state, FloodingFx { broadcast_ops }))
+        Ok((state, fx))
     }
 }
 
@@ -108,7 +116,10 @@ mod tests {
         let (_, fx) = m
             .transition(state, FloodingAction::TriggerBroadcast)
             .unwrap();
-        assert!(fx.broadcast_ops.contains(&op_id));
+        assert_eq!(
+            fx,
+            Some(FloodingFx::BroadcastOps([op_id].into_iter().collect()))
+        );
     }
 
     /// An op that was just broadcast should NOT be immediately re-broadcast.
@@ -125,7 +136,7 @@ mod tests {
         let (_, fx) = m
             .transition(state, FloodingAction::TriggerBroadcast)
             .unwrap();
-        assert!(!fx.broadcast_ops.contains(&op_id));
+        assert_eq!(fx, Some(FloodingFx::BroadcastOps(BTreeSet::new())));
     }
 
     /// After broadcast_interval ticks, an op is eligible for re-broadcast.
@@ -145,7 +156,10 @@ mod tests {
         let (_, fx) = m
             .transition(state, FloodingAction::TriggerBroadcast)
             .unwrap();
-        assert!(fx.broadcast_ops.contains(&op_id));
+        assert_eq!(
+            fx,
+            Some(FloodingFx::BroadcastOps([op_id].into_iter().collect()))
+        );
     }
 
     /// ReceiveOp stores the op in state and produces no Fx.
@@ -160,11 +174,11 @@ mod tests {
                 state,
                 FloodingAction::ReceiveOp {
                     from: NodeId::from(9),
-                    op,
+                    op: op.clone(),
                 },
             )
             .unwrap();
-        assert!(fx.broadcast_ops.is_empty());
+        assert_eq!(fx, Some(FloodingFx::StoreOp(op)));
         assert!(state.ops.contains_key(&op_id));
     }
 }

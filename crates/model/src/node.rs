@@ -11,7 +11,7 @@ pub struct NodeModel {
     routing: RoutingModel,
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct NodeFx {
     pub routing: RoutingFx,
 }
@@ -19,7 +19,7 @@ pub struct NodeFx {
 impl polestar::Machine for NodeModel {
     type State = simdash_state::node::NodeState;
     type Action = simdash_action::node::NodeAction;
-    type Fx = NodeFx;
+    type Fx = Option<NodeFx>;
     type Error = anyhow::Error;
 
     fn transition(
@@ -43,12 +43,12 @@ impl polestar::Machine for NodeModel {
                 }
 
                 state.dash = self.dash.transition_(state.dash, action)?;
-                (state, NodeFx::default())
+                (state, None)
             }
             NodeAction::Routing(action) => {
                 let (routing, fx) = self.routing.transition(state.routing, action)?;
                 state.routing = routing;
-                (state, NodeFx { routing: fx })
+                (state, fx.map(|fx| NodeFx { routing: fx }))
             }
         })
     }
@@ -65,7 +65,10 @@ mod tests {
     };
 
     use super::*;
-    use crate::{dash::DashModel, routing::RoutingModel};
+    use crate::{
+        dash::DashModel,
+        routing::{RoutingModel, flooding::FloodingFx},
+    };
 
     fn make_op(id: u32) -> Operation {
         Operation {
@@ -129,7 +132,10 @@ mod tests {
         let (_, fx) = m
             .transition(state, NodeAction::Routing(RoutingAction::TriggerBroadcast))
             .unwrap();
-        assert!(fx.routing.broadcast_ops.contains(&op_id));
+        assert_eq!(
+            fx.unwrap().routing,
+            FloodingFx::BroadcastOps([op_id].into_iter().collect())
+        );
     }
 
     /// ReceiveOp via Routing stores in routing state only — not in dash.
@@ -139,7 +145,7 @@ mod tests {
         let state = NodeState::default();
         let op = make_op(42);
         let op_id = op.id;
-        let (state, _) = m
+        let (state, fx) = m
             .transition(
                 state,
                 NodeAction::Routing(RoutingAction::ReceiveOp {
