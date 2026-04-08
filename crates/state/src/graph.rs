@@ -32,6 +32,10 @@ impl<R, E> Graph<R, E> {
         &mut self.graph
     }
 
+    pub fn node_ids(&self) -> impl Iterator<Item = crate::NodeId> + '_ {
+        self.node_indices.keys().copied()
+    }
+
     pub fn node_index(&self, node_id: crate::NodeId) -> Option<NodeIndex> {
         self.node_indices.get(&node_id).copied()
     }

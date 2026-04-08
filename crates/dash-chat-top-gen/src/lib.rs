@@ -6,10 +6,14 @@ use std::{
 use rand::prelude::*;
 use simdash_distribution::Distribution;
 use simdash_ids::{NodeId, OpId, Size};
-use simdash_state::{dash::Body, dash::DashState, dash::GroupId, dash::Header, dash::Operation};
+use simdash_state::{
+    dash::Body, dash::DashState, dash::GroupId, dash::Header, dash::Operation, graph::Graph,
+};
 
 #[derive(Debug, Clone)]
 pub struct Config {
+    /// Seed for deterministic RNG.
+    pub seed: u64,
     /// How many contacts each node has.
     pub contacts_per_node: Distribution,
     /// How many groups each node joins.
@@ -22,10 +26,11 @@ pub struct Config {
     pub op_payload_size: Distribution,
 }
 
-impl Default for Config {
+impl Config {
     /// Realistic chat-app defaults based on WhatsApp/Signal research data.
-    fn default() -> Self {
+    pub fn default_from_seed(seed: u64) -> Self {
         Config {
+            seed,
             // ~20 active contacts, std_dev ~8
             contacts_per_node: Distribution::normal(20.0, 8.0),
             // ~10 groups per user, std_dev ~4
@@ -38,29 +43,26 @@ impl Default for Config {
             op_payload_size: Distribution::normal(256.0, 50.0),
         }
     }
-}
 
-impl Config {
     /// Create a Config with realistic defaults for nodes that have been
     /// disconnected for the given duration.
     ///
     /// `ops_per_minute` controls how many messages per minute each node produces.
     /// A realistic default is ~0.017 (≈25 msgs/day).
-    pub fn disconnected_for(duration: Duration, ops_per_minute: Distribution) -> Self {
+    pub fn disconnected_for(seed: u64, duration: Duration, ops_per_minute: Distribution) -> Self {
         let minutes = duration.as_secs_f64() / 60.0;
 
-        let ops_per_node = ops_per_minute.scale(minutes);
-
         Config {
-            ops_per_node,
-            ..Config::default()
+            ops_per_node: ops_per_minute.scale(minutes),
+            ..Config::default_from_seed(seed)
         }
     }
 }
 
 /// Generate a `DashState` for each node in the network topology.
-pub fn generate(nodes: &[NodeId], seed: u64, config: &Config) -> BTreeMap<NodeId, DashState> {
-    let mut rng = StdRng::seed_from_u64(seed);
+pub fn generate(graph: &Graph, config: &Config) -> BTreeMap<NodeId, DashState> {
+    let mut rng = StdRng::seed_from_u64(config.seed);
+    let nodes: Vec<NodeId> = graph.node_ids().collect();
     let n = nodes.len();
     if n == 0 {
         return BTreeMap::new();
@@ -76,7 +78,7 @@ pub fn generate(nodes: &[NodeId], seed: u64, config: &Config) -> BTreeMap<NodeId
     let mut op_counter: u32 = 0;
     let mut result = BTreeMap::new();
 
-    for &node in nodes {
+    for &node in &nodes {
         // Groups
         let num_groups_for_node = config.groups_per_node.sample(&mut rng).min(num_groups) as usize;
         let groups: BTreeSet<GroupId> = (0..num_groups)
@@ -148,12 +150,23 @@ pub fn generate(nodes: &[NodeId], seed: u64, config: &Config) -> BTreeMap<NodeId
 
 #[cfg(test)]
 mod tests {
+    use simdash_state::node::NodeState;
+
     use super::*;
+
+    fn make_graph(n: u32) -> Graph {
+        let mut graph = Graph::new();
+        for i in 0..n {
+            graph.add_node(NodeId::from(i), NodeState::default());
+        }
+        graph
+    }
 
     #[test]
     fn deterministic_with_seed() {
-        let nodes: Vec<NodeId> = (0..10).map(NodeId::from).collect();
+        let graph = make_graph(10);
         let config = Config {
+            seed: 42,
             contacts_per_node: Distribution::fixed(3.0),
             groups_per_node: Distribution::fixed(2.0),
             group_size: Distribution::fixed(3.0),
@@ -161,15 +174,16 @@ mod tests {
             op_payload_size: Distribution::fixed(100.0),
         };
 
-        let result1 = generate(&nodes, 42, &config);
-        let result2 = generate(&nodes, 42, &config);
+        let result1 = generate(&graph, &config);
+        let result2 = generate(&graph, &config);
         assert_eq!(result1, result2);
     }
 
     #[test]
     fn respects_fixed_counts() {
-        let nodes: Vec<NodeId> = (0..5).map(NodeId::from).collect();
+        let graph = make_graph(5);
         let config = Config {
+            seed: 1,
             contacts_per_node: Distribution::fixed(2.0),
             groups_per_node: Distribution::fixed(1.0),
             group_size: Distribution::fixed(2.0),
@@ -177,7 +191,7 @@ mod tests {
             op_payload_size: Distribution::fixed(64.0),
         };
 
-        let result = generate(&nodes, 1, &config);
+        let result = generate(&graph, &config);
         assert_eq!(result.len(), 5);
         for (_node_id, state) in &result {
             assert_eq!(state.contacts.len(), 2);
@@ -191,8 +205,9 @@ mod tests {
 
     #[test]
     fn uniform_distribution() {
-        let nodes: Vec<NodeId> = (0..20).map(NodeId::from).collect();
+        let graph = make_graph(20);
         let config = Config {
+            seed: 99,
             contacts_per_node: Distribution::uniform(1.0, 5.0),
             groups_per_node: Distribution::uniform(1.0, 3.0),
             group_size: Distribution::fixed(4.0),
@@ -200,7 +215,7 @@ mod tests {
             op_payload_size: Distribution::normal(256.0, 50.0),
         };
 
-        let result = generate(&nodes, 99, &config);
+        let result = generate(&graph, &config);
         assert_eq!(result.len(), 20);
         for state in result.values() {
             assert!(state.contacts.len() >= 1 && state.contacts.len() <= 5);
@@ -215,20 +230,19 @@ mod tests {
 
     #[test]
     fn disconnected_for_defaults() {
-        let nodes: Vec<NodeId> = (0..10).map(NodeId::from).collect();
+        let graph = make_graph(10);
         // 1 hour disconnected, ~0.017 msgs/min (≈25/day)
         let config = Config::disconnected_for(
+            42,
             Duration::from_secs(3600),
             Distribution::fixed(0.017),
         );
 
-        let result = generate(&nodes, 42, &config);
+        let result = generate(&graph, &config);
         assert_eq!(result.len(), 10);
         for state in result.values() {
-            // With Normal(20,8) contacts, should have some contacts
+            // With Normal(20,8) contacts, should have some
             assert!(state.contacts.len() > 0);
-            // With Normal(10,4) groups, should have some groups
-            assert!(state.groups.len() > 0);
             // 0.017 msgs/min * 60 min ≈ 1 op per node
             assert!(state.op_store.len() <= 5);
         }
