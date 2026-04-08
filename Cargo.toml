@@ -8,3 +8,5 @@ members = ["crates/*"]
 anyhow = "1"
 derive_more = { version = "2", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
+
+polestar = { git = "https://github.com/maackle/polestar-rs.git", branch = "main" }
