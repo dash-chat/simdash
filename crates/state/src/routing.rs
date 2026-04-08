@@ -1,29 +1,6 @@
-use simdash_ids::*;
+pub mod flooding;
 
 use crate::Operation;
 
 /// Only one possible routing state for now.
-pub type RoutingState = FloodingState<Operation>;
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct FloodingState<M: FloodingMetadata> {
-    data: Vec<FloodingOp<M>>,
-}
-
-impl Default for FloodingState<Operation> {
-    fn default() -> Self {
-        Self { data: vec![] }
-    }
-}
-
-/// Metadata needed for flooding.
-pub trait FloodingMetadata {
-    fn size(&self) -> Size;
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct FloodingOp<M: FloodingMetadata> {
-    id: OpId,
-    metadata: M,
-    last_sent: Time,
-}
+pub type RoutingState = flooding::FloodingState<Operation>;
