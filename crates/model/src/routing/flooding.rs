@@ -39,7 +39,7 @@ impl polestar::Machine for FloodingModel {
                     .values_mut()
                     .filter(|op| {
                         op.since_last_send
-                            .map(|t| t <= self.broadcast_interval)
+                            .map(|t| t >= self.broadcast_interval)
                             .unwrap_or(true)
                     })
                     .map(|op| {
@@ -56,15 +56,115 @@ impl polestar::Machine for FloodingModel {
 
 #[cfg(test)]
 mod tests {
-    use simdash_state::routing::flooding::FloodingState;
+    use polestar::Machine;
+    use simdash_ids::{NodeId, OpId, Size};
+    use simdash_state::{
+        dash::{Body, Header, Operation},
+        routing::flooding::FloodingState,
+    };
 
     use super::*;
 
-    #[test]
-    fn test_flooding_model() {
-        let model = FloodingModel {
+    fn make_op(id: u32) -> Operation {
+        Operation {
+            id: OpId::from(id),
+            header: Header {
+                author: NodeId::from(1),
+                payload_size: Size::from(100u64),
+            },
+            body: Body::DirectMessage {
+                recipient: NodeId::from(2),
+            },
+        }
+    }
+
+    fn model() -> FloodingModel {
+        FloodingModel {
             broadcast_interval: 3.into(),
-        };
+        }
+    }
+
+    /// Storing the same op twice should be a no-op, not an error.
+    #[test]
+    fn store_op_is_idempotent() {
+        let m = model();
         let state = FloodingState::default();
+        let op = make_op(1);
+        let (state, _) = m
+            .transition(state, FloodingAction::StoreOp { op: op.clone() })
+            .unwrap();
+        let result = m.transition(state, FloodingAction::StoreOp { op });
+        assert!(result.is_err());
+    }
+
+    /// Ops that have never been broadcast are included in TriggerBroadcast Fx.
+    #[test]
+    fn trigger_broadcast_sends_new_ops() {
+        let m = model();
+        let state = FloodingState::default();
+        let op = make_op(1);
+        let op_id = op.id;
+        let (state, _) = m.transition(state, FloodingAction::StoreOp { op }).unwrap();
+        let (_, fx) = m
+            .transition(state, FloodingAction::TriggerBroadcast)
+            .unwrap();
+        assert!(fx.broadcast_ops.contains(&op_id));
+    }
+
+    /// An op that was just broadcast should NOT be immediately re-broadcast.
+    #[test]
+    fn trigger_broadcast_suppresses_immediate_resend() {
+        let m = model();
+        let state = FloodingState::default();
+        let op = make_op(1);
+        let op_id = op.id;
+        let (state, _) = m.transition(state, FloodingAction::StoreOp { op }).unwrap();
+        let (state, _) = m
+            .transition(state, FloodingAction::TriggerBroadcast)
+            .unwrap();
+        let (_, fx) = m
+            .transition(state, FloodingAction::TriggerBroadcast)
+            .unwrap();
+        assert!(!fx.broadcast_ops.contains(&op_id));
+    }
+
+    /// After broadcast_interval ticks, an op is eligible for re-broadcast.
+    #[test]
+    fn trigger_broadcast_resends_after_interval() {
+        let m = model();
+        let state = FloodingState::default();
+        let op = make_op(1);
+        let op_id = op.id;
+        let (mut state, _) = m.transition(state, FloodingAction::StoreOp { op }).unwrap();
+        let (mut state, _) = m
+            .transition(state, FloodingAction::TriggerBroadcast)
+            .unwrap();
+        for _ in 0..3 {
+            state.tick();
+        }
+        let (_, fx) = m
+            .transition(state, FloodingAction::TriggerBroadcast)
+            .unwrap();
+        assert!(fx.broadcast_ops.contains(&op_id));
+    }
+
+    /// ReceiveOp stores the op in state and produces no Fx.
+    #[test]
+    fn receive_op_is_stored() {
+        let m = model();
+        let state = FloodingState::default();
+        let op = make_op(42);
+        let op_id = op.id;
+        let (state, fx) = m
+            .transition(
+                state,
+                FloodingAction::ReceiveOp {
+                    from: NodeId::from(9),
+                    op,
+                },
+            )
+            .unwrap();
+        assert!(fx.broadcast_ops.is_empty());
+        assert!(state.ops.contains_key(&op_id));
     }
 }
