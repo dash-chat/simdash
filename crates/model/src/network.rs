@@ -26,20 +26,18 @@ impl polestar::Machine for NetworkModel {
         match action {
             // Tick every node and run all effects
             simdash_action::network::NetworkAction::Tick => {
-                let all_keys = state.nodes.keys().copied().collect::<Vec<_>>();
+                let all_keys = state.graph.node_ids().collect::<Vec<_>>();
                 for node_id in all_keys {
-                    state
-                        .nodes
-                        .owned_update(node_id, |network_state, mut node_state| {
-                            node_state.tick();
-                            Ok((node_state, ()))
-                        })?;
+                    state.graph.update_node(node_id, |mut node_state| {
+                        node_state.tick();
+                        Ok((node_state, ()))
+                    })?;
                 }
                 Ok((state, ()))
             }
 
             simdash_action::network::NetworkAction::Node(node_id, node_action) => {
-                if let Some(fx) = state.nodes.owned_update(node_id, |_, mut node_state| {
+                if let Some(fx) = state.graph.update_node(node_id, |node_state| {
                     let (node_state, node_fx) = self.node.transition(node_state, node_action)?;
                     Ok((node_state, node_fx))
                 })? {
@@ -64,8 +62,8 @@ impl NetworkModel {
                     .iter()
                     .map(|op_id| {
                         state
-                            .nodes
-                            .get(&node_id)
+                            .graph
+                            .node_state(node_id)
                             .ok_or(anyhow::anyhow!("Node not found: {:?}", node_id))?
                             .dash
                             .op_store
@@ -83,12 +81,10 @@ impl NetworkModel {
                 }
             }
             FloodingFx::StoreOp(op) => {
-                state
-                    .nodes
-                    .get_mut(&node_id)
-                    .ok_or(anyhow::anyhow!("Node not found: {:?}", node_id))?
-                    .dash
-                    .store_op(op)?;
+                state.graph.update_node(node_id, |mut node_state| {
+                    node_state.dash.store_op(op)?;
+                    Ok((node_state, ()))
+                })?;
             }
         }
         Ok(())

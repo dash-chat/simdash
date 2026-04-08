@@ -1,4 +1,7 @@
-run:
+_:
+    just --list
+
+generate:
     cargo run --bin simdash-runner
 
 test:

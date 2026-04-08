@@ -2,11 +2,11 @@ use std::collections::BTreeMap;
 
 use simdash_ids::NodeId;
 
-use crate::{dash::Operation, node::NodeState};
+use crate::{Graph, dash::Operation, node::NodeState};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone)]
 pub struct NetworkState {
-    pub nodes: BTreeMap<NodeId, NodeState>,
+    pub graph: Graph,
     // links: ???,
 }
 
@@ -16,7 +16,9 @@ impl NetworkState {
     }
 
     pub fn neighborhood(&self, node_id: NodeId) -> impl Iterator<Item = NodeId> {
-        todo!("get neighborhood from graph");
-        self.nodes.keys().copied().filter(move |id| id != &node_id)
+        self.graph
+            .graph()
+            .neighbors(self.graph.node_index(node_id).unwrap())
+            .map(|n| self.graph.node_id(n).unwrap())
     }
 }

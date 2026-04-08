@@ -1,4 +1,4 @@
-out/
+gen/
 target/
 Cargo.lock
 

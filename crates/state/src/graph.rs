@@ -21,7 +21,7 @@ impl<R, E> Default for Graph<R, E> {
     }
 }
 
-impl<R, E> Graph<R, E> {
+impl<R: Clone, E> Graph<R, E> {
     pub fn new() -> Self {
         Self::default()
     }
@@ -38,8 +38,40 @@ impl<R, E> Graph<R, E> {
         self.node_indices.keys().copied()
     }
 
+    pub fn node_id(&self, index: NodeIndex) -> Option<NodeId> {
+        self.node_indices
+            .iter()
+            .find_map(|(id, idx)| if *idx == index { Some(*id) } else { None })
+    }
+
     pub fn node_index(&self, node_id: NodeId) -> Option<NodeIndex> {
         self.node_indices.get(&node_id).copied()
+    }
+
+    pub fn node_state(&self, node_id: NodeId) -> Option<&NodeState<R>> {
+        self.graph.node_weight(self.node_index(node_id)?)
+    }
+
+    pub fn set_node(&mut self, node_id: NodeId, state: NodeState<R>) -> bool {
+        let Some(idx) = self.node_index(node_id) else {
+            return false;
+        };
+        let Some(s) = self.graph.node_weight_mut(idx) else {
+            return false;
+        };
+        *s = state;
+        true
+    }
+
+    pub fn update_node<O>(
+        &mut self,
+        node_id: NodeId,
+        action: impl FnOnce(NodeState<R>) -> anyhow::Result<(NodeState<R>, O)>,
+    ) -> anyhow::Result<O> {
+        let state = self.node_state(node_id).unwrap().clone();
+        let (state, fx) = action(state)?;
+        self.set_node(node_id, state);
+        Ok(fx)
     }
 
     pub fn add_node(&mut self, node_id: NodeId, state: NodeState<R>) -> NodeIndex {

@@ -52,15 +52,15 @@ fn main() {
             None
         };
 
-        fs::create_dir_all("out").expect("Failed to create output directory");
+        fs::create_dir_all("gen").expect("Failed to create output directory");
 
         let graph_bytes = postcard::to_stdvec(&graph).expect("Failed to serialize graph");
-        let graph_path = "out/topology.postcard";
+        let graph_path = "gen/topology.postcard";
         fs::write(graph_path, graph_bytes).expect("Failed to write graph dump");
         println!("Serialized graph written to '{graph_path}'");
 
         let dot = generate_dot(&graph, dash_states.as_ref());
-        let dot_path = "out/topology.dot";
+        let dot_path = "gen/topology.dot";
         fs::write(dot_path, &dot).expect("Failed to write DOT file");
         println!("Graphviz diagram written to '{dot_path}'");
     }
