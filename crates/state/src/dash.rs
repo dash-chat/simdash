@@ -3,6 +3,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde::{Deserialize, Serialize};
 use simdash_ids::{NodeId, OpId, Size};
 
+use crate::{Extract, routing::flooding::FloodingMetadata};
+
 pub type GroupId = u64;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
@@ -19,6 +21,7 @@ pub struct Header {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Operation {
+    pub id: OpId,
     pub header: Header,
     pub body: Body,
 }
@@ -30,8 +33,10 @@ pub struct DashState {
     pub groups: BTreeSet<GroupId>,
 }
 
-impl crate::routing::flooding::FloodingMetadata for Operation {
-    fn size(&self) -> Size {
-        self.header.payload_size
+impl Extract<FloodingMetadata> for Operation {
+    fn extract(&self) -> FloodingMetadata {
+        FloodingMetadata {
+            size: self.header.payload_size,
+        }
     }
 }

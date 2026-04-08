@@ -1,4 +1,4 @@
-use crate::{DashModel, RoutingModel};
+use crate::{dash::DashModel, routing::RoutingModel};
 
 pub struct NodeModel {
     dash: DashModel,

@@ -90,6 +90,7 @@ pub fn generate(nodes: &[NodeId], config: &Config) -> BTreeMap<NodeId, DashState
             op_store.insert(
                 op_id,
                 Operation {
+                    id: op_id,
                     header: Header {
                         author: node,
                         payload_size,

@@ -14,5 +14,19 @@ pub struct OpId(u32);
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash, From, Deref)]
 pub struct Size(u64);
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash, From, Deref)]
-pub struct Time(u64);
+/// A number of ticks (a duration).
+#[derive(
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    From,
+    Deref,
+    derive_more::Add,
+    derive_more::Sub,
+)]
+pub struct Ticks(u32);

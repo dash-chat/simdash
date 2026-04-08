@@ -18,3 +18,7 @@ pub struct State {
     nodes: BTreeMap<NodeId, NodeState>,
     // links: ???,
 }
+
+pub trait Extract<T> {
+    fn extract(&self) -> T;
+}
