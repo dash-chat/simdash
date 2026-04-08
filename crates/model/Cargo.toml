@@ -6,3 +6,5 @@ edition = "2024"
 [dependencies]
 simdash-state = { path = "../state" }
 simdash-action = { path = "../action" }
+
+polestar = { workspace = true }
