@@ -6,3 +6,5 @@ edition = "2021"
 [dependencies]
 clap = { version = "4", features = ["derive"] }
 serde_json = "1"
+net-top-gen = { path = "../net-top-gen" }
+simdash-state = { path = "../state" }

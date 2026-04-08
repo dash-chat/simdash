@@ -1,3 +1,13 @@
 {
-  "name": "simdash"
+  "name": "simdash",
+  "seed": 7,
+  "net-top": [
+    { "element": "node", "number": 100 },
+    {
+      "element": "link",
+      "strategy": "per_node",
+      "count": { "min": 0, "max": 4 },
+      "destination": "random"
+    }
+  ]
 }
