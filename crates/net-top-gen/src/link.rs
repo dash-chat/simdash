@@ -1,0 +1,83 @@
+use rand::seq::IndexedRandom;
+use serde::Deserialize;
+use simdash_ids::NodeId;
+
+use crate::{ApplyRule, BuildState};
+
+/// How many links to create for a rule.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum Count {
+    /// A fixed number of links.
+    Fixed(u32),
+    /// A uniformly random number of links in the range `[min, max]`.
+    Range { min: u32, max: u32 },
+}
+
+/// How link destinations are chosen.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Destination {
+    Random,
+}
+
+/// Specification for links originating from a node group.
+#[derive(Debug, Clone, Deserialize)]
+pub struct LinkSpec {
+    pub strategy: String,
+    pub count: Count,
+    pub destination: Destination,
+}
+
+impl ApplyRule for LinkSpec {
+    fn apply<R: rand::Rng>(&self, state: &mut BuildState<R>) {
+        if state.all_node_ids.len() < 2 {
+            return;
+        }
+        match self.strategy.as_str() {
+            "per_node" => match self.destination {
+                Destination::Random => {
+                    for &node in state.all_node_ids.clone().iter() {
+                        let n = match self.count {
+                            Count::Fixed(n) => n,
+                            Count::Range { min, max } => state.rng.random_range(min..=max),
+                        };
+                        let candidates: Vec<NodeId> = state
+                            .all_node_ids
+                            .iter()
+                            .copied()
+                            .filter(|&id| id != node)
+                            .collect();
+                        for _ in 0..n {
+                            if let Some(&to) = candidates.choose(&mut state.rng) {
+                                state.graph.add_edge(node, to, ());
+                            }
+                        }
+                    }
+                }
+            },
+            _ => {
+                let total_links = match self.count {
+                    Count::Fixed(n) => n,
+                    Count::Range { min, max } => state.rng.random_range(min..=max),
+                };
+                match self.destination {
+                    Destination::Random => {
+                        for _ in 0..total_links {
+                            let from = *state.all_node_ids.choose(&mut state.rng).unwrap();
+                            let candidates: Vec<NodeId> = state
+                                .all_node_ids
+                                .iter()
+                                .copied()
+                                .filter(|&id| id != from)
+                                .collect();
+                            if let Some(&to) = candidates.choose(&mut state.rng) {
+                                state.graph.add_edge(from, to, ());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
