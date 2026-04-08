@@ -1,6 +1,6 @@
 use derive_more::{Deref, From};
 
-use crate::{DashState, RoutingState};
+use crate::{DashState, Operation, RoutingState};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct NodeState<R = RoutingState> {

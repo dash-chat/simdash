@@ -2,6 +2,8 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use simdash_ids::{NodeId, OpId, Size};
 
+use crate::FloodingMetadata;
+
 pub type GroupId = u64;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -21,4 +23,10 @@ pub struct DashState {
     pub op_store: BTreeMap<OpId, Operation>,
     pub contacts: BTreeSet<NodeId>,
     pub groups: BTreeSet<GroupId>,
+}
+
+impl FloodingMetadata for Operation {
+    fn size(&self) -> Size {
+        self.header.payload_size
+    }
 }

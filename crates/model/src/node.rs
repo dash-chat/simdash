@@ -1,4 +1,9 @@
-pub struct NodeModel;
+use crate::{DashModel, RoutingModel};
+
+pub struct NodeModel {
+    dash: DashModel,
+    routing: RoutingModel,
+}
 
 impl polestar::Machine for NodeModel {
     type State = simdash_state::NodeState;
