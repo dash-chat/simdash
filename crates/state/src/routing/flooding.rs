@@ -1,6 +1,6 @@
 use simdash_ids::*;
 
-use crate::{Extract, dash::Operation};
+use crate::{ExtractMetadata, dash::Operation};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
 pub struct FloodingState {
@@ -24,7 +24,7 @@ impl FloodingOp {
     pub fn new(op: &Operation) -> Self {
         Self {
             id: op.id,
-            metadata: op.extract(),
+            metadata: op.extract_metadata(),
             since_last_send: None,
         }
     }

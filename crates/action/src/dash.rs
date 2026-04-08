@@ -1,6 +1,9 @@
-use simdash_ids::OpId;
+use simdash_ids::NodeId;
+use simdash_state::dash::{GroupId, Operation};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum DashAction {
-    StoreOp(OpId),
+    StoreOp(Operation),
+    AddContact(NodeId),
+    JoinGroup(GroupId),
 }

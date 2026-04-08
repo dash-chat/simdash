@@ -11,3 +11,6 @@ serde = { version = "1", features = ["derive"] }
 petgraph = "0.8"
 
 polestar = { git = "https://github.com/maackle/polestar-rs.git", branch = "main" }
+
+# [patch."https://github.com/maackle/polestar-rs"]
+# polestar = { path = "/home/michael/proj/polestar-rs/polestar" }

@@ -49,6 +49,5 @@ mod tests {
     fn test_flooding_model() {
         let model = FloodingModel;
         let state = FloodingState::default();
-        let action = FloodingAction::Tick;
     }
 }

@@ -4,6 +4,6 @@ use crate::{dash::DashState, routing::RoutingState};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub struct NodeState<R = RoutingState> {
-    dash: DashState,
-    routing: R,
+    pub dash: DashState,
+    pub routing: R,
 }

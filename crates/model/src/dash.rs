@@ -1,8 +1,11 @@
+use simdash_action::dash::DashAction;
+use simdash_state::dash::DashState;
+
 pub struct DashModel;
 
 impl polestar::Machine for DashModel {
-    type State = simdash_state::dash::DashState;
-    type Action = simdash_action::dash::DashAction;
+    type State = DashState;
+    type Action = DashAction;
     type Fx = ();
     type Error = ();
 
@@ -11,6 +14,19 @@ impl polestar::Machine for DashModel {
         mut state: Self::State,
         action: Self::Action,
     ) -> polestar::TransitionResult<Self> {
-        todo!()
+        match action {
+            DashAction::StoreOp(op) => {
+                state.op_store.insert(op.id, op);
+                Ok((state, ()))
+            }
+            DashAction::AddContact(contact) => {
+                state.contacts.insert(contact);
+                Ok((state, ()))
+            }
+            DashAction::JoinGroup(group) => {
+                state.groups.insert(group);
+                Ok((state, ()))
+            }
+        }
     }
 }

@@ -19,6 +19,6 @@ pub struct State {
     // links: ???,
 }
 
-pub trait Extract<T> {
-    fn extract(&self) -> T;
+pub trait ExtractMetadata<T> {
+    fn extract_metadata(&self) -> T;
 }
