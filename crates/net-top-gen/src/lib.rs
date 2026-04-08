@@ -54,12 +54,13 @@ impl TopologyGenerator {
         Ok(Self { config })
     }
 
-    pub fn generate(&self) -> Graph {
+    pub fn generate(&self, seed: u64) -> Graph {
+        use rand::SeedableRng;
         use rand::seq::IndexedRandom;
 
         let mut graph = Graph::new();
         let mut next_id: u32 = 0;
-        let mut rng = rand::rng();
+        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
         let mut all_node_ids: Vec<NodeId> = Vec::new();
 
         for rule in &self.config {
@@ -127,9 +128,44 @@ mod tests {
         ]"#;
 
         let generator = TopologyGenerator::from_json(json).unwrap();
-        let graph = generator.generate();
+        let graph = generator.generate(0);
 
         assert_eq!(graph.graph().node_count(), 2);
         assert_eq!(graph.graph().edge_count(), 2);
+    }
+
+    #[test]
+    fn three_nodes_one_link_per_node() {
+        let json = r#"[
+            {
+                "element": "node",
+                "number": 3
+            },
+            {
+                "element": "link",
+                "strategy": "per_node",
+                "number": 1,
+                "destination": "random"
+            }
+        ]"#;
+
+        let generator = TopologyGenerator::from_json(json).unwrap();
+        let graph1 = generator.generate(42);
+        let graph2 = generator.generate(42);
+
+        assert_eq!(graph1.graph().node_count(), 3);
+
+        // Same seed produces identical topology.
+        let edges1: Vec<_> = graph1
+            .graph()
+            .edge_indices()
+            .map(|e| graph1.graph().edge_endpoints(e).unwrap())
+            .collect();
+        let edges2: Vec<_> = graph2
+            .graph()
+            .edge_indices()
+            .map(|e| graph2.graph().edge_endpoints(e).unwrap())
+            .collect();
+        assert_eq!(edges1, edges2);
     }
 }
