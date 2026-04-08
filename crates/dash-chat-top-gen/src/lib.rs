@@ -7,8 +7,8 @@ use simdash_state::{dash::Body, dash::DashState, dash::GroupId, dash::Header, da
 
 #[derive(Debug, Clone)]
 pub struct Config {
-    /// Optional seed for deterministic RNG. If None, uses OS entropy.
-    pub seed: Option<u64>,
+    /// Seed for deterministic RNG.
+    pub seed: u64,
     /// How many contacts each node has.
     pub contacts_per_node: Distribution,
     /// How many groups each node joins.
@@ -23,10 +23,7 @@ pub struct Config {
 
 /// Generate a `DashState` for each node in the network topology.
 pub fn generate(nodes: &[NodeId], config: &Config) -> BTreeMap<NodeId, DashState> {
-    let mut rng: StdRng = match config.seed {
-        Some(seed) => StdRng::seed_from_u64(seed),
-        None => StdRng::from_os_rng(),
-    };
+    let mut rng = StdRng::seed_from_u64(config.seed);
     let n = nodes.len();
     if n == 0 {
         return BTreeMap::new();
@@ -120,7 +117,7 @@ mod tests {
     fn deterministic_with_seed() {
         let nodes: Vec<NodeId> = (0..10).map(NodeId::from).collect();
         let config = Config {
-            seed: Some(42),
+            seed: 42,
             contacts_per_node: Distribution::fixed(3.0),
             groups_per_node: Distribution::fixed(2.0),
             group_size: Distribution::fixed(3.0),
@@ -137,7 +134,7 @@ mod tests {
     fn respects_fixed_counts() {
         let nodes: Vec<NodeId> = (0..5).map(NodeId::from).collect();
         let config = Config {
-            seed: Some(1),
+            seed: 1,
             contacts_per_node: Distribution::fixed(2.0),
             groups_per_node: Distribution::fixed(1.0),
             group_size: Distribution::fixed(2.0),
@@ -160,7 +157,7 @@ mod tests {
     #[test]
     fn empty_topology() {
         let config = Config {
-            seed: Some(0),
+            seed: 0,
             contacts_per_node: Distribution::fixed(1.0),
             groups_per_node: Distribution::fixed(1.0),
             group_size: Distribution::fixed(1.0),
@@ -174,7 +171,7 @@ mod tests {
     fn uniform_distribution() {
         let nodes: Vec<NodeId> = (0..20).map(NodeId::from).collect();
         let config = Config {
-            seed: Some(99),
+            seed: 99,
             contacts_per_node: Distribution::uniform(1.0, 5.0),
             groups_per_node: Distribution::uniform(1.0, 3.0),
             group_size: Distribution::fixed(4.0),
