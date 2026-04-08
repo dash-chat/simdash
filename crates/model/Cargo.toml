@@ -4,8 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+
 simdash-action = { path = "../action" }
 simdash-ids = { path = "../ids" }
 simdash-state = { path = "../state" }
 
+anyhow = { workspace = true }
 polestar = { workspace = true }

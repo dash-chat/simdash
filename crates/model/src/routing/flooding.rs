@@ -10,20 +10,22 @@ pub struct FloodingModel {
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
-pub struct FloodingFx(BTreeSet<OpId>);
+pub struct FloodingFx {
+    pub broadcast_ops: BTreeSet<OpId>,
+}
 
 impl polestar::Machine for FloodingModel {
     type State = simdash_state::routing::flooding::FloodingState;
     type Action = simdash_action::routing::flooding::FloodingAction;
     type Fx = FloodingFx;
-    type Error = ();
+    type Error = anyhow::Error;
 
     fn transition(
         &self,
         mut state: Self::State,
         action: Self::Action,
     ) -> polestar::TransitionResult<Self> {
-        let (state, fx) = match action {
+        let (state, broadcast_ops) = match action {
             FloodingAction::Tick => {
                 state.ops.iter_mut().for_each(|op| op.tick());
                 (state, BTreeSet::new())
@@ -53,7 +55,7 @@ impl polestar::Machine for FloodingModel {
                 (state, broadcasted)
             }
         };
-        Ok((state, FloodingFx(fx)))
+        Ok((state, FloodingFx { broadcast_ops }))
     }
 }
 

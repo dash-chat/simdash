@@ -1,3 +1,4 @@
+use anyhow::bail;
 use simdash_action::dash::DashAction;
 use simdash_state::dash::DashState;
 
@@ -7,7 +8,7 @@ impl polestar::Machine for DashModel {
     type State = DashState;
     type Action = DashAction;
     type Fx = ();
-    type Error = ();
+    type Error = anyhow::Error;
 
     fn transition(
         &self,
@@ -16,7 +17,9 @@ impl polestar::Machine for DashModel {
     ) -> polestar::TransitionResult<Self> {
         match action {
             DashAction::StoreOp(op) => {
-                state.op_store.insert(op.id, op);
+                if let Some(existing) = state.op_store.insert(op.id, op) {
+                    bail!("Op already exists: {:?}", existing.id);
+                }
                 Ok((state, ()))
             }
             DashAction::AddContact(contact) => {

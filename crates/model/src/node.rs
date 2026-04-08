@@ -13,14 +13,14 @@ pub struct NodeModel {
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash)]
 pub struct NodeFx {
-    routing: RoutingFx,
+    pub routing: RoutingFx,
 }
 
 impl polestar::Machine for NodeModel {
     type State = simdash_state::node::NodeState;
     type Action = simdash_action::node::NodeAction;
     type Fx = NodeFx;
-    type Error = ();
+    type Error = anyhow::Error;
 
     fn transition(
         &self,
@@ -28,6 +28,13 @@ impl polestar::Machine for NodeModel {
         action: Self::Action,
     ) -> polestar::TransitionResult<Self> {
         Ok(match action {
+            NodeAction::Tick => {
+                let (routing, fx) = self
+                    .routing
+                    .transition(state.routing, FloodingAction::Tick)?;
+                state.routing = routing;
+                (state, NodeFx { routing: fx })
+            }
             NodeAction::Dash(action) => {
                 // Always trigger a StoreOp on the routing state if an op is stored in dash chat.
                 // (idempotent.)
