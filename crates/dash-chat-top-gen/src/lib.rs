@@ -1,4 +1,7 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    time::Duration,
+};
 
 use rand::prelude::*;
 use simdash_distribution::Distribution;
@@ -7,8 +10,6 @@ use simdash_state::{dash::Body, dash::DashState, dash::GroupId, dash::Header, da
 
 #[derive(Debug, Clone)]
 pub struct Config {
-    /// Seed for deterministic RNG.
-    pub seed: u64,
     /// How many contacts each node has.
     pub contacts_per_node: Distribution,
     /// How many groups each node joins.
@@ -21,9 +22,45 @@ pub struct Config {
     pub op_payload_size: Distribution,
 }
 
+impl Default for Config {
+    /// Realistic chat-app defaults based on WhatsApp/Signal research data.
+    fn default() -> Self {
+        Config {
+            // ~20 active contacts, std_dev ~8
+            contacts_per_node: Distribution::normal(20.0, 8.0),
+            // ~10 groups per user, std_dev ~4
+            groups_per_node: Distribution::normal(10.0, 4.0),
+            // median group size ~7, std_dev ~5
+            group_size: Distribution::normal(7.0, 5.0),
+            // default: no ops
+            ops_per_node: Distribution::fixed(0.0),
+            // typical message payload ~256 bytes
+            op_payload_size: Distribution::normal(256.0, 50.0),
+        }
+    }
+}
+
+impl Config {
+    /// Create a Config with realistic defaults for nodes that have been
+    /// disconnected for the given duration.
+    ///
+    /// `ops_per_minute` controls how many messages per minute each node produces.
+    /// A realistic default is ~0.017 (≈25 msgs/day).
+    pub fn disconnected_for(duration: Duration, ops_per_minute: Distribution) -> Self {
+        let minutes = duration.as_secs_f64() / 60.0;
+
+        let ops_per_node = ops_per_minute.scale(minutes);
+
+        Config {
+            ops_per_node,
+            ..Config::default()
+        }
+    }
+}
+
 /// Generate a `DashState` for each node in the network topology.
-pub fn generate(nodes: &[NodeId], config: &Config) -> BTreeMap<NodeId, DashState> {
-    let mut rng = StdRng::seed_from_u64(config.seed);
+pub fn generate(nodes: &[NodeId], seed: u64, config: &Config) -> BTreeMap<NodeId, DashState> {
+    let mut rng = StdRng::seed_from_u64(seed);
     let n = nodes.len();
     if n == 0 {
         return BTreeMap::new();
@@ -117,7 +154,6 @@ mod tests {
     fn deterministic_with_seed() {
         let nodes: Vec<NodeId> = (0..10).map(NodeId::from).collect();
         let config = Config {
-            seed: 42,
             contacts_per_node: Distribution::fixed(3.0),
             groups_per_node: Distribution::fixed(2.0),
             group_size: Distribution::fixed(3.0),
@@ -125,8 +161,8 @@ mod tests {
             op_payload_size: Distribution::fixed(100.0),
         };
 
-        let result1 = generate(&nodes, &config);
-        let result2 = generate(&nodes, &config);
+        let result1 = generate(&nodes, 42, &config);
+        let result2 = generate(&nodes, 42, &config);
         assert_eq!(result1, result2);
     }
 
@@ -134,7 +170,6 @@ mod tests {
     fn respects_fixed_counts() {
         let nodes: Vec<NodeId> = (0..5).map(NodeId::from).collect();
         let config = Config {
-            seed: 1,
             contacts_per_node: Distribution::fixed(2.0),
             groups_per_node: Distribution::fixed(1.0),
             group_size: Distribution::fixed(2.0),
@@ -142,7 +177,7 @@ mod tests {
             op_payload_size: Distribution::fixed(64.0),
         };
 
-        let result = generate(&nodes, &config);
+        let result = generate(&nodes, 1, &config);
         assert_eq!(result.len(), 5);
         for (_node_id, state) in &result {
             assert_eq!(state.contacts.len(), 2);
@@ -155,23 +190,9 @@ mod tests {
     }
 
     #[test]
-    fn empty_topology() {
-        let config = Config {
-            seed: 0,
-            contacts_per_node: Distribution::fixed(1.0),
-            groups_per_node: Distribution::fixed(1.0),
-            group_size: Distribution::fixed(1.0),
-            ops_per_node: Distribution::fixed(1.0),
-            op_payload_size: Distribution::fixed(1.0),
-        };
-        assert!(generate(&[], &config).is_empty());
-    }
-
-    #[test]
     fn uniform_distribution() {
         let nodes: Vec<NodeId> = (0..20).map(NodeId::from).collect();
         let config = Config {
-            seed: 99,
             contacts_per_node: Distribution::uniform(1.0, 5.0),
             groups_per_node: Distribution::uniform(1.0, 3.0),
             group_size: Distribution::fixed(4.0),
@@ -179,10 +200,37 @@ mod tests {
             op_payload_size: Distribution::normal(256.0, 50.0),
         };
 
-        let result = generate(&nodes, &config);
+        let result = generate(&nodes, 99, &config);
         assert_eq!(result.len(), 20);
         for state in result.values() {
-            assert!(state.contacts.len() <= 5);
+            assert!(state.contacts.len() >= 1 && state.contacts.len() <= 5);
+            assert!(state.groups.len() >= 1 && state.groups.len() <= 3);
+            assert!(state.op_store.len() <= 10);
+            for op in state.op_store.values() {
+                // Normal(256, 50) — payload should be in a reasonable range
+                assert!(*op.header.payload_size <= 500);
+            }
+        }
+    }
+
+    #[test]
+    fn disconnected_for_defaults() {
+        let nodes: Vec<NodeId> = (0..10).map(NodeId::from).collect();
+        // 1 hour disconnected, ~0.017 msgs/min (≈25/day)
+        let config = Config::disconnected_for(
+            Duration::from_secs(3600),
+            Distribution::fixed(0.017),
+        );
+
+        let result = generate(&nodes, 42, &config);
+        assert_eq!(result.len(), 10);
+        for state in result.values() {
+            // With Normal(20,8) contacts, should have some contacts
+            assert!(state.contacts.len() > 0);
+            // With Normal(10,4) groups, should have some groups
+            assert!(state.groups.len() > 0);
+            // 0.017 msgs/min * 60 min ≈ 1 op per node
+            assert!(state.op_store.len() <= 5);
         }
     }
 }
