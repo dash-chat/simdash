@@ -1,6 +1,3 @@
-use simdash_ids::{NodeId, OpId};
+pub mod flooding;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum RoutingAction {
-    ReceiveOp { from: NodeId, op: OpId },
-}
+pub type RoutingAction = flooding::FloodingAction;
