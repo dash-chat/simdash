@@ -28,13 +28,6 @@ impl polestar::Machine for NodeModel {
         action: Self::Action,
     ) -> polestar::TransitionResult<Self> {
         Ok(match action {
-            NodeAction::Tick => {
-                let (routing, fx) = self
-                    .routing
-                    .transition(state.routing, FloodingAction::Tick)?;
-                state.routing = routing;
-                (state, NodeFx { routing: fx })
-            }
             NodeAction::Dash(action) => {
                 // Always trigger a StoreOp on the routing state if an op is stored in dash chat.
                 // (idempotent.)

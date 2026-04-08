@@ -33,6 +33,10 @@ pub struct DashState {
     pub groups: BTreeSet<GroupId>,
 }
 
+impl DashState {
+    pub fn tick(&mut self) {}
+}
+
 impl ExtractMetadata<FloodingMetadata> for Operation {
     fn extract_metadata(&self) -> FloodingMetadata {
         FloodingMetadata {

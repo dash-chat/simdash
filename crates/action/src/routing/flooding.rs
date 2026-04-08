@@ -3,7 +3,6 @@ use simdash_state::{dash::Operation, routing::flooding::FloodingOp};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum FloodingAction {
-    Tick,
     StoreOp { op: Operation },
     ReceiveOp { from: NodeId, op: Operation },
     TriggerBroadcast,

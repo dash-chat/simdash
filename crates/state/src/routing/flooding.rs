@@ -7,6 +7,13 @@ pub struct FloodingState {
     pub ops: Vec<FloodingOp>,
 }
 
+impl FloodingState {
+    /// Tick doesn't happen as an independent action. All nodes get ticked at once.
+    pub fn tick(&mut self) {
+        self.ops.iter_mut().for_each(|op| op.tick());
+    }
+}
+
 /// Metadata needed for flooding.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct FloodingMetadata {

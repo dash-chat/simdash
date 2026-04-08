@@ -8,8 +8,13 @@ pub struct NodeState<R = RoutingState> {
     pub routing: R,
 }
 
-impl<R> NodeState<R> {
+impl NodeState<RoutingState> {
     pub fn dash(&self) -> &DashState {
         &self.dash
+    }
+
+    pub fn tick(&mut self) {
+        self.dash.tick();
+        self.routing.tick();
     }
 }

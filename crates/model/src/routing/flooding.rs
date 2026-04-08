@@ -26,10 +26,6 @@ impl polestar::Machine for FloodingModel {
         action: Self::Action,
     ) -> polestar::TransitionResult<Self> {
         let (state, broadcast_ops) = match action {
-            FloodingAction::Tick => {
-                state.ops.iter_mut().for_each(|op| op.tick());
-                (state, BTreeSet::new())
-            }
             FloodingAction::StoreOp { op } => {
                 state.ops.push(FloodingOp::new(&op));
                 (state, BTreeSet::new())
