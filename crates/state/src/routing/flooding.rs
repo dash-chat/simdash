@@ -1,10 +1,11 @@
 use std::collections::{BTreeMap, BTreeSet};
 
+use serde::{Deserialize, Serialize};
 use simdash_ids::*;
 
 use crate::{ExtractMetadata, dash::Operation};
 
-#[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct FloodingState {
     pub ops: BTreeMap<OpId, FloodingOp>,
 }
@@ -19,12 +20,12 @@ impl FloodingState {
 }
 
 /// Metadata needed for flooding.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
 pub struct FloodingMetadata {
     pub size: Size,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
 pub struct FloodingOp {
     pub id: OpId,
     pub metadata: FloodingMetadata,

@@ -52,17 +52,21 @@ fn main() {
             None
         };
 
+        fs::create_dir_all("out").expect("Failed to create output directory");
+
+        let graph_bytes = postcard::to_stdvec(&graph).expect("Failed to serialize graph");
+        let graph_path = "out/topology.postcard";
+        fs::write(graph_path, graph_bytes).expect("Failed to write graph dump");
+        println!("Serialized graph written to '{graph_path}'");
+
         let dot = generate_dot(&graph, dash_states.as_ref());
-        let dot_path = "topology.dot";
+        let dot_path = "out/topology.dot";
         fs::write(dot_path, &dot).expect("Failed to write DOT file");
         println!("Graphviz diagram written to '{dot_path}'");
     }
 }
 
-fn generate_dot(
-    graph: &Graph,
-    dash_states: Option<&BTreeMap<NodeId, DashState>>,
-) -> String {
+fn generate_dot(graph: &Graph, dash_states: Option<&BTreeMap<NodeId, DashState>>) -> String {
     let mut dot = String::new();
     writeln!(dot, "digraph topology {{").unwrap();
     writeln!(dot, "    rankdir=LR;").unwrap();

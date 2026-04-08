@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
 use petgraph::graph::{Graph as PetGraph, NodeIndex};
+use serde::{Deserialize, Serialize};
 use simdash_ids::NodeId;
 
 use crate::node::NodeState;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Graph<R = crate::routing::RoutingState, E = ()> {
     graph: PetGraph<NodeState<R>, E>,
     node_indices: HashMap<NodeId, NodeIndex>,
