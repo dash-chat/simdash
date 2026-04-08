@@ -6,6 +6,6 @@ edition = "2024"
 [dependencies]
 petgraph = { workspace = true }
 rand = "0.9"
-rand_distr = "0.5"
+simdash-distribution = { path = "../distribution" }
 simdash-ids = { path = "../ids" }
 simdash-state = { path = "../state" }
