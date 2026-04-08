@@ -1,15 +1,23 @@
-use polestar::ext::MapExt;
-use simdash_action::node::NodeAction;
+use polestar::{Machine, ext::MapExt};
+use simdash_action::{node::NodeAction, routing::RoutingAction};
 use simdash_ids::NodeId;
 use simdash_state::{dash::Operation, network::NetworkState, node::NodeState};
 
 use crate::{
-    node::{NodeFx, NodeModel},
-    routing::flooding::FloodingFx,
+    node::{NodeFx, NodeModel, NodeModelConfig},
+    routing::{RoutingFx, flooding::FloodingFx},
 };
 
 pub struct NetworkModel {
     node: NodeModel,
+}
+
+impl NetworkModel {
+    pub fn new(config: NodeModelConfig) -> Self {
+        Self {
+            node: NodeModel::new(config),
+        }
+    }
 }
 
 impl polestar::Machine for NetworkModel {
@@ -41,7 +49,7 @@ impl polestar::Machine for NetworkModel {
                     let (node_state, node_fx) = self.node.transition(node_state, node_action)?;
                     Ok((node_state, node_fx))
                 })? {
-                    self.apply_effects(&mut state, node_id, fx)?;
+                    self.apply_node_effects(&mut state, node_id, fx)?;
                 }
                 Ok((state, ()))
             }
@@ -50,13 +58,43 @@ impl polestar::Machine for NetworkModel {
 }
 
 impl NetworkModel {
-    pub fn apply_effects(
+    pub fn send_op(
+        &self,
+        state: &mut NetworkState,
+        from: NodeId,
+        to: NodeId,
+        op: Operation,
+    ) -> anyhow::Result<()> {
+        let fx = state.graph.update_node(to, |mut n| {
+            let (new, fx) = self
+                .node
+                .routing
+                .transition(n.routing, RoutingAction::ReceiveOp { from, op })?;
+            n.routing = new;
+            Ok((n, fx))
+        })?;
+        if let Some(fx) = fx {
+            self.apply_routing_effects(state, to, fx)?;
+        }
+        Ok(())
+    }
+
+    pub fn apply_node_effects(
         &self,
         state: &mut NetworkState,
         node_id: NodeId,
         fx: NodeFx,
     ) -> anyhow::Result<()> {
-        match fx.routing {
+        self.apply_routing_effects(state, node_id, fx.routing)
+    }
+
+    pub fn apply_routing_effects(
+        &self,
+        state: &mut NetworkState,
+        node_id: NodeId,
+        fx: RoutingFx,
+    ) -> anyhow::Result<()> {
+        match fx {
             FloodingFx::BroadcastOps(broadcast_ops) => {
                 let ops = broadcast_ops
                     .iter()
@@ -76,7 +114,9 @@ impl NetworkModel {
                 let neighbors = state.neighborhood(node_id).collect::<Vec<_>>();
                 for neighbor in neighbors {
                     for op in ops.iter() {
-                        state.send_op(node_id, neighbor, op.clone())?;
+                        if let Err(err) = self.send_op(state, node_id, neighbor, op.clone()) {
+                            tracing::warn!("Failed to send op to neighbor: {:?}", err);
+                        }
                     }
                 }
             }

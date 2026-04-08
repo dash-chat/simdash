@@ -10,6 +10,7 @@ pub struct FloodingModel {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[must_use]
 pub enum FloodingFx {
     BroadcastOps(BTreeSet<OpId>),
     StoreOp(Operation),
@@ -30,14 +31,14 @@ impl polestar::Machine for FloodingModel {
             FloodingAction::StoreOp { op } => {
                 let existing = state.ops.insert(op.id, FloodingOp::new(&op));
                 if existing.is_some() {
-                    anyhow::bail!("Flooding op already exists: {:?}", op.id);
+                    anyhow::bail!("Flooding op already exists: op={:?}", op.id);
                 }
                 (state, None)
             }
             FloodingAction::ReceiveOp { from: _, op } => {
                 let existing = state.ops.insert(op.id, FloodingOp::new(&op));
                 if existing.is_some() {
-                    anyhow::bail!("Flooding op already exists: {:?}", op.id);
+                    anyhow::bail!("Flooding op already exists: op={:?}", op.id);
                 }
                 (state, Some(FloodingFx::StoreOp(op)))
             }
@@ -71,20 +72,9 @@ mod tests {
         routing::flooding::FloodingState,
     };
 
-    use super::*;
+    use crate::util::basic_op;
 
-    fn make_op(id: u32) -> Operation {
-        Operation {
-            id: OpId::from(id),
-            header: Header {
-                author: NodeId::from(1),
-                payload_size: Size::from(100u64),
-            },
-            body: Body::DirectMessage {
-                recipient: NodeId::from(2),
-            },
-        }
-    }
+    use super::*;
 
     fn model() -> FloodingModel {
         FloodingModel {
@@ -97,7 +87,7 @@ mod tests {
     fn store_op_is_idempotent() {
         let m = model();
         let state = FloodingState::default();
-        let op = make_op(1);
+        let op = basic_op(1);
         let (state, _) = m
             .transition(state, FloodingAction::StoreOp { op: op.clone() })
             .unwrap();
@@ -110,7 +100,7 @@ mod tests {
     fn trigger_broadcast_sends_new_ops() {
         let m = model();
         let state = FloodingState::default();
-        let op = make_op(1);
+        let op = basic_op(1);
         let op_id = op.id;
         let (state, _) = m.transition(state, FloodingAction::StoreOp { op }).unwrap();
         let (_, fx) = m
@@ -127,7 +117,7 @@ mod tests {
     fn trigger_broadcast_suppresses_immediate_resend() {
         let m = model();
         let state = FloodingState::default();
-        let op = make_op(1);
+        let op = basic_op(1);
         let op_id = op.id;
         let (state, _) = m.transition(state, FloodingAction::StoreOp { op }).unwrap();
         let (state, _) = m
@@ -144,7 +134,7 @@ mod tests {
     fn trigger_broadcast_resends_after_interval() {
         let m = model();
         let state = FloodingState::default();
-        let op = make_op(1);
+        let op = basic_op(1);
         let op_id = op.id;
         let (mut state, _) = m.transition(state, FloodingAction::StoreOp { op }).unwrap();
         let (mut state, _) = m
@@ -167,7 +157,7 @@ mod tests {
     fn receive_op_is_stored() {
         let m = model();
         let state = FloodingState::default();
-        let op = make_op(42);
+        let op = basic_op(42);
         let op_id = op.id;
         let (state, fx) = m
             .transition(

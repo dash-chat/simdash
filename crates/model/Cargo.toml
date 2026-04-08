@@ -11,3 +11,4 @@ simdash-state = { path = "../state" }
 
 anyhow = { workspace = true }
 polestar = { workspace = true }
+tracing = { workspace = true }

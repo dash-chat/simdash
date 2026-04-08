@@ -1,5 +1,6 @@
 use polestar::util::update_replace;
 use simdash_action::{dash::DashAction, node::NodeAction, routing::flooding::FloodingAction};
+use simdash_ids::Ticks;
 
 use crate::{
     dash::DashModel,
@@ -7,11 +8,27 @@ use crate::{
 };
 
 pub struct NodeModel {
-    dash: DashModel,
-    routing: RoutingModel,
+    pub dash: DashModel,
+    pub routing: RoutingModel,
+}
+
+pub struct NodeModelConfig {
+    pub broadcast_interval: Ticks,
+}
+
+impl NodeModel {
+    pub fn new(config: NodeModelConfig) -> Self {
+        Self {
+            dash: DashModel,
+            routing: RoutingModel {
+                broadcast_interval: config.broadcast_interval,
+            },
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[must_use]
 pub struct NodeFx {
     pub routing: RoutingFx,
 }
@@ -68,28 +85,13 @@ mod tests {
     use crate::{
         dash::DashModel,
         routing::{RoutingModel, flooding::FloodingFx},
+        util::basic_op,
     };
 
-    fn make_op(id: u32) -> Operation {
-        Operation {
-            id: OpId::from(id),
-            header: Header {
-                author: NodeId::from(1),
-                payload_size: Size::from(100u64),
-            },
-            body: Body::DirectMessage {
-                recipient: NodeId::from(2),
-            },
-        }
-    }
-
     fn model() -> NodeModel {
-        NodeModel {
-            dash: DashModel,
-            routing: RoutingModel {
-                broadcast_interval: 3.into(),
-            },
-        }
+        NodeModel::new(NodeModelConfig {
+            broadcast_interval: 3.into(),
+        })
     }
 
     /// DashAction::StoreOp should populate both dash.op_store and routing.ops.
@@ -97,7 +99,7 @@ mod tests {
     fn store_op_syncs_to_routing() {
         let m = model();
         let state = NodeState::default();
-        let op = make_op(1);
+        let op = basic_op(1);
         let op_id = op.id;
         let (state, _) = m
             .transition(state, NodeAction::Dash(DashAction::StoreOp(op)))
@@ -124,7 +126,7 @@ mod tests {
     fn trigger_broadcast_after_store_op() {
         let m = model();
         let state = NodeState::default();
-        let op = make_op(1);
+        let op = basic_op(1);
         let op_id = op.id;
         let (state, _) = m
             .transition(state, NodeAction::Dash(DashAction::StoreOp(op)))
@@ -143,7 +145,7 @@ mod tests {
     fn receive_op_stays_in_routing_only() {
         let m = model();
         let state = NodeState::default();
-        let op = make_op(42);
+        let op = basic_op(42);
         let op_id = op.id;
         let (state, fx) = m
             .transition(
