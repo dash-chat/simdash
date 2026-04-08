@@ -12,13 +12,21 @@ pub struct NodeSpec {
     pub number: u32,
 }
 
+/// How many links to create for a rule.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum Count {
+    /// A fixed number of links.
+    Fixed(u32),
+    /// A uniformly random number of links in the range `[min, max]`.
+    Range { min: u32, max: u32 },
+}
+
 /// Specification for links originating from a node group.
 #[derive(Debug, Clone, Deserialize)]
 pub struct LinkSpec {
     pub strategy: String,
-    /// Number of links to create — interpreted as a total when `strategy` is `"total"`,
-    /// or as links per node when `strategy` is `"per_node"`.
-    pub number: u32,
+    pub count: Count,
     pub destination: Destination,
 }
 
@@ -43,6 +51,9 @@ pub enum Rule {
 
 pub type TopologyConfig = Vec<Rule>;
 
+#[cfg(test)]
+mod test_helpers;
+
 /// Generates a network topology graph from a JSON configuration.
 pub struct TopologyGenerator {
     config: TopologyConfig,
@@ -55,6 +66,7 @@ impl TopologyGenerator {
     }
 
     pub fn generate(&self, seed: u64) -> Graph {
+        use rand::Rng;
         use rand::SeedableRng;
         use rand::seq::IndexedRandom;
 
@@ -80,22 +92,45 @@ impl TopologyGenerator {
                     if all_node_ids.len() < 2 {
                         continue;
                     }
-                    let total_links = if link_spec.strategy == "per_node" {
-                        link_spec.number * all_node_ids.len() as u32
-                    } else {
-                        link_spec.number
-                    };
-                    match link_spec.destination {
-                        Destination::Random => {
-                            for _ in 0..total_links {
-                                let from = *all_node_ids.choose(&mut rng).unwrap();
-                                let candidates: Vec<NodeId> = all_node_ids
-                                    .iter()
-                                    .copied()
-                                    .filter(|&id| id != from)
-                                    .collect();
-                                if let Some(&to) = candidates.choose(&mut rng) {
-                                    graph.add_edge(from, to, ());
+                    match link_spec.strategy.as_str() {
+                        "per_node" => match link_spec.destination {
+                            Destination::Random => {
+                                for &node in &all_node_ids {
+                                    let n = match link_spec.count {
+                                        Count::Fixed(n) => n,
+                                        Count::Range { min, max } => rng.random_range(min..=max),
+                                    };
+                                    let candidates: Vec<NodeId> = all_node_ids
+                                        .iter()
+                                        .copied()
+                                        .filter(|&id| id != node)
+                                        .collect();
+                                    for _ in 0..n {
+                                        if let Some(&to) = candidates.choose(&mut rng) {
+                                            graph.add_edge(node, to, ());
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        _ => {
+                            let total_links = match link_spec.count {
+                                Count::Fixed(n) => n,
+                                Count::Range { min, max } => rng.random_range(min..=max),
+                            };
+                            match link_spec.destination {
+                                Destination::Random => {
+                                    for _ in 0..total_links {
+                                        let from = *all_node_ids.choose(&mut rng).unwrap();
+                                        let candidates: Vec<NodeId> = all_node_ids
+                                            .iter()
+                                            .copied()
+                                            .filter(|&id| id != from)
+                                            .collect();
+                                        if let Some(&to) = candidates.choose(&mut rng) {
+                                            graph.add_edge(from, to, ());
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -110,6 +145,7 @@ impl TopologyGenerator {
 
 #[cfg(test)]
 mod tests {
+    use super::test_helpers::{incoming_distribution, outgoing_distribution};
     use super::*;
 
     #[test]
@@ -122,7 +158,7 @@ mod tests {
             {
                 "element": "link",
                 "strategy": "per_node",
-                "number": 1,
+                "count": 1,
                 "destination": "random"
             }
         ]"#;
@@ -144,7 +180,7 @@ mod tests {
             {
                 "element": "link",
                 "strategy": "per_node",
-                "number": 1,
+                "count": 1,
                 "destination": "random"
             }
         ]"#;
@@ -167,5 +203,46 @@ mod tests {
             .map(|e| graph2.graph().edge_endpoints(e).unwrap())
             .collect();
         assert_eq!(edges1, edges2);
+    }
+
+    #[test]
+    fn hundred_nodes_zero_to_four_links_per_node() {
+        let json = r#"[
+            {
+                "element": "node",
+                "number": 100
+            },
+            {
+                "element": "link",
+                "strategy": "per_node",
+                "count": { "min": 0, "max": 4 },
+                "destination": "random"
+            }
+        ]"#;
+
+        let generator = TopologyGenerator::from_json(json).unwrap();
+        let graph = generator.generate(7);
+
+        assert_eq!(graph.graph().node_count(), 100);
+        assert!(graph.graph().edge_count() <= 400);
+
+        // dist[n] = number of nodes with exactly n outgoing edges
+        let out_dist = outgoing_distribution(&graph);
+        assert_eq!(out_dist[0], 24);
+        assert_eq!(out_dist[1], 22);
+        assert_eq!(out_dist[2], 15);
+        assert_eq!(out_dist[3], 16);
+        assert_eq!(out_dist[4], 23);
+
+        let inc_dist = incoming_distribution(&graph);
+        // inc_dist[n] = number of nodes with exactly n incoming edges
+        // (unbounded; any node may receive edges from multiple sources)
+        assert_eq!(inc_dist[&0], 15);
+        assert_eq!(inc_dist[&1], 28);
+        assert_eq!(inc_dist[&2], 27);
+        assert_eq!(inc_dist[&3], 18);
+        assert_eq!(inc_dist[&4], 6);
+        assert_eq!(inc_dist[&5], 4);
+        assert_eq!(inc_dist[&6], 2);
     }
 }
