@@ -1,0 +1,9 @@
+[package]
+name = "dash-chat-top-gen"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+petgraph = "0.8"
+simdash-ids = { path = "../ids" }
+simdash-state = { path = "../state" }
