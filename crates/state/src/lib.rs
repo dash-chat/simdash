@@ -10,6 +10,8 @@ pub use dash::*;
 pub use node::*;
 pub use routing::*;
 
+use simdash_ids::NodeId;
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct State {
     nodes: BTreeMap<NodeId, NodeState>,

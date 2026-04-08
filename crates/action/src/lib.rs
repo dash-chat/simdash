@@ -1,5 +1,6 @@
 #![allow(unused)]
 
+use simdash_ids::NodeId;
 use simdash_state::*;
 
 mod dash;
