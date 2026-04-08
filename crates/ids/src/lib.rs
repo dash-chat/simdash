@@ -11,7 +11,9 @@ pub struct NodeId(u32);
 )]
 pub struct OpId(u32);
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Hash, From, Deref)]
+#[derive(
+    Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, From, Deref,
+)]
 pub struct Size(u64);
 
 /// A number of ticks (a duration).
@@ -23,6 +25,8 @@ pub struct Size(u64);
     Copy,
     PartialEq,
     Eq,
+    PartialOrd,
+    Ord,
     Hash,
     From,
     Deref,
