@@ -23,7 +23,7 @@ pub struct Operation {
     pub body: Body,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub struct DashState {
     pub op_store: BTreeMap<OpId, Operation>,
     pub contacts: BTreeSet<NodeId>,
