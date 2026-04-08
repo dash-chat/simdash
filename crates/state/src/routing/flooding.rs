@@ -1,26 +1,30 @@
+use std::collections::{BTreeMap, BTreeSet};
+
 use simdash_ids::*;
 
 use crate::{ExtractMetadata, dash::Operation};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Hash)]
 pub struct FloodingState {
-    pub ops: Vec<FloodingOp>,
+    pub ops: BTreeMap<OpId, FloodingOp>,
 }
 
 impl FloodingState {
     /// Tick doesn't happen as an independent action. All nodes get ticked at once.
     pub fn tick(&mut self) {
-        self.ops.iter_mut().for_each(|op| op.tick());
+        self.ops.values_mut().for_each(|mut op| {
+            op.tick();
+        });
     }
 }
 
 /// Metadata needed for flooding.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct FloodingMetadata {
     pub size: Size,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct FloodingOp {
     pub id: OpId,
     pub metadata: FloodingMetadata,

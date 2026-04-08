@@ -26,18 +26,17 @@ impl polestar::Machine for FloodingModel {
         action: Self::Action,
     ) -> polestar::TransitionResult<Self> {
         let (state, broadcast_ops) = match action {
-            FloodingAction::StoreOp { op } => {
-                state.ops.push(FloodingOp::new(&op));
-                (state, BTreeSet::new())
-            }
-            FloodingAction::ReceiveOp { from, op } => {
-                state.ops.push(FloodingOp::new(&op));
+            FloodingAction::StoreOp { op } | FloodingAction::ReceiveOp { from: _, op } => {
+                let existing = state.ops.insert(op.id, FloodingOp::new(&op));
+                if existing.is_some() {
+                    anyhow::bail!("Flooding op already exists: {:?}", op.id);
+                }
                 (state, BTreeSet::new())
             }
             FloodingAction::TriggerBroadcast => {
                 let broadcasted = state
                     .ops
-                    .iter_mut()
+                    .values_mut()
                     .filter(|op| {
                         op.since_last_send
                             .map(|t| t <= self.broadcast_interval)
