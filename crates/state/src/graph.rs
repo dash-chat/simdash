@@ -11,7 +11,7 @@ pub struct Graph<R = crate::routing::RoutingState, E = ()> {
     graph: PetGraph<NodeState<R>, E>,
     node_indices: HashMap<NodeId, NodeIndex>,
     #[serde(skip, default)]
-    groups: BTreeMap<String, Vec<NodeId>>,
+    subnets: BTreeMap<String, Vec<NodeId>>,
 }
 
 impl<R, E> Default for Graph<R, E> {
@@ -19,7 +19,7 @@ impl<R, E> Default for Graph<R, E> {
         Self {
             graph: PetGraph::new(),
             node_indices: HashMap::new(),
-            groups: BTreeMap::new(),
+            subnets: BTreeMap::new(),
         }
     }
 }
@@ -96,13 +96,13 @@ impl<R: Clone, E> Graph<R, E> {
         true
     }
 
-    pub fn set_group(&mut self, name: impl Into<String>, mut node_ids: Vec<NodeId>) {
+    pub fn set_subnet(&mut self, name: impl Into<String>, mut node_ids: Vec<NodeId>) {
         node_ids.sort_unstable();
         node_ids.dedup();
-        self.groups.insert(name.into(), node_ids);
+        self.subnets.insert(name.into(), node_ids);
     }
 
-    pub fn group_node_ids(&self, name: &str) -> Option<&[NodeId]> {
-        self.groups.get(name).map(Vec::as_slice)
+    pub fn subnet_node_ids(&self, name: &str) -> Option<&[NodeId]> {
+        self.subnets.get(name).map(Vec::as_slice)
     }
 }
