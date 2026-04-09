@@ -5,16 +5,27 @@
   "net-top": [
     {
       "element": "node",
-      "number": 100
+      "subnet": "mesh",
+      "number": 100,
+      "rules": [
+        {
+          "element": "link",
+          "strategy": "per_node",
+          "count": {
+            "min": 0,
+            "max": 4
+          },
+          "destination": {
+            "selection": "random",
+            "subnet": "mesh"
+          }
+        }
+      ]
     },
     {
-      "element": "link",
-      "strategy": "per_node",
-      "count": {
-        "min": 0,
-        "max": 4
-      },
-      "destination": "random"
+      "element": "node",
+      "subnet": "cloud",
+      "number": 1
     }
   ],
   "dash-chat-top": {
