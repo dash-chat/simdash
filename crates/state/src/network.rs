@@ -18,6 +18,9 @@ impl NetworkState {
     }
 
     pub fn load_postcard(path: impl AsRef<Path>) -> Self {
+        let path = path.as_ref();
+        let path = path.canonicalize().unwrap();
+        println!("Loading network state from {}", path.display());
         let bytes = std::fs::read(path).unwrap();
         let graph = postcard::from_bytes(&bytes).unwrap();
         Self { graph }

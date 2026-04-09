@@ -1,0 +1,15 @@
+[package]
+name = "simdash-scenario"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = { workspace = true }
+derive_more = { workspace = true }
+polestar = { workspace = true }
+
+simdash-action = { path = "../action" }
+simdash-behavior = { path = "../behavior" }
+simdash-ids = { path = "../ids" }
+simdash-model = { path = "../model" }
+simdash-state = { path = "../state" }

@@ -22,6 +22,7 @@ pub struct Size(u64);
     Deserialize,
     Debug,
     Clone,
+    Default,
     Copy,
     PartialEq,
     Eq,
