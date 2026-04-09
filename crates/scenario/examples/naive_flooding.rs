@@ -19,7 +19,7 @@ fn holding_count(state: &NetworkState, ops: impl IntoIterator<Item = OpId>) -> u
 }
 
 fn main() {
-    let initial_state = NetworkState::load_postcard("fixtures/topology.postcard");
+    let initial_state = NetworkState::load_postcard("gen/topology.postcard");
     let model = NetworkModel::new(NodeModelConfig {
         broadcast_interval: 3.into(),
     });
@@ -44,17 +44,27 @@ fn main() {
 
     let mut prev_count = 0;
     let mut stable_steps = 0;
-    for _ in 0..1000 {
+    let start_time = std::time::Instant::now();
+
+    loop {
         scenario.advance().unwrap();
         let state = scenario.state().unwrap();
         let count = holding_count(&state, ops.clone().map(|op| op.id));
         if prev_count != count {
             prev_count = count;
-            println!("step {:<5}: count={:<3}", scenario.history().len(), count);
+            println!(
+                "step {:<5} | count={:<3} | time={:.2?}",
+                scenario.history().len(),
+                count,
+                start_time.elapsed()
+            );
         } else {
             stable_steps += 1;
-            if stable_steps > 500 {
-                println!("count is stable");
+            if stable_steps > 10000 {
+                println!(
+                    "count is stable. avg time per step: {:.2?}",
+                    start_time.elapsed() / scenario.history().len() as u32
+                );
                 break;
             }
         }

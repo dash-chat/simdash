@@ -81,6 +81,11 @@ async fn main() {
         graph
     };
 
+    {
+        let bytes = postcard::to_stdvec(&graph).unwrap();
+        fs::write("gen/topology.postcard", bytes).unwrap();
+    }
+
     println!("Using behavior: {behavior}");
     let sim = Simulation::new(graph, behavior, broadcast_interval)
         .unwrap_or_else(|e| panic!("Failed to create simulation: {e}"));
