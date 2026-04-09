@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getState, stepForward, stepBack, reset } from '$lib/api';
+	import { getState, stepForward, stepBack, reset, setBehavior } from '$lib/api';
 	import { computeMetrics } from '$lib/metrics';
 	import type { SimSnapshot, NodeInfo, OpTraceData } from '$lib/types';
 	import Controls from '$lib/components/Controls.svelte';
@@ -32,11 +32,9 @@
 		const holders = new Set(
 			snapshot.nodes.filter((n) => n.ops.some((op) => op.id === selectedOpId)).map((n) => n.id)
 		);
-		const prevHolderSet = new Set(
-			prevSnapshot
-				? prevSnapshot.nodes.filter((n) => n.ops.some((op) => op.id === selectedOpId)).map((n) => n.id)
-				: []
-		);
+		const prevHolderSet = prevSnapshot
+			? new Set(prevSnapshot.nodes.filter((n) => n.ops.some((op) => op.id === selectedOpId)).map((n) => n.id))
+			: holders;
 		const newHolders = new Set([...holders].filter((id) => !prevHolderSet.has(id)));
 		return { holders, newHolders, prevHolders: prevHolderSet };
 	});
@@ -83,6 +81,20 @@
 		loading = false;
 	}
 
+	async function handleBehaviorChange(behavior: string) {
+		loading = true;
+		try {
+			prevSnapshot = null;
+			snapshot = await setBehavior(behavior);
+			selectedNodeId = null;
+			selectedOpId = null;
+			selectedGroupId = null;
+		} catch (e) {
+			error = `${e}`;
+		}
+		loading = false;
+	}
+
 	function toggleOp(id: number | null) {
 		selectedOpId = selectedOpId === id ? null : id;
 	}
@@ -106,9 +118,12 @@
 				<Controls
 					step={snapshot.step}
 					{loading}
+					behavior={snapshot.behavior}
+					availableBehaviors={snapshot.available_behaviors}
 					onforward={handleForward}
 					onback={handleBack}
 					onreset={handleReset}
+					onbehaviorchange={handleBehaviorChange}
 				/>
 			</div>
 		</div>

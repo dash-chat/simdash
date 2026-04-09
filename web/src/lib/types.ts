@@ -1,5 +1,7 @@
 export interface SimSnapshot {
 	step: number;
+	behavior: string;
+	available_behaviors: string[];
 	graph: GraphStructure;
 	nodes: NodeInfo[];
 }

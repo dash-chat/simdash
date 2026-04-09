@@ -11,3 +11,13 @@ impl Behavior<RoutingModel> for NaiveFloodingBehavior {
         Ok(Some(FloodingAction::TriggerBroadcast.into()))
     }
 }
+
+/// A no-op routing behavior that never triggers any routing actions.
+/// Useful as a baseline to observe the initial state without propagation.
+pub struct NoOpRoutingBehavior;
+
+impl Behavior<RoutingModel> for NoOpRoutingBehavior {
+    fn next(&mut self, _: &RoutingState) -> anyhow::Result<Option<RoutingAction>> {
+        Ok(None)
+    }
+}

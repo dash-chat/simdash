@@ -21,6 +21,7 @@
             pkgs.nodejs_22
             pkgs.pnpm
             pkgs.just
+            pkgs.mprocs
           ];
         };
       }
