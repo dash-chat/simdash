@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
 use petgraph::graph::{Graph as PetGraph, NodeIndex};
 use polestar::ext::MapExt;
@@ -10,17 +10,17 @@ use crate::node::NodeState;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Graph<R = crate::routing::RoutingState, E = ()> {
     graph: PetGraph<(), E>,
-    nodes: BTreeMap<NodeId, NodeState<R>>,
+    nodes: HashMap<NodeId, NodeState<R>>,
     #[serde(skip, default)]
-    subnets: BTreeMap<String, Vec<NodeId>>,
+    subnets: HashMap<String, Vec<NodeId>>,
 }
 
 impl<R, E> Default for Graph<R, E> {
     fn default() -> Self {
         Self {
             graph: PetGraph::new(),
-            nodes: BTreeMap::new(),
-            subnets: BTreeMap::new(),
+            nodes: HashMap::new(),
+            subnets: HashMap::new(),
         }
     }
 }
