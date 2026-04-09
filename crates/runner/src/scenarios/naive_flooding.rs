@@ -39,7 +39,6 @@ pub fn naive_flooding(
     let model = NetworkModel::new(NodeModelConfig {
         broadcast_interval: broadcast_interval.into(),
     });
-    let behavior =
-        RoundRobinNodeScheduler::new(BasicRoutingBehavior::new(NaiveFloodingBehavior, false));
+    let behavior = RoundRobinNodeScheduler::new(BasicRoutingBehavior::new(NaiveFloodingBehavior));
     Scenario::initial(model, initial_state, behavior)
 }

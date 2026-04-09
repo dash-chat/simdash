@@ -7,3 +7,4 @@ config.local.json
 
 flamegraph.svg
 perf.data
+perf.data.old

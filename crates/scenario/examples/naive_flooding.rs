@@ -39,8 +39,7 @@ fn main() {
     // store ops on nodes
     let initial_state = model.apply_actions_(initial_state, stores).unwrap();
 
-    let behavior =
-        RoundRobinNodeScheduler::new(BasicRoutingBehavior::new(NaiveFloodingBehavior, true));
+    let behavior = RoundRobinNodeScheduler::new(BasicRoutingBehavior::new(NaiveFloodingBehavior));
     let mut scenario = Scenario::initial(model, initial_state, behavior);
 
     let mut prev_count = 0;
@@ -55,7 +54,7 @@ fn main() {
         let state = scenario.state().unwrap();
         let count = holding_count(&state, ops.clone().map(|op| op.id));
         let num_actions = scenario.history().len();
-        if dbg!(num_actions) % 1_000 == 0 {
+        if num_actions % 10_000 == 0 {
             println!("...");
         }
         if prev_count != count {

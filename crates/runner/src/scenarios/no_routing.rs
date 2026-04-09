@@ -15,7 +15,6 @@ pub fn no_routing(
     let model = NetworkModel::new(NodeModelConfig {
         broadcast_interval: broadcast_interval.into(),
     });
-    let behavior =
-        RoundRobinNodeScheduler::new(BasicRoutingBehavior::new(NoOpRoutingBehavior, false));
+    let behavior = RoundRobinNodeScheduler::new(BasicRoutingBehavior::new(NoOpRoutingBehavior));
     Scenario::initial(model, initial_state, behavior)
 }
