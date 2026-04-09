@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { getState, stepForward, stepBack, reset } from '$lib/api';
 	import { computeMetrics } from '$lib/metrics';
-	import type { SimSnapshot, StepDelta, NodeInfo, OpTraceData, RoutingOpInfo } from '$lib/types';
+	import type { SimSnapshot, NodeInfo, OpTraceData } from '$lib/types';
 	import Controls from '$lib/components/Controls.svelte';
 	import GraphView from '$lib/components/GraphView.svelte';
 	import MetricsPanel from '$lib/components/MetricsPanel.svelte';
@@ -41,39 +41,6 @@
 		return { holders, newHolders, prevHolders: prevHolderSet };
 	});
 
-	function applyDelta(current: SimSnapshot, delta: StepDelta): SimSnapshot {
-		const diffMap = new Map(delta.node_diffs.map((d) => [d.node_id, d]));
-		const nodes = current.nodes.map((node) => {
-			const diff = diffMap.get(node.id);
-			if (!diff) {
-				// No new ops — just tick routing timers
-				return {
-					...node,
-					routing_ops: tickRoutingOps(node.routing_ops)
-				};
-			}
-			// Merge new ops and add routing entries for them
-			const newRoutingOps: RoutingOpInfo[] = diff.new_ops.map((op) => ({
-				id: op.id,
-				size: op.payload_size,
-				since_last_send: null
-			}));
-			return {
-				...node,
-				ops: [...node.ops, ...diff.new_ops],
-				routing_ops: [...tickRoutingOps(node.routing_ops), ...newRoutingOps]
-			};
-		});
-		return { ...current, step: delta.step, nodes };
-	}
-
-	function tickRoutingOps(ops: RoutingOpInfo[]): RoutingOpInfo[] {
-		return ops.map((op) => ({
-			...op,
-			since_last_send: op.since_last_send !== null ? op.since_last_send + 1 : null
-		}));
-	}
-
 	onMount(async () => {
 		try {
 			snapshot = await getState();
@@ -85,9 +52,8 @@
 	async function handleForward() {
 		loading = true;
 		try {
-			const delta = await stepForward();
 			prevSnapshot = snapshot;
-			snapshot = applyDelta(snapshot!, delta);
+			snapshot = await stepForward();
 		} catch (e) {
 			error = `${e}`;
 		}

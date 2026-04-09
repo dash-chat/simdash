@@ -1,63 +1,64 @@
 mod naive_flooding;
 
+use polestar::Machine;
 use simdash_action::network::NetworkAction;
-use simdash_behavior::{
-    network::RoundRobinNodeScheduler, node::BasicRoutingBehavior, routing::NaiveFloodingBehavior,
-};
+use simdash_behavior::Behavior;
 use simdash_model::network::NetworkModel;
-use simdash_scenario::Scenario;
 use simdash_state::network::NetworkState;
 
-type NaiveFloodingScenario =
-    Scenario<NetworkModel, RoundRobinNodeScheduler<BasicRoutingBehavior<NaiveFloodingBehavior>>>;
+use self::naive_flooding::NaiveFloodingBehaviorType;
 
 /// Wraps the concrete scenario types so we can select them at runtime.
-pub enum AnyScenario {
-    NaiveFlooding(NaiveFloodingScenario),
+pub struct AnyScenario {
+    model: NetworkModel,
+    state: NetworkState,
+    behavior: NaiveFloodingBehaviorType,
 }
 
 impl AnyScenario {
     pub fn from_config(
-        behavior: &str,
+        _behavior: &str,
         initial_state: NetworkState,
         broadcast_interval: u32,
     ) -> anyhow::Result<Self> {
-        match behavior {
-            "naive-flooding" => Ok(Self::NaiveFlooding(naive_flooding::naive_flooding(
-                initial_state,
-                broadcast_interval,
-            ))),
-            other => anyhow::bail!("Unknown behavior: {other}"),
-        }
+        let (model, behavior, state) =
+            naive_flooding::naive_flooding(initial_state, broadcast_interval);
+        Ok(Self {
+            model,
+            state,
+            behavior,
+        })
     }
 
-    /// Advance one "round": keep calling advance() until a Tick action is applied.
+    /// Advance one "round" in two phases:
+    /// 1. Collect all node actions from the behavior (without applying)
+    /// 2. Apply them all, then apply the Tick
+    ///
+    /// This ensures ops received mid-round aren't re-broadcast in the same round.
     pub fn step(&mut self) -> anyhow::Result<()> {
-        match self {
-            Self::NaiveFlooding(s) => step_until_tick(s),
+        // Phase 1: collect all node actions for this round
+        let mut actions = Vec::new();
+        loop {
+            let action = self.behavior.next(&self.state)?;
+            match action {
+                Some(NetworkAction::Tick) => break,
+                Some(a) => actions.push(a),
+                None => break,
+            }
         }
+
+        // Phase 2: apply all node actions, then tick
+        for action in actions {
+            self.state = self.model.transition_(self.state.clone(), action)?;
+        }
+        self.state = self
+            .model
+            .transition_(self.state.clone(), NetworkAction::Tick)?;
+
+        Ok(())
     }
 
     pub fn state(&self) -> &NetworkState {
-        match self {
-            Self::NaiveFlooding(s) => s.state().expect("scenario should have state"),
-        }
+        &self.state
     }
-}
-
-fn step_until_tick(scenario: &mut NaiveFloodingScenario) -> anyhow::Result<()> {
-    loop {
-        let prev_len = scenario.history().len();
-        scenario.advance()?;
-        let history = scenario.history();
-        if history.len() > prev_len {
-            if matches!(history.last(), Some(NetworkAction::Tick)) {
-                break;
-            }
-        } else {
-            // No action produced, behavior exhausted
-            break;
-        }
-    }
-    Ok(())
 }

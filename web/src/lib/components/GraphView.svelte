@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import cytoscape from 'cytoscape';
-	import type { SimSnapshot, OpTraceData } from '$lib/types';
+	import type { SimSnapshot, OpTraceData, OpInfo, NodeInfo } from '$lib/types';
 
 	interface Props {
 		snapshot: SimSnapshot;
@@ -17,15 +17,24 @@
 	let cy: cytoscape.Core | null = null;
 	let layoutDone = false;
 
-	// Count of unique ops across the whole network (for coloring)
-	function uniqueOpCount(snapshot: SimSnapshot): number {
-		const ids = new Set<number>();
+	// Collect all unique ops across the network
+	function allUniqueOps(snapshot: SimSnapshot): OpInfo[] {
+		const seen = new Map<number, OpInfo>();
 		for (const node of snapshot.nodes) {
 			for (const op of node.ops) {
-				ids.add(op.id);
+				if (!seen.has(op.id)) seen.set(op.id, op);
 			}
 		}
-		return ids.size;
+		return [...seen.values()];
+	}
+
+	// Check if an op is "meant for" a given node
+	function isOpMeantFor(op: OpInfo, node: NodeInfo): boolean {
+		if (op.body.type === 'GroupMessage') {
+			return node.groups.includes(op.body.group_id);
+		} else {
+			return node.id === op.body.recipient;
+		}
 	}
 
 	function snapshotToElements(snapshot: SimSnapshot): cytoscape.ElementDefinition[] {
@@ -38,9 +47,7 @@
 		return [...nodes, ...edges];
 	}
 
-	function opSaturation(nodeOpCount: number, totalOps: number): string {
-		if (totalOps === 0) return '#555';
-		const ratio = nodeOpCount / totalOps;
+	function saturationColor(ratio: number): string {
 		// Interpolate from red (0) to green (1)
 		const r = Math.round(220 * (1 - ratio));
 		const g = Math.round(220 * ratio);
@@ -49,7 +56,7 @@
 
 	function updateNodeStyles(snapshot: SimSnapshot) {
 		if (!cy) return;
-		const total = uniqueOpCount(snapshot);
+		const allOps = allUniqueOps(snapshot);
 		const nodeMap = new Map(snapshot.nodes.map((n) => [n.id, n]));
 		const hasHighlight = highlightedNodeIds.size > 0;
 		const tracing = opTrace !== null;
@@ -57,7 +64,6 @@
 		cy.nodes().forEach((ele) => {
 			const id = parseInt(ele.id().slice(1));
 			const node = nodeMap.get(id);
-			const opCount = node?.ops.length ?? 0;
 
 			// Background color
 			if (tracing) {
@@ -68,8 +74,14 @@
 				} else {
 					ele.style('background-color', '#555');
 				}
+			} else if (node) {
+				const meantForNode = allOps.filter((op) => isOpMeantFor(op, node));
+				const heldIds = new Set(node.ops.map((op) => op.id));
+				const heldCount = meantForNode.filter((op) => heldIds.has(op.id)).length;
+				const ratio = meantForNode.length === 0 ? 1 : heldCount / meantForNode.length;
+				ele.style('background-color', saturationColor(ratio));
 			} else {
-				ele.style('background-color', opSaturation(opCount, total));
+				ele.style('background-color', '#555');
 			}
 
 			// Border
