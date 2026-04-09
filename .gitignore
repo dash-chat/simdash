@@ -3,3 +3,7 @@ target/
 
 topology.dot
 mprocs.log
+config.local.json
+
+flamegraph.svg
+perf.data

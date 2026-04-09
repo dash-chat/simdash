@@ -39,7 +39,8 @@ fn main() {
     // store ops on nodes
     let initial_state = model.apply_actions_(initial_state, stores).unwrap();
 
-    let behavior = RoundRobinNodeScheduler::new(BasicRoutingBehavior::new(NaiveFloodingBehavior));
+    let behavior =
+        RoundRobinNodeScheduler::new(BasicRoutingBehavior::new(NaiveFloodingBehavior, true));
     let mut scenario = Scenario::initial(model, initial_state, behavior);
 
     let mut prev_count = 0;
@@ -50,20 +51,25 @@ fn main() {
         scenario.advance().unwrap();
         let state = scenario.state().unwrap();
         let count = holding_count(&state, ops.clone().map(|op| op.id));
+        let num_actions = scenario.history().len();
+        if num_actions % 10000 == 0 {
+            println!("...");
+        }
         if prev_count != count {
             prev_count = count;
             println!(
                 "step {:<5} | count={:<3} | time={:.2?}",
-                scenario.history().len(),
+                num_actions,
                 count,
                 start_time.elapsed()
             );
         } else {
             stable_steps += 1;
-            if stable_steps > 10000 {
+            if stable_steps > state.graph.graph().node_count() {
                 println!(
-                    "count is stable. avg time per step: {:.2?}",
-                    start_time.elapsed() / scenario.history().len() as u32
+                    "count is stable in {} steps. avg time per step: {:.2?}",
+                    num_actions,
+                    start_time.elapsed() / num_actions as u32
                 );
                 break;
             }

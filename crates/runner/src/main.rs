@@ -27,6 +27,9 @@ struct Cli {
     /// Port to listen on
     #[arg(short, long, default_value = "3000")]
     port: u16,
+
+    #[arg(long = "no-serve")]
+    no_serve: bool,
 }
 
 #[tokio::main]
@@ -82,8 +85,14 @@ async fn main() {
     };
 
     {
+        std::fs::create_dir_all("gen").unwrap();
         let bytes = postcard::to_stdvec(&graph).unwrap();
         fs::write("gen/topology.postcard", bytes).unwrap();
+        println!("Serialized graph to gen/topology.postcard");
+    }
+
+    if cli.no_serve {
+        return;
     }
 
     println!("Using behavior: {behavior}");
