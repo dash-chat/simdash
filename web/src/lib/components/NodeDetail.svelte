@@ -4,14 +4,20 @@
 	interface Props {
 		node: NodeInfo;
 		selectedGroupId: number | null;
+		selectedOpId: number | null;
 		onselectgroup: (groupId: number | null) => void;
+		onselectop: (opId: number | null) => void;
 		onclose: () => void;
 	}
 
-	let { node, selectedGroupId, onselectgroup, onclose }: Props = $props();
+	let { node, selectedGroupId, selectedOpId, onselectgroup, onselectop, onclose }: Props = $props();
 
 	function toggleGroup(id: number) {
 		onselectgroup(selectedGroupId === id ? null : id);
+	}
+
+	function toggleOp(id: number) {
+		onselectop(selectedOpId === id ? null : id);
 	}
 </script>
 
@@ -51,7 +57,11 @@
 		<div class="ops-list">
 			{#each node.ops as op}
 				<div class="op">
-					<span class="op-id">#{op.id}</span>
+					<button
+						class="op-link"
+						class:active={selectedOpId === op.id}
+						onclick={() => toggleOp(op.id)}
+					>#{op.id}</button>
 					<span class="op-author">from {op.author}</span>
 					<span class="op-type">
 						{#if op.body.type === 'DirectMessage'}
@@ -124,9 +134,25 @@
 		padding: 2px 0;
 		border-bottom: 1px solid #2a2a3a;
 	}
-	.op-id {
+	.op-link {
+		background: none;
+		border: none;
 		color: #8ecae6;
+		cursor: pointer;
+		padding: 0;
+		font-size: inherit;
+		text-decoration: underline;
+		text-decoration-style: dotted;
 		min-width: 30px;
+		text-align: left;
+	}
+	.op-link:hover {
+		color: #b8e0f8;
+	}
+	.op-link.active {
+		color: #40e0a0;
+		text-decoration-style: solid;
+		font-weight: bold;
 	}
 	.op-author {
 		color: #999;

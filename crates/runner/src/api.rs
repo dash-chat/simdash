@@ -1,3 +1,4 @@
+use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
 use axum::{
@@ -20,10 +21,11 @@ pub async fn get_state(State(sim): State<AppState>) -> Json<SimSnapshot> {
     Json(build_snapshot(&sim))
 }
 
-pub async fn step_forward(State(sim): State<AppState>) -> Result<Json<SimSnapshot>, AppError> {
+pub async fn step_forward(State(sim): State<AppState>) -> Result<Json<StepDelta>, AppError> {
     let mut sim = sim.lock().await;
+    let prev_ops = capture_node_ops(sim.current_state());
     sim.step_forward()?;
-    Ok(Json(build_snapshot(&sim)))
+    Ok(Json(build_delta(&sim, &prev_ops)))
 }
 
 pub async fn step_back(State(sim): State<AppState>) -> Result<Json<SimSnapshot>, AppError> {
@@ -37,6 +39,8 @@ pub async fn reset(State(sim): State<AppState>) -> Json<SimSnapshot> {
     sim.reset();
     Json(build_snapshot(&sim))
 }
+
+// --- Snapshot building (full state) ---
 
 fn build_snapshot(sim: &Simulation) -> SimSnapshot {
     let state = sim.current_state();
@@ -96,23 +100,7 @@ fn build_node_infos(state: &NetworkState) -> Vec<NodeInfo> {
                 .dash
                 .op_store
                 .values()
-                .map(|op| OpInfo {
-                    id: *op.id,
-                    author: *op.header.author,
-                    payload_size: *op.header.payload_size,
-                    body: match &op.body {
-                        simdash_state::chat::Body::GroupMessage { group_id } => {
-                            OpBody::GroupMessage {
-                                group_id: *group_id,
-                            }
-                        }
-                        simdash_state::chat::Body::DirectMessage { recipient } => {
-                            OpBody::DirectMessage {
-                                recipient: **recipient,
-                            }
-                        }
-                    },
-                })
+                .map(|op| build_op_info(op))
                 .collect();
 
             let routing_ops: Vec<RoutingOpInfo> = node_state
@@ -139,6 +127,71 @@ fn build_node_infos(state: &NetworkState) -> Vec<NodeInfo> {
         .collect()
 }
 
+fn build_op_info(op: &simdash_state::chat::Operation) -> OpInfo {
+    OpInfo {
+        id: *op.id,
+        author: *op.header.author,
+        payload_size: *op.header.payload_size,
+        body: match &op.body {
+            simdash_state::chat::Body::GroupMessage { group_id } => OpBody::GroupMessage {
+                group_id: *group_id,
+            },
+            simdash_state::chat::Body::DirectMessage { recipient } => OpBody::DirectMessage {
+                recipient: **recipient,
+            },
+        },
+    }
+}
+
+// --- Delta building ---
+
+fn capture_node_ops(state: &NetworkState) -> BTreeMap<u32, BTreeSet<u32>> {
+    let mut result = BTreeMap::new();
+    for node_id in state.graph.node_ids() {
+        if let Some(node_state) = state.graph.node_state(node_id) {
+            let op_ids: BTreeSet<u32> = node_state.dash.op_store.keys().map(|id| **id).collect();
+            result.insert(*node_id, op_ids);
+        }
+    }
+    result
+}
+
+fn build_delta(sim: &Simulation, prev_ops: &BTreeMap<u32, BTreeSet<u32>>) -> StepDelta {
+    let state = sim.current_state();
+    let mut node_diffs = Vec::new();
+
+    let mut node_ids: Vec<NodeId> = state.graph.node_ids().collect();
+    node_ids.sort();
+
+    for node_id in node_ids {
+        let Some(node_state) = state.graph.node_state(node_id) else {
+            continue;
+        };
+        let empty = BTreeSet::new();
+        let prev = prev_ops.get(&*node_id).unwrap_or(&empty);
+
+        let new_ops: Vec<OpInfo> = node_state
+            .dash
+            .op_store
+            .values()
+            .filter(|op| !prev.contains(&*op.id))
+            .map(|op| build_op_info(op))
+            .collect();
+
+        if !new_ops.is_empty() {
+            node_diffs.push(NodeDelta {
+                node_id: *node_id,
+                new_ops,
+            });
+        }
+    }
+
+    StepDelta {
+        step: sim.current_step(),
+        node_diffs,
+    }
+}
+
 // --- Response types ---
 
 #[derive(Serialize)]
@@ -146,6 +199,18 @@ pub struct SimSnapshot {
     pub step: usize,
     pub graph: GraphStructure,
     pub nodes: Vec<NodeInfo>,
+}
+
+#[derive(Serialize)]
+pub struct StepDelta {
+    pub step: usize,
+    pub node_diffs: Vec<NodeDelta>,
+}
+
+#[derive(Serialize)]
+pub struct NodeDelta {
+    pub node_id: u32,
+    pub new_ops: Vec<OpInfo>,
 }
 
 #[derive(Serialize)]
@@ -175,7 +240,7 @@ pub struct NodeInfo {
     pub neighbors: Vec<u32>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct OpInfo {
     pub id: u32,
     pub author: u32,
@@ -183,7 +248,7 @@ pub struct OpInfo {
     pub body: OpBody,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 #[serde(tag = "type")]
 pub enum OpBody {
     GroupMessage { group_id: u64 },

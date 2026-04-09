@@ -1,16 +1,17 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import cytoscape from 'cytoscape';
-	import type { SimSnapshot } from '$lib/types';
+	import type { SimSnapshot, OpTraceData } from '$lib/types';
 
 	interface Props {
 		snapshot: SimSnapshot;
 		selectedNodeId: number | null;
 		highlightedNodeIds: Set<number>;
+		opTrace: OpTraceData | null;
 		onselect: (nodeId: number | null) => void;
 	}
 
-	let { snapshot, selectedNodeId, highlightedNodeIds, onselect }: Props = $props();
+	let { snapshot, selectedNodeId, highlightedNodeIds, opTrace, onselect }: Props = $props();
 
 	let container: HTMLDivElement;
 	let cy: cytoscape.Core | null = null;
@@ -51,30 +52,87 @@
 		const total = uniqueOpCount(snapshot);
 		const nodeMap = new Map(snapshot.nodes.map((n) => [n.id, n]));
 		const hasHighlight = highlightedNodeIds.size > 0;
+		const tracing = opTrace !== null;
 
 		cy.nodes().forEach((ele) => {
 			const id = parseInt(ele.id().slice(1));
 			const node = nodeMap.get(id);
 			const opCount = node?.ops.length ?? 0;
-			const color = opSaturation(opCount, total);
 
-			ele.style('background-color', color);
+			// Background color
+			if (tracing) {
+				if (opTrace!.newHolders.has(id)) {
+					ele.style('background-color', '#40e0a0');
+				} else if (opTrace!.holders.has(id)) {
+					ele.style('background-color', '#4a90d9');
+				} else {
+					ele.style('background-color', '#555');
+				}
+			} else {
+				ele.style('background-color', opSaturation(opCount, total));
+			}
 
+			// Border
 			if (id === selectedNodeId) {
 				ele.style('border-width', 3);
 				ele.style('border-color', '#fff');
 			} else if (hasHighlight && highlightedNodeIds.has(id)) {
 				ele.style('border-width', 3);
 				ele.style('border-color', '#f0c040');
+			} else if (tracing && opTrace!.newHolders.has(id)) {
+				ele.style('border-width', 3);
+				ele.style('border-color', '#40e0a0');
 			} else {
 				ele.style('border-width', 0);
 			}
 
-			ele.style('opacity', hasHighlight && !highlightedNodeIds.has(id) && id !== selectedNodeId ? 0.25 : 1);
+			// Opacity
+			if (tracing) {
+				ele.style('opacity', opTrace!.holders.has(id) || id === selectedNodeId ? 1 : 0.2);
+			} else if (hasHighlight) {
+				ele.style('opacity', highlightedNodeIds.has(id) || id === selectedNodeId ? 1 : 0.25);
+			} else {
+				ele.style('opacity', 1);
+			}
 		});
 
 		cy.edges().forEach((ele) => {
-			ele.style('opacity', hasHighlight ? 0.15 : 1);
+			if (tracing) {
+				const src = parseInt(ele.source().id().slice(1));
+				const tgt = parseInt(ele.target().id().slice(1));
+				// Highlight edges where a prev holder transmitted to a new holder
+				const isTransmission =
+					(opTrace!.prevHolders.has(src) && opTrace!.newHolders.has(tgt)) ||
+					(opTrace!.prevHolders.has(tgt) && opTrace!.newHolders.has(src));
+				const isBetweenHolders = opTrace!.holders.has(src) && opTrace!.holders.has(tgt);
+
+				if (isTransmission) {
+					ele.style('line-color', '#40e0a0');
+					ele.style('target-arrow-color', '#40e0a0');
+					ele.style('width', 2.5);
+					ele.style('opacity', 1);
+				} else if (isBetweenHolders) {
+					ele.style('line-color', '#4a90d9');
+					ele.style('target-arrow-color', '#4a90d9');
+					ele.style('width', 1.5);
+					ele.style('opacity', 0.6);
+				} else {
+					ele.style('line-color', '#444');
+					ele.style('target-arrow-color', '#444');
+					ele.style('width', 1);
+					ele.style('opacity', 0.1);
+				}
+			} else if (hasHighlight) {
+				ele.style('line-color', '#444');
+				ele.style('target-arrow-color', '#444');
+				ele.style('width', 1);
+				ele.style('opacity', 0.15);
+			} else {
+				ele.style('line-color', '#444');
+				ele.style('target-arrow-color', '#444');
+				ele.style('width', 1);
+				ele.style('opacity', 1);
+			}
 		});
 	}
 
@@ -136,6 +194,7 @@
 		snapshot;
 		selectedNodeId;
 		highlightedNodeIds;
+		opTrace;
 		if (cy && layoutDone) {
 			updateNodeStyles(snapshot);
 		}

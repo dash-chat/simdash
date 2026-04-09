@@ -2,16 +2,18 @@
 	import { onMount } from 'svelte';
 	import { getState, stepForward, stepBack, reset } from '$lib/api';
 	import { computeMetrics } from '$lib/metrics';
-	import type { SimSnapshot, NodeInfo } from '$lib/types';
+	import type { SimSnapshot, StepDelta, NodeInfo, OpTraceData, RoutingOpInfo } from '$lib/types';
 	import Controls from '$lib/components/Controls.svelte';
 	import GraphView from '$lib/components/GraphView.svelte';
 	import MetricsPanel from '$lib/components/MetricsPanel.svelte';
 	import NodeDetail from '$lib/components/NodeDetail.svelte';
 
 	let snapshot: SimSnapshot | null = $state(null);
+	let prevSnapshot: SimSnapshot | null = $state(null);
 	let loading = $state(false);
 	let selectedNodeId: number | null = $state(null);
 	let selectedGroupId: number | null = $state(null);
+	let selectedOpId: number | null = $state(null);
 	let error: string | null = $state(null);
 
 	let metrics = $derived(snapshot ? computeMetrics(snapshot) : null);
@@ -25,6 +27,52 @@
 			snapshot.nodes.filter((n) => n.groups.includes(selectedGroupId!)).map((n) => n.id)
 		);
 	});
+	let opTrace: OpTraceData | null = $derived.by(() => {
+		if (selectedOpId === null || !snapshot) return null;
+		const holders = new Set(
+			snapshot.nodes.filter((n) => n.ops.some((op) => op.id === selectedOpId)).map((n) => n.id)
+		);
+		const prevHolderSet = new Set(
+			prevSnapshot
+				? prevSnapshot.nodes.filter((n) => n.ops.some((op) => op.id === selectedOpId)).map((n) => n.id)
+				: []
+		);
+		const newHolders = new Set([...holders].filter((id) => !prevHolderSet.has(id)));
+		return { holders, newHolders, prevHolders: prevHolderSet };
+	});
+
+	function applyDelta(current: SimSnapshot, delta: StepDelta): SimSnapshot {
+		const diffMap = new Map(delta.node_diffs.map((d) => [d.node_id, d]));
+		const nodes = current.nodes.map((node) => {
+			const diff = diffMap.get(node.id);
+			if (!diff) {
+				// No new ops — just tick routing timers
+				return {
+					...node,
+					routing_ops: tickRoutingOps(node.routing_ops)
+				};
+			}
+			// Merge new ops and add routing entries for them
+			const newRoutingOps: RoutingOpInfo[] = diff.new_ops.map((op) => ({
+				id: op.id,
+				size: op.payload_size,
+				since_last_send: null
+			}));
+			return {
+				...node,
+				ops: [...node.ops, ...diff.new_ops],
+				routing_ops: [...tickRoutingOps(node.routing_ops), ...newRoutingOps]
+			};
+		});
+		return { ...current, step: delta.step, nodes };
+	}
+
+	function tickRoutingOps(ops: RoutingOpInfo[]): RoutingOpInfo[] {
+		return ops.map((op) => ({
+			...op,
+			since_last_send: op.since_last_send !== null ? op.since_last_send + 1 : null
+		}));
+	}
 
 	onMount(async () => {
 		try {
@@ -37,7 +85,9 @@
 	async function handleForward() {
 		loading = true;
 		try {
-			snapshot = await stepForward();
+			const delta = await stepForward();
+			prevSnapshot = snapshot;
+			snapshot = applyDelta(snapshot!, delta);
 		} catch (e) {
 			error = `${e}`;
 		}
@@ -47,6 +97,7 @@
 	async function handleBack() {
 		loading = true;
 		try {
+			prevSnapshot = snapshot;
 			snapshot = await stepBack();
 		} catch (e) {
 			error = `${e}`;
@@ -57,12 +108,17 @@
 	async function handleReset() {
 		loading = true;
 		try {
+			prevSnapshot = null;
 			snapshot = await reset();
 			selectedNodeId = null;
 		} catch (e) {
 			error = `${e}`;
 		}
 		loading = false;
+	}
+
+	function toggleOp(id: number | null) {
+		selectedOpId = selectedOpId === id ? null : id;
 	}
 </script>
 
@@ -78,7 +134,7 @@
 	<div class="layout">
 		<div class="left-panel">
 			<div class="metrics-area">
-				<MetricsPanel {metrics} {selectedGroupId} onselectgroup={(id) => (selectedGroupId = id)} />
+				<MetricsPanel {metrics} {selectedGroupId} {selectedOpId} onselectgroup={(id) => (selectedGroupId = id)} onselectop={toggleOp} />
 			</div>
 			<div class="controls-area">
 				<Controls
@@ -91,11 +147,11 @@
 			</div>
 		</div>
 		<div class="graph-area">
-			<GraphView {snapshot} {selectedNodeId} {highlightedNodeIds} onselect={(id) => (selectedNodeId = id)} />
+			<GraphView {snapshot} {selectedNodeId} {highlightedNodeIds} {opTrace} onselect={(id) => { selectedNodeId = id; selectedGroupId = null; selectedOpId = null; }} />
 		</div>
 		{#if selectedNode}
 			<div class="right-panel">
-				<NodeDetail node={selectedNode} {selectedGroupId} onselectgroup={(id) => (selectedGroupId = id)} onclose={() => (selectedNodeId = null)} />
+				<NodeDetail node={selectedNode} {selectedGroupId} {selectedOpId} onselectgroup={(id) => (selectedGroupId = id)} onselectop={toggleOp} onclose={() => (selectedNodeId = null)} />
 			</div>
 		{/if}
 	</div>

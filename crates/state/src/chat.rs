@@ -31,11 +31,21 @@ pub struct ChatState {
     pub op_store: BTreeMap<OpId, Operation>,
     pub contacts: BTreeSet<NodeId>,
     pub groups: BTreeSet<GroupId>,
+    /// Maximum total payload size this node can store. None means unlimited.
+    #[serde(default)]
+    pub storage_capacity: Option<Size>,
 }
 
 impl ChatState {
     /// ChatState is timeless
     pub fn tick(&mut self) {}
+
+    pub fn stored_size(&self) -> Size {
+        self.op_store
+            .values()
+            .map(|op| op.header.payload_size)
+            .fold(Size::from(0u64), |acc, s| Size::from(*acc + *s))
+    }
 
     pub fn store_op(&mut self, op: Operation) -> anyhow::Result<()> {
         let existing = self.op_store.insert(op.id, op);

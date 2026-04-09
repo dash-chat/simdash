@@ -155,10 +155,12 @@ impl ChatStateGenerator {
                 );
             }
 
+            let storage_capacity = Some(Size::from(self.config.node_storage.sample(&mut rng)));
             let chat_state = ChatState {
                 op_store,
                 contacts,
                 groups,
+                storage_capacity,
             };
             graph
                 .update_node(node, |mut n| {

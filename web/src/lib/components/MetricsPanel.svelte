@@ -4,13 +4,19 @@
 	interface Props {
 		metrics: NetworkMetrics;
 		selectedGroupId: number | null;
+		selectedOpId: number | null;
 		onselectgroup: (groupId: number | null) => void;
+		onselectop: (opId: number | null) => void;
 	}
 
-	let { metrics, selectedGroupId, onselectgroup }: Props = $props();
+	let { metrics, selectedGroupId, selectedOpId, onselectgroup, onselectop }: Props = $props();
 
 	function toggleGroup(id: number) {
 		onselectgroup(selectedGroupId === id ? null : id);
+	}
+
+	function toggleOp(id: number) {
+		onselectop(selectedOpId === id ? null : id);
 	}
 </script>
 
@@ -45,7 +51,13 @@
 				<tbody>
 					{#each metrics.delivery as d}
 						<tr>
-							<td>{d.op_id}</td>
+							<td>
+								<button
+									class="op-link"
+									class:active={selectedOpId === d.op_id}
+									onclick={() => toggleOp(d.op_id)}
+								>{d.op_id}</button>
+							</td>
 							<td>{d.author}</td>
 							<td>
 								{#if d.group_id !== null}
@@ -102,6 +114,24 @@
 	.delivery-table {
 		max-height: 200px;
 		overflow-y: auto;
+	}
+	.op-link {
+		background: none;
+		border: none;
+		color: #8ecae6;
+		cursor: pointer;
+		padding: 0;
+		font-size: inherit;
+		text-decoration: underline;
+		text-decoration-style: dotted;
+	}
+	.op-link:hover {
+		color: #b8e0f8;
+	}
+	.op-link.active {
+		color: #40e0a0;
+		text-decoration-style: solid;
+		font-weight: bold;
 	}
 	.group-link {
 		background: none;

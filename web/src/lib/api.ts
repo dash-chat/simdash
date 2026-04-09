@@ -1,4 +1,4 @@
-import type { SimSnapshot } from './types';
+import type { SimSnapshot, StepDelta } from './types';
 
 const BASE = '/api';
 
@@ -15,7 +15,7 @@ export function getState(): Promise<SimSnapshot> {
 	return fetchJson(`${BASE}/state`);
 }
 
-export function stepForward(): Promise<SimSnapshot> {
+export function stepForward(): Promise<StepDelta> {
 	return fetchJson(`${BASE}/step/forward`, { method: 'POST' });
 }
 

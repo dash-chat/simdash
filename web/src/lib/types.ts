@@ -43,3 +43,19 @@ export interface RoutingOpInfo {
 	size: number;
 	since_last_send: number | null;
 }
+
+export interface StepDelta {
+	step: number;
+	node_diffs: NodeDelta[];
+}
+
+export interface NodeDelta {
+	node_id: number;
+	new_ops: OpInfo[];
+}
+
+export interface OpTraceData {
+	holders: Set<number>;
+	newHolders: Set<number>;
+	prevHolders: Set<number>;
+}

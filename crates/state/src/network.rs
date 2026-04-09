@@ -31,11 +31,28 @@ impl NetworkState {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::node::NodeState;
+
+    fn make_network() -> NetworkState {
+        //  0 -> 1 -> 2
+        //  |         ^
+        //  +-> 3 ----+
+        let mut graph = Graph::new();
+        for i in 0..4u32 {
+            graph.add_node(NodeId::from(i), NodeState::default());
+        }
+        graph.add_edge(0.into(), 1.into(), ());
+        graph.add_edge(1.into(), 2.into(), ());
+        graph.add_edge(0.into(), 3.into(), ());
+        graph.add_edge(3.into(), 2.into(), ());
+        NetworkState { graph }
+    }
 
     #[test]
     fn test_neighborhood() {
-        let network = NetworkState::load_postcard("../../fixtures/topology.postcard");
-        let neighborhood = network.neighborhood(NodeId::from(0));
-        assert_eq!(neighborhood.collect::<Vec<_>>(), vec![15.into(), 4.into()]);
+        let network = make_network();
+        let mut neighbors: Vec<NodeId> = network.neighborhood(0.into()).collect();
+        neighbors.sort();
+        assert_eq!(neighbors, vec![1.into(), 3.into()]);
     }
 }
