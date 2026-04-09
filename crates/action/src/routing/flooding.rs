@@ -6,4 +6,5 @@ pub enum FloodingAction {
     StoreOp { op: Operation },
     ReceiveOp { from: NodeId, op: Operation },
     TriggerBroadcast,
+    Tick,
 }
