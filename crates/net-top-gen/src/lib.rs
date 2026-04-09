@@ -1,5 +1,7 @@
 //! Network topology generation utilities.
 
+use std::collections::HashMap;
+
 use serde::Deserialize;
 use simdash_ids::NodeId;
 use simdash_state::Graph;
@@ -15,6 +17,7 @@ pub struct BuildState<'a, R: rand::Rng> {
     pub graph: &'a mut Graph,
     pub next_id: &'a mut u32,
     pub all_node_ids: &'a mut Vec<NodeId>,
+    pub named_groups: &'a mut HashMap<String, Vec<NodeId>>,
     pub rng: &'a mut R,
 }
 
@@ -63,12 +66,14 @@ impl TopologyGenerator {
         let mut next_id: u32 = 0;
         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
         let mut all_node_ids: Vec<NodeId> = Vec::new();
+        let mut named_groups: HashMap<String, Vec<NodeId>> = HashMap::new();
 
         for rule in &self.config {
             rule.apply(&mut BuildState {
                 graph: &mut graph,
                 next_id: &mut next_id,
                 all_node_ids: &mut all_node_ids,
+                named_groups: &mut named_groups,
                 rng: &mut rng,
             });
         }
@@ -93,7 +98,9 @@ mod tests {
                 "element": "link",
                 "strategy": "per_node",
                 "count": 1,
-                "destination": "random"
+                "destination": {
+                    "selection": "random"
+                }
             }
         ]"#;
 
@@ -115,7 +122,9 @@ mod tests {
                 "element": "link",
                 "strategy": "per_node",
                 "count": 1,
-                "destination": "random"
+                "destination": {
+                    "selection": "random"
+                }
             }
         ]"#;
 
@@ -150,7 +159,9 @@ mod tests {
                 "element": "link",
                 "strategy": "per_node",
                 "count": { "min": 0, "max": 4 },
-                "destination": "random"
+                "destination": {
+                    "selection": "random"
+                }
             }
         ]"#;
 
@@ -178,5 +189,100 @@ mod tests {
         assert_eq!(inc_dist[&4], 6);
         assert_eq!(inc_dist[&5], 4);
         assert_eq!(inc_dist[&6], 2);
+    }
+
+    #[test]
+    fn two_nested_node_groups() {
+        let json = r#"[
+            {
+                "element": "node",
+                "number": 2
+            },
+            {
+                "element": "node",
+                "number": 2,
+                "rules": [
+                   {
+                        "element": "link",
+                        "strategy": "per_node",
+                        "count": 1,
+                        "destination": {
+                            "selection": "random"
+                        }
+                    }
+                ]
+            }
+        ]"#;
+
+        let generator = TopologyGenerator::from_json(json).unwrap();
+        let graph = generator.generate(0);
+
+        assert_eq!(graph.graph().node_count(), 4);
+        assert_eq!(graph.graph().edge_count(), 2);
+
+        // First two nodes are isolated; only the nested group receives links.
+        let out_dist = outgoing_distribution(&graph);
+        assert_eq!(out_dist[0], 2);
+        assert_eq!(out_dist[1], 2);
+        assert_eq!(out_dist[2], 0);
+
+        let inc_dist = incoming_distribution(&graph);
+        assert_eq!(inc_dist.get(&0), Some(&2));
+        assert_eq!(inc_dist.get(&1), Some(&2));
+    }
+
+    #[test]
+    fn two_named_nested_node_groups_with_links_to_first_group() {
+        let json = r#"[
+            {
+                "element": "node",
+                "name": "first_group",
+                "number": 2
+            },
+            {
+                "element": "node",
+                "name": "second_group",
+                "number": 2,
+                "rules": [
+                   {
+                        "element": "link",
+                        "strategy": "per_node",
+                        "count": 1,
+                        "destination": {
+                            "selection": "random",
+                            "group": "first_group"
+                        }
+                    }
+                ]
+            }
+        ]"#;
+
+        let generator = TopologyGenerator::from_json(json).unwrap();
+        let graph = generator.generate(0);
+
+        assert_eq!(graph.graph().node_count(), 4);
+        assert_eq!(graph.graph().edge_count(), 2);
+
+        let out_dist = outgoing_distribution(&graph);
+        assert_eq!(out_dist[0], 2);
+        assert_eq!(out_dist[1], 2);
+        assert_eq!(out_dist[2], 0);
+
+        let edges: Vec<_> = graph
+            .graph()
+            .edge_indices()
+            .map(|e| {
+                let (from_idx, to_idx) = graph.graph().edge_endpoints(e).unwrap();
+                (
+                    graph.node_id(from_idx).unwrap(),
+                    graph.node_id(to_idx).unwrap(),
+                )
+            })
+            .collect();
+
+        for (from, to) in edges {
+            assert!(from == NodeId::from(2) || from == NodeId::from(3));
+            assert!(to == NodeId::from(0) || to == NodeId::from(1));
+        }
     }
 }

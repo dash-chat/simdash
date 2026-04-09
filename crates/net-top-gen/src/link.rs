@@ -17,8 +17,22 @@ pub enum Count {
 /// How link destinations are chosen.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "lowercase")]
-pub enum Destination {
+pub enum Selection {
     Random,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct DestinationSpec {
+    pub selection: Selection,
+    #[serde(default)]
+    pub group: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum Destination {
+    Selection(Selection),
+    Spec(DestinationSpec),
 }
 
 /// Specification for links originating from a node group.
@@ -31,19 +45,37 @@ pub struct LinkSpec {
 
 impl ApplyRule for LinkSpec {
     fn apply<R: rand::Rng>(&self, state: &mut BuildState<R>) {
-        if state.all_node_ids.len() < 2 {
+        if state.all_node_ids.is_empty() {
             return;
         }
+
+        let (selection, group) = match &self.destination {
+            Destination::Selection(selection) => (selection, None),
+            Destination::Spec(spec) => (&spec.selection, spec.group.as_ref()),
+        };
+
+        let target_pool: Vec<NodeId> = match group {
+            Some(group) => state
+                .named_groups
+                .get(group)
+                .cloned()
+                .unwrap_or_default(),
+            None => state.all_node_ids.clone(),
+        };
+
+        if target_pool.is_empty() {
+            return;
+        }
+
         match self.strategy.as_str() {
-            "per_node" => match self.destination {
-                Destination::Random => {
+            "per_node" => match selection {
+                Selection::Random => {
                     for &node in state.all_node_ids.clone().iter() {
                         let n = match self.count {
                             Count::Fixed(n) => n,
                             Count::Range { min, max } => state.rng.random_range(min..=max),
                         };
-                        let candidates: Vec<NodeId> = state
-                            .all_node_ids
+                        let candidates: Vec<NodeId> = target_pool
                             .iter()
                             .copied()
                             .filter(|&id| id != node)
@@ -61,12 +93,11 @@ impl ApplyRule for LinkSpec {
                     Count::Fixed(n) => n,
                     Count::Range { min, max } => state.rng.random_range(min..=max),
                 };
-                match self.destination {
-                    Destination::Random => {
+                match selection {
+                    Selection::Random => {
                         for _ in 0..total_links {
                             let from = *state.all_node_ids.choose(&mut state.rng).unwrap();
-                            let candidates: Vec<NodeId> = state
-                                .all_node_ids
+                            let candidates: Vec<NodeId> = target_pool
                                 .iter()
                                 .copied()
                                 .filter(|&id| id != from)
