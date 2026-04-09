@@ -179,4 +179,42 @@ mod tests {
         assert_eq!(inc_dist[&5], 4);
         assert_eq!(inc_dist[&6], 2);
     }
+
+    #[test]
+    fn two_nested_node_groups() {
+        let json = r#"[
+            {
+                "element": "node",
+                "number": 2
+            },
+            {
+                "element": "node",
+                "number": 2,
+                "rules": [
+                   {
+                        "element": "link",
+                        "strategy": "per_node",
+                        "count": 1,
+                        "destination": "random"
+                    }
+                ]
+            }
+        ]"#;
+
+        let generator = TopologyGenerator::from_json(json).unwrap();
+        let graph = generator.generate(0);
+
+        assert_eq!(graph.graph().node_count(), 4);
+        assert_eq!(graph.graph().edge_count(), 2);
+
+        // First two nodes are isolated; only the nested group receives links.
+        let out_dist = outgoing_distribution(&graph);
+        assert_eq!(out_dist[0], 2);
+        assert_eq!(out_dist[1], 2);
+        assert_eq!(out_dist[2], 0);
+
+        let inc_dist = incoming_distribution(&graph);
+        assert_eq!(inc_dist.get(&0), Some(&2));
+        assert_eq!(inc_dist.get(&1), Some(&2));
+    }
 }
