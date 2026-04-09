@@ -12,8 +12,8 @@ fn holding_count(state: &NetworkState, ops: impl IntoIterator<Item = OpId>) -> u
     let ops = ops.into_iter().collect::<Vec<_>>();
     state
         .graph
-        .graph()
-        .node_weights()
+        .node_ids()
+        .filter_map(|id| state.graph.node_state(id))
         .filter(|n| ops.iter().any(|op_id| n.dash.op_store.contains_key(&op_id)))
         .count()
 }

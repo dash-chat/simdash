@@ -71,16 +71,10 @@ fn build_snapshot(sim: &Simulation) -> SimSnapshot {
 }
 
 fn build_graph_structure(state: &NetworkState) -> GraphStructure {
-    let mut index_to_id = std::collections::BTreeMap::new();
-    for node_id in state.graph.node_ids() {
-        if let Some(idx) = state.graph.node_index(node_id) {
-            index_to_id.insert(idx, node_id);
-        }
-    }
-
-    let nodes: Vec<GraphNode> = index_to_id
-        .values()
-        .map(|&id| GraphNode { id: *id })
+    let nodes: Vec<GraphNode> = state
+        .graph
+        .node_ids()
+        .map(|id| GraphNode { id: *id })
         .collect();
 
     let edges: Vec<GraphEdge> = state
@@ -90,8 +84,8 @@ fn build_graph_structure(state: &NetworkState) -> GraphStructure {
         .filter_map(|e| {
             let (src, dst) = state.graph.graph().edge_endpoints(e)?;
             Some(GraphEdge {
-                source: **index_to_id.get(&src)?,
-                target: **index_to_id.get(&dst)?,
+                source: *state.graph.node_id(src)?,
+                target: *state.graph.node_id(dst)?,
             })
         })
         .collect();

@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 
 use petgraph::graph::{Graph as PetGraph, NodeIndex};
 use serde::{Deserialize, Serialize};
@@ -6,10 +6,18 @@ use simdash_ids::NodeId;
 
 use crate::node::NodeState;
 
+fn node_id_to_index(id: NodeId) -> NodeIndex {
+    NodeIndex::new(*id as usize)
+}
+
+fn node_index_to_id(idx: NodeIndex) -> NodeId {
+    NodeId::from(idx.index() as u32)
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Graph<R = crate::routing::RoutingState, E = ()> {
-    graph: PetGraph<NodeState<R>, E>,
-    node_indices: HashMap<NodeId, NodeIndex>,
+    graph: PetGraph<(), E>,
+    node_states: BTreeMap<NodeId, NodeState<R>>,
     #[serde(skip, default)]
     subnets: BTreeMap<String, Vec<NodeId>>,
 }
@@ -18,7 +26,7 @@ impl<R, E> Default for Graph<R, E> {
     fn default() -> Self {
         Self {
             graph: PetGraph::new(),
-            node_indices: HashMap::new(),
+            node_states: BTreeMap::new(),
             subnets: BTreeMap::new(),
         }
     }
@@ -29,40 +37,42 @@ impl<R: Clone, E> Graph<R, E> {
         Self::default()
     }
 
-    pub fn graph(&self) -> &PetGraph<NodeState<R>, E> {
+    pub fn graph(&self) -> &PetGraph<(), E> {
         &self.graph
     }
 
-    pub fn graph_mut(&mut self) -> &mut PetGraph<NodeState<R>, E> {
+    pub fn graph_mut(&mut self) -> &mut PetGraph<(), E> {
         &mut self.graph
     }
 
     pub fn node_ids(&self) -> impl Iterator<Item = NodeId> + '_ {
-        self.node_indices.keys().copied()
+        self.node_states.keys().copied()
     }
 
     pub fn node_id(&self, index: NodeIndex) -> Option<NodeId> {
-        self.node_indices
-            .iter()
-            .find_map(|(id, idx)| if *idx == index { Some(*id) } else { None })
+        let id = node_index_to_id(index);
+        self.node_states.contains_key(&id).then_some(id)
     }
 
     pub fn node_index(&self, node_id: NodeId) -> Option<NodeIndex> {
-        self.node_indices.get(&node_id).copied()
+        self.node_states
+            .contains_key(&node_id)
+            .then(|| node_id_to_index(node_id))
     }
 
     pub fn node_state(&self, node_id: NodeId) -> Option<&NodeState<R>> {
-        self.graph.node_weight(self.node_index(node_id)?)
+        self.node_states.get(&node_id)
+    }
+
+    pub fn node_state_mut(&mut self, node_id: NodeId) -> Option<&mut NodeState<R>> {
+        self.node_states.get_mut(&node_id)
     }
 
     pub fn set_node(&mut self, node_id: NodeId, state: NodeState<R>) -> bool {
-        let Some(idx) = self.node_index(node_id) else {
+        let Some(entry) = self.node_states.get_mut(&node_id) else {
             return false;
         };
-        let Some(s) = self.graph.node_weight_mut(idx) else {
-            return false;
-        };
-        *s = state;
+        *entry = state;
         true
     }
 
@@ -71,28 +81,28 @@ impl<R: Clone, E> Graph<R, E> {
         node_id: NodeId,
         action: impl FnOnce(NodeState<R>) -> anyhow::Result<(NodeState<R>, O)>,
     ) -> anyhow::Result<O> {
-        let state = self.node_state(node_id).unwrap().clone();
+        let state = self.node_states.get(&node_id).unwrap().clone();
         let (state, fx) = action(state)?;
         self.set_node(node_id, state);
         Ok(fx)
     }
 
-    pub fn add_node(&mut self, node_id: NodeId, state: NodeState<R>) -> NodeIndex {
-        let idx = self.graph.add_node(state);
-        self.node_indices.insert(node_id, idx);
-        idx
+    pub fn add_node(&mut self, node_id: NodeId, state: NodeState<R>) {
+        let expected_idx = node_id_to_index(node_id);
+        let idx = self.graph.add_node(());
+        assert_eq!(
+            idx, expected_idx,
+            "NodeId {node_id:?} must be added in order (got index {idx:?}, expected {expected_idx:?})"
+        );
+        self.node_states.insert(node_id, state);
     }
 
     pub fn add_edge(&mut self, from: NodeId, to: NodeId, weight: E) -> bool {
-        let from_idx = match self.node_indices.get(&from) {
-            Some(&idx) => idx,
-            None => return false,
-        };
-        let to_idx = match self.node_indices.get(&to) {
-            Some(&idx) => idx,
-            None => return false,
-        };
-        self.graph.add_edge(from_idx, to_idx, weight);
+        if !self.node_states.contains_key(&from) || !self.node_states.contains_key(&to) {
+            return false;
+        }
+        self.graph
+            .add_edge(node_id_to_index(from), node_id_to_index(to), weight);
         true
     }
 
