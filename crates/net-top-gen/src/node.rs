@@ -13,6 +13,8 @@ fn default_strategy() -> String {
 pub struct NodeSpec {
     #[serde(default = "default_strategy")]
     pub strategy: String,
+    #[serde(default)]
+    pub name: Option<String>,
     pub number: u32,
     #[serde(default)]
     pub rules: Vec<Rule>,
@@ -29,6 +31,13 @@ impl ApplyRule for NodeSpec {
             state.graph.add_node(node_id, NodeState::default());
         }
         state.all_node_ids.extend_from_slice(&node_ids);
+        if let Some(name) = &self.name {
+            state
+                .named_groups
+                .entry(name.clone())
+                .or_default()
+                .extend_from_slice(&node_ids);
+        }
 
         if !self.rules.is_empty() {
             let mut scoped_node_ids = node_ids;
@@ -37,6 +46,7 @@ impl ApplyRule for NodeSpec {
                     graph: state.graph,
                     next_id: state.next_id,
                     all_node_ids: &mut scoped_node_ids,
+                    named_groups: state.named_groups,
                     rng: state.rng,
                 });
             }
