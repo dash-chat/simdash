@@ -22,7 +22,9 @@ pub async fn get_state(State(sim): State<AppState>) -> Json<SimSnapshot> {
 
 pub async fn step_forward(State(sim): State<AppState>) -> Result<Json<SimSnapshot>, AppError> {
     let mut sim = sim.lock().await;
+    let t = std::time::Instant::now();
     sim.step_forward()?;
+    tracing::info!("{:>6}ms", t.elapsed().as_millis());
     Ok(Json(build_snapshot(&sim)))
 }
 

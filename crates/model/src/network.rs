@@ -114,7 +114,7 @@ impl NetworkModel {
                 for neighbor in neighbors {
                     for op in ops.iter() {
                         if let Err(err) = self.send_op(state, node_id, neighbor, op.clone()) {
-                            tracing::warn!("Failed to send op to neighbor: {:?}", err);
+                            tracing::debug!("Failed to send op to neighbor: {:?}", err);
                         }
                     }
                 }
