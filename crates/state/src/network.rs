@@ -14,8 +14,8 @@ impl NetworkState {
     pub fn neighborhood(&self, node_id: NodeId) -> impl Iterator<Item = NodeId> {
         self.graph
             .graph()
-            .neighbors(self.graph.node_index(node_id).unwrap())
-            .map(|n| self.graph.node_id(n).unwrap())
+            .neighbors(node_id.into())
+            .map(|n| n.into())
     }
 
     pub fn load_postcard(path: impl AsRef<Path>) -> Self {

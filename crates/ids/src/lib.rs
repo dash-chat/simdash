@@ -35,3 +35,15 @@ pub struct Size(u64);
     derive_more::Sub,
 )]
 pub struct Ticks(u32);
+
+impl From<NodeId> for petgraph::graph::NodeIndex {
+    fn from(id: NodeId) -> petgraph::graph::NodeIndex {
+        petgraph::graph::NodeIndex::new(*id as usize)
+    }
+}
+
+impl From<petgraph::graph::NodeIndex> for NodeId {
+    fn from(index: petgraph::graph::NodeIndex) -> NodeId {
+        NodeId::from(index.index() as u32)
+    }
+}

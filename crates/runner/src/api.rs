@@ -44,7 +44,11 @@ pub async fn get_behaviors(State(sim): State<AppState>) -> Json<BehaviorsRespons
     let sim = sim.lock().await;
     Json(BehaviorsResponse {
         current: sim.behavior_name().to_string(),
-        available: sim.available_behaviors().iter().map(|s| s.to_string()).collect(),
+        available: sim
+            .available_behaviors()
+            .iter()
+            .map(|s| s.to_string())
+            .collect(),
     })
 }
 
@@ -64,7 +68,11 @@ fn build_snapshot(sim: &Simulation) -> SimSnapshot {
     SimSnapshot {
         step: sim.current_step(),
         behavior: sim.behavior_name().to_string(),
-        available_behaviors: sim.available_behaviors().iter().map(|s| s.to_string()).collect(),
+        available_behaviors: sim
+            .available_behaviors()
+            .iter()
+            .map(|s| s.to_string())
+            .collect(),
         graph: build_graph_structure(state),
         nodes: build_node_infos(state),
     }
@@ -84,8 +92,8 @@ fn build_graph_structure(state: &NetworkState) -> GraphStructure {
         .filter_map(|e| {
             let (src, dst) = state.graph.graph().edge_endpoints(e)?;
             Some(GraphEdge {
-                source: *state.graph.node_id(src)?,
-                target: *state.graph.node_id(dst)?,
+                source: src.index() as u32,
+                target: dst.index() as u32,
             })
         })
         .collect();
@@ -104,9 +112,8 @@ fn build_node_infos(state: &NetworkState) -> Vec<NodeInfo> {
             let neighbors: Vec<u32> = state
                 .graph
                 .graph()
-                .neighbors(state.graph.node_index(node_id)?)
-                .filter_map(|idx| state.graph.node_id(idx))
-                .map(|id| *id)
+                .neighbors(node_id.into())
+                .map(|id| *NodeId::from(id))
                 .collect();
 
             let ops: Vec<OpInfo> = node_state

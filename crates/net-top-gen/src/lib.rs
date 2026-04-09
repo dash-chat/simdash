@@ -272,15 +272,12 @@ mod tests {
         assert_eq!(out_dist[1], 2);
         assert_eq!(out_dist[2], 0);
 
-        let edges: Vec<_> = graph
+        let edges: Vec<(NodeId, NodeId)> = graph
             .graph()
             .edge_indices()
             .map(|e| {
                 let (from_idx, to_idx) = graph.graph().edge_endpoints(e).unwrap();
-                (
-                    graph.node_id(from_idx).unwrap(),
-                    graph.node_id(to_idx).unwrap(),
-                )
+                (from_idx.into(), to_idx.into())
             })
             .collect();
 

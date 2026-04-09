@@ -48,11 +48,14 @@ fn main() {
     let start_time = std::time::Instant::now();
 
     loop {
-        scenario.advance().unwrap();
+        let Some(_action) = scenario.advance().unwrap() else {
+            println!("scenario can't advance");
+            break;
+        };
         let state = scenario.state().unwrap();
         let count = holding_count(&state, ops.clone().map(|op| op.id));
         let num_actions = scenario.history().len();
-        if num_actions % 10000 == 0 {
+        if dbg!(num_actions) % 1_000 == 0 {
             println!("...");
         }
         if prev_count != count {
