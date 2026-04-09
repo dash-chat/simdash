@@ -1,10 +1,10 @@
 use std::{collections::BTreeMap, fmt::Write, fs, path::PathBuf};
 
 use clap::Parser;
-use dash_chat_top_gen::DashStateGenerator;
+use dash_chat_top_gen::ChatStateGenerator;
 use net_top_gen::TopologyGenerator;
 use simdash_ids::NodeId;
-use simdash_state::{dash::DashState, Graph};
+use simdash_state::{chat::ChatState, Graph};
 
 /// simdash simulation runner
 #[derive(Parser)]
@@ -43,7 +43,7 @@ fn main() {
         let dash_states = if let Some(dash_chat_value) = config.get("dash-chat-top") {
             let dash_chat_json = serde_json::to_string(dash_chat_value)
                 .expect("Failed to serialize dash-chat-top config");
-            let generator = DashStateGenerator::from_json(&dash_chat_json)
+            let generator = ChatStateGenerator::from_json(&dash_chat_json)
                 .expect("Failed to parse dash-chat-top config");
             let states = generator.generate(&graph);
             println!("Generated dash chat state for {} nodes", states.len());
@@ -66,7 +66,7 @@ fn main() {
     }
 }
 
-fn generate_dot(graph: &Graph, dash_states: Option<&BTreeMap<NodeId, DashState>>) -> String {
+fn generate_dot(graph: &Graph, dash_states: Option<&BTreeMap<NodeId, ChatState>>) -> String {
     let mut dot = String::new();
     writeln!(dot, "digraph topology {{").unwrap();
     writeln!(dot, "    rankdir=LR;").unwrap();

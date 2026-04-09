@@ -1,6 +1,6 @@
 pub mod flooding;
 
-use crate::dash::Operation;
+use crate::chat::Operation;
 
 /// Only one possible routing state for now.
 pub type RoutingState = flooding::FloodingState;

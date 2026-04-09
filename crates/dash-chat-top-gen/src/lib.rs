@@ -8,7 +8,7 @@ use serde::Deserialize;
 use simdash_distribution::Distribution;
 use simdash_ids::{NodeId, OpId, Size};
 use simdash_state::{
-    dash::Body, dash::DashState, dash::GroupId, dash::Header, dash::Operation, graph::Graph,
+    chat::Body, chat::ChatState, chat::GroupId, chat::Header, chat::Operation, graph::Graph,
 };
 
 #[derive(Debug, Clone, Deserialize)]
@@ -60,19 +60,19 @@ impl Config {
     }
 }
 
-/// Generates DashState for each node in a network topology from a JSON config.
-pub struct DashStateGenerator {
+/// Generates ChatState for each node in a network topology from a JSON config.
+pub struct ChatStateGenerator {
     config: Config,
 }
 
-impl DashStateGenerator {
+impl ChatStateGenerator {
     pub fn from_json(json: &str) -> anyhow::Result<Self> {
         let config = serde_json::from_str(json)?;
         Ok(Self { config })
     }
 
-    /// Generate a `DashState` for each node in the network topology.
-    pub fn generate(&self, graph: &Graph) -> BTreeMap<NodeId, DashState> {
+    /// Generate a `ChatState` for each node in the network topology.
+    pub fn generate(&self, graph: &Graph) -> BTreeMap<NodeId, ChatState> {
         let mut rng = StdRng::seed_from_u64(self.config.seed);
         let nodes: Vec<NodeId> = graph.node_ids().collect();
         let n = nodes.len();
@@ -153,7 +153,7 @@ impl DashStateGenerator {
 
             result.insert(
                 node,
-                DashState {
+                ChatState {
                     op_store,
                     contacts,
                     groups,
@@ -191,11 +191,11 @@ mod tests {
             op_payload_size: Distribution::fixed(100.0),
         };
 
-        let result1 = DashStateGenerator {
+        let result1 = ChatStateGenerator {
             config: config.clone(),
         }
         .generate(&graph);
-        let result2 = DashStateGenerator {
+        let result2 = ChatStateGenerator {
             config: config.clone(),
         }
         .generate(&graph);
@@ -214,7 +214,7 @@ mod tests {
             op_payload_size: Distribution::fixed(64.0),
         };
 
-        let result = DashStateGenerator {
+        let result = ChatStateGenerator {
             config: config.clone(),
         }
         .generate(&graph);
@@ -241,7 +241,7 @@ mod tests {
             op_payload_size: Distribution::normal(256.0, 50.0),
         };
 
-        let result = DashStateGenerator {
+        let result = ChatStateGenerator {
             config: config.clone(),
         }
         .generate(&graph);
@@ -264,7 +264,7 @@ mod tests {
         let config =
             Config::disconnected_for(42, Duration::from_secs(3600), Distribution::fixed(0.017));
 
-        let result = DashStateGenerator {
+        let result = ChatStateGenerator {
             config: config.clone(),
         }
         .generate(&graph);
@@ -288,7 +288,7 @@ mod tests {
             "op_payload_size": { "type": "normal", "mean": 256.0, "std_dev": 50.0 }
         }"#;
 
-        let generator = DashStateGenerator::from_json(json).unwrap();
+        let generator = ChatStateGenerator::from_json(json).unwrap();
         let graph = make_graph(10);
         let result = generator.generate(&graph);
 

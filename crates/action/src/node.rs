@@ -1,7 +1,7 @@
-use crate::{dash::DashAction, routing::RoutingAction};
+use crate::{chat::ChatAction, routing::RoutingAction};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum NodeAction {
-    Dash(DashAction),
+    Chat(ChatAction),
     Routing(RoutingAction),
 }

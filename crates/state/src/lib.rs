@@ -2,7 +2,7 @@
 
 use std::collections::BTreeMap;
 
-pub mod dash;
+pub mod chat;
 pub mod graph;
 pub mod network;
 pub mod node;

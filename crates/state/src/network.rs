@@ -2,7 +2,7 @@ use std::{collections::BTreeMap, path::Path};
 
 use simdash_ids::NodeId;
 
-use crate::{Graph, dash::Operation, node::NodeState};
+use crate::{Graph, chat::Operation, node::NodeState};
 
 #[derive(Debug, Clone)]
 pub struct NetworkState {

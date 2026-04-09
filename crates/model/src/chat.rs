@@ -1,12 +1,12 @@
 use anyhow::bail;
-use simdash_action::dash::DashAction;
-use simdash_state::dash::DashState;
+use simdash_action::chat::ChatAction;
+use simdash_state::chat::ChatState;
 
-pub struct DashModel;
+pub struct ChatModel;
 
-impl polestar::Machine for DashModel {
-    type State = DashState;
-    type Action = DashAction;
+impl polestar::Machine for ChatModel {
+    type State = ChatState;
+    type Action = ChatAction;
     type Fx = ();
     type Error = anyhow::Error;
 
@@ -16,17 +16,17 @@ impl polestar::Machine for DashModel {
         action: Self::Action,
     ) -> polestar::TransitionResult<Self> {
         match action {
-            DashAction::StoreOp(op) => {
+            ChatAction::StoreOp(op) => {
                 if let Some(existing) = state.op_store.insert(op.id, op) {
                     bail!("Op already exists: {:?}", existing.id);
                 }
                 Ok((state, ()))
             }
-            DashAction::AddContact(contact) => {
+            ChatAction::AddContact(contact) => {
                 state.contacts.insert(contact);
                 Ok((state, ()))
             }
-            DashAction::JoinGroup(group) => {
+            ChatAction::JoinGroup(group) => {
                 state.groups.insert(group);
                 Ok((state, ()))
             }

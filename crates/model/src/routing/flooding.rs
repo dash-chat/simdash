@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 
 use simdash_action::routing::flooding::FloodingAction;
 use simdash_ids::{OpId, Ticks};
-use simdash_state::{dash::Operation, routing::flooding::FloodingOp};
+use simdash_state::{chat::Operation, routing::flooding::FloodingOp};
 
 pub struct FloodingModel {
     /// Don't broadcast an op twice within this interval.
@@ -68,7 +68,7 @@ mod tests {
     use polestar::Machine;
     use simdash_ids::{NodeId, OpId, Size};
     use simdash_state::{
-        dash::{Body, Header, Operation},
+        chat::{Body, Header, Operation},
         routing::flooding::FloodingState,
     };
 

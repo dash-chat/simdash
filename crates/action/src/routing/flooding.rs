@@ -1,5 +1,5 @@
 use simdash_ids::{NodeId, OpId};
-use simdash_state::{dash::Operation, routing::flooding::FloodingOp};
+use simdash_state::{chat::Operation, routing::flooding::FloodingOp};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum FloodingAction {

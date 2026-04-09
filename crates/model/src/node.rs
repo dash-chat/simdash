@@ -1,14 +1,14 @@
 use polestar::util::update_replace;
-use simdash_action::{dash::DashAction, node::NodeAction, routing::flooding::FloodingAction};
+use simdash_action::{chat::ChatAction, node::NodeAction, routing::flooding::FloodingAction};
 use simdash_ids::Ticks;
 
 use crate::{
-    dash::DashModel,
+    chat::ChatModel,
     routing::{RoutingFx, RoutingModel},
 };
 
 pub struct NodeModel {
-    pub dash: DashModel,
+    pub dash: ChatModel,
     pub routing: RoutingModel,
 }
 
@@ -19,7 +19,7 @@ pub struct NodeModelConfig {
 impl NodeModel {
     pub fn new(config: NodeModelConfig) -> Self {
         Self {
-            dash: DashModel,
+            dash: ChatModel,
             routing: RoutingModel {
                 broadcast_interval: config.broadcast_interval,
             },
@@ -45,11 +45,11 @@ impl polestar::Machine for NodeModel {
         action: Self::Action,
     ) -> polestar::TransitionResult<Self> {
         Ok(match action {
-            NodeAction::Dash(action) => {
+            NodeAction::Chat(action) => {
                 // Always trigger a StoreOp on the routing state if an op is stored in dash chat.
                 // (idempotent.)
                 match &action {
-                    DashAction::StoreOp(op) => {
+                    ChatAction::StoreOp(op) => {
                         let (routing, fx) = self.routing.transition(
                             state.routing,
                             FloodingAction::StoreOp { op: op.clone() },
@@ -74,16 +74,16 @@ impl polestar::Machine for NodeModel {
 #[cfg(test)]
 mod tests {
     use polestar::Machine;
-    use simdash_action::{dash::DashAction, node::NodeAction, routing::RoutingAction};
+    use simdash_action::{chat::ChatAction, node::NodeAction, routing::RoutingAction};
     use simdash_ids::{NodeId, OpId, Size};
     use simdash_state::{
-        dash::{Body, Header, Operation},
+        chat::{Body, Header, Operation},
         node::NodeState,
     };
 
     use super::*;
     use crate::{
-        dash::DashModel,
+        chat::ChatModel,
         routing::{RoutingModel, flooding::FloodingFx},
         util::basic_op,
     };
@@ -94,7 +94,7 @@ mod tests {
         })
     }
 
-    /// DashAction::StoreOp should populate both dash.op_store and routing.ops.
+    /// ChatAction::StoreOp should populate both dash.op_store and routing.ops.
     #[test]
     fn store_op_syncs_to_routing() {
         let m = model();
@@ -102,26 +102,26 @@ mod tests {
         let op = basic_op(1);
         let op_id = op.id;
         let (state, _) = m
-            .transition(state, NodeAction::Dash(DashAction::StoreOp(op)))
+            .transition(state, NodeAction::Chat(ChatAction::StoreOp(op)))
             .unwrap();
         assert!(state.dash.op_store.contains_key(&op_id));
         assert!(state.routing.ops.contains_key(&op_id));
     }
 
-    /// Other DashActions (e.g. AddContact) should not touch routing state.
+    /// Other ChatActions (e.g. AddContact) should not touch routing state.
     #[test]
     fn add_contact_does_not_affect_routing() {
         let m = model();
         let state = NodeState::default();
         let contact = NodeId::from(99);
         let (state, _) = m
-            .transition(state, NodeAction::Dash(DashAction::AddContact(contact)))
+            .transition(state, NodeAction::Chat(ChatAction::AddContact(contact)))
             .unwrap();
         assert!(state.dash.contacts.contains(&contact));
         assert!(state.routing.ops.is_empty());
     }
 
-    /// After StoreOp via Dash, TriggerBroadcast via Routing should include that op.
+    /// After StoreOp via Chat, TriggerBroadcast via Routing should include that op.
     #[test]
     fn trigger_broadcast_after_store_op() {
         let m = model();
@@ -129,7 +129,7 @@ mod tests {
         let op = basic_op(1);
         let op_id = op.id;
         let (state, _) = m
-            .transition(state, NodeAction::Dash(DashAction::StoreOp(op)))
+            .transition(state, NodeAction::Chat(ChatAction::StoreOp(op)))
             .unwrap();
         let (_, fx) = m
             .transition(state, NodeAction::Routing(RoutingAction::TriggerBroadcast))

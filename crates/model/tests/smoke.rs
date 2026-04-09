@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 
 use polestar::Machine;
 use simdash_action::{
-    dash::DashAction, network::NetworkAction, node::NodeAction, routing::RoutingAction,
+    chat::ChatAction, network::NetworkAction, node::NodeAction, routing::RoutingAction,
 };
 use simdash_ids::{NodeId, OpId};
 use simdash_model::{network::NetworkModel, node::NodeModelConfig, util::basic_op};
@@ -37,7 +37,7 @@ fn flooding_convergence() {
         .map(|(i, op)| {
             NetworkAction::Node(
                 NodeId::from(i as u32),
-                NodeAction::Dash(DashAction::StoreOp(op.clone())),
+                NodeAction::Chat(ChatAction::StoreOp(op.clone())),
             )
         })
         .collect::<Vec<_>>();

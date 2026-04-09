@@ -27,14 +27,14 @@ pub struct Operation {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq, Hash)]
-pub struct DashState {
+pub struct ChatState {
     pub op_store: BTreeMap<OpId, Operation>,
     pub contacts: BTreeSet<NodeId>,
     pub groups: BTreeSet<GroupId>,
 }
 
-impl DashState {
-    /// DashState is timeless
+impl ChatState {
+    /// ChatState is timeless
     pub fn tick(&mut self) {}
 
     pub fn store_op(&mut self, op: Operation) -> anyhow::Result<()> {

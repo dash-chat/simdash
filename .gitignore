@@ -1,5 +1,4 @@
 gen/
 target/
-Cargo.lock
 
 topology.dot
