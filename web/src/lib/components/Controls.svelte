@@ -29,7 +29,9 @@
 	function startTimer() {
 		stopTimer();
 		timer = setInterval(() => {
-			onforward();
+			if (!loading) {
+				onforward();
+			}
 		}, intervalMs);
 	}
 

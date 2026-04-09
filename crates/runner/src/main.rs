@@ -4,7 +4,10 @@ mod sim;
 
 use std::{fs, net::SocketAddr, path::PathBuf, sync::Arc};
 
-use axum::{Router, routing::{get, post}};
+use axum::{
+    routing::{get, post},
+    Router,
+};
 use clap::Parser;
 use dash_chat_top_gen::ChatStateGenerator;
 use net_top_gen::TopologyGenerator;
