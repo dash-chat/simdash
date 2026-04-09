@@ -1,10 +1,11 @@
 use std::{collections::BTreeMap, path::Path};
 
+use serde::{Deserialize, Serialize};
 use simdash_ids::NodeId;
 
 use crate::{Graph, chat::Operation, node::NodeState};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NetworkState {
     pub graph: Graph,
 }
