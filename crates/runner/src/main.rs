@@ -105,6 +105,8 @@ async fn main() {
         .route("/api/step/forward", post(api::step_forward))
         .route("/api/step/back", post(api::step_back))
         .route("/api/reset", post(api::reset))
+        .route("/api/behaviors", get(api::get_behaviors))
+        .route("/api/behavior", post(api::set_behavior))
         .layer(CorsLayer::permissive())
         .with_state(state);
 

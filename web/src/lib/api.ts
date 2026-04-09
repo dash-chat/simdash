@@ -26,3 +26,11 @@ export function stepBack(): Promise<SimSnapshot> {
 export function reset(): Promise<SimSnapshot> {
 	return fetchJson(`${BASE}/reset`, { method: 'POST' });
 }
+
+export function setBehavior(behavior: string): Promise<SimSnapshot> {
+	return fetchJson(`${BASE}/behavior`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ behavior })
+	});
+}

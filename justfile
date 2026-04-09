@@ -4,7 +4,7 @@ _:
 viewer config="config.json":
     mprocs \
         --names "backend,frontend" \
-        "RUST_LOG=info cargo run --bin simdash-runner -- {{ config }}" \
+        "RUST_LOG=info cargo run --release --bin simdash-runner -- {{ config }}" \
         "cd web && npm run dev -- --open"
 
 generate config="config.local.json":

@@ -4,12 +4,15 @@
 	interface Props {
 		step: number;
 		loading: boolean;
+		behavior: string;
+		availableBehaviors: string[];
 		onforward: () => void;
 		onback: () => void;
 		onreset: () => void;
+		onbehaviorchange: (behavior: string) => void;
 	}
 
-	let { step, loading, onforward, onback, onreset }: Props = $props();
+	let { step, loading, behavior, availableBehaviors, onforward, onback, onreset, onbehaviorchange }: Props = $props();
 
 	let playing = $state(false);
 	let sliderValue = $state(1810);
@@ -71,6 +74,20 @@
 	</div>
 
 	<button class="reset" onclick={onreset} disabled={loading || playing || step === 0}>Reset</button>
+
+	<div class="behavior-row">
+		<span class="behavior-label">Behavior</span>
+		<select
+			class="behavior-select"
+			value={behavior}
+			onchange={(e) => { stop(); onbehaviorchange(e.currentTarget.value); }}
+			disabled={loading || playing}
+		>
+			{#each availableBehaviors as b}
+				<option value={b}>{b}</option>
+			{/each}
+		</select>
+	</div>
 </div>
 
 <style>
@@ -132,5 +149,30 @@
 	.speed {
 		flex: 1;
 		accent-color: #0f3460;
+	}
+	.behavior-row {
+		width: 100%;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+	.behavior-label {
+		color: #888;
+		font-size: 11px;
+		white-space: nowrap;
+	}
+	.behavior-select {
+		flex: 1;
+		padding: 4px 6px;
+		border: 1px solid #555;
+		background: #16213e;
+		color: #eee;
+		border-radius: 4px;
+		font-size: 12px;
+		cursor: pointer;
+	}
+	.behavior-select:disabled {
+		opacity: 0.4;
+		cursor: not-allowed;
 	}
 </style>

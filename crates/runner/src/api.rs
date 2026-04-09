@@ -6,7 +6,7 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use simdash_ids::NodeId;
 use simdash_state::network::NetworkState;
 use tokio::sync::Mutex;
@@ -40,12 +40,31 @@ pub async fn reset(State(sim): State<AppState>) -> Json<SimSnapshot> {
     Json(build_snapshot(&sim))
 }
 
+pub async fn get_behaviors(State(sim): State<AppState>) -> Json<BehaviorsResponse> {
+    let sim = sim.lock().await;
+    Json(BehaviorsResponse {
+        current: sim.behavior_name().to_string(),
+        available: sim.available_behaviors().iter().map(|s| s.to_string()).collect(),
+    })
+}
+
+pub async fn set_behavior(
+    State(sim): State<AppState>,
+    Json(body): Json<SetBehaviorRequest>,
+) -> Result<Json<SimSnapshot>, AppError> {
+    let mut sim = sim.lock().await;
+    sim.set_behavior(&body.behavior)?;
+    Ok(Json(build_snapshot(&sim)))
+}
+
 // --- Snapshot building (full state) ---
 
 fn build_snapshot(sim: &Simulation) -> SimSnapshot {
     let state = sim.current_state();
     SimSnapshot {
         step: sim.current_step(),
+        behavior: sim.behavior_name().to_string(),
+        available_behaviors: sim.available_behaviors().iter().map(|s| s.to_string()).collect(),
         graph: build_graph_structure(state),
         nodes: build_node_infos(state),
     }
@@ -148,8 +167,21 @@ fn build_op_info(op: &simdash_state::chat::Operation) -> OpInfo {
 #[derive(Serialize)]
 pub struct SimSnapshot {
     pub step: usize,
+    pub behavior: String,
+    pub available_behaviors: Vec<String>,
     pub graph: GraphStructure,
     pub nodes: Vec<NodeInfo>,
+}
+
+#[derive(Serialize)]
+pub struct BehaviorsResponse {
+    pub current: String,
+    pub available: Vec<String>,
+}
+
+#[derive(Deserialize)]
+pub struct SetBehaviorRequest {
+    pub behavior: String,
 }
 
 #[derive(Serialize)]

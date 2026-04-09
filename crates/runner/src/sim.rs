@@ -1,14 +1,14 @@
 use simdash_state::network::NetworkState;
 use simdash_state::Graph;
 
-use crate::scenarios::{NaiveFloodingScenario, naive_flooding, step_until_tick};
+use crate::scenarios::{AnyScenario, AVAILABLE_BEHAVIORS, naive_flooding, no_routing, step_until_tick};
 
 pub struct Simulation {
     initial_state: NetworkState,
     current_step: usize,
     behavior_name: String,
     broadcast_interval: u32,
-    scenario: NaiveFloodingScenario,
+    scenario: AnyScenario,
 }
 
 impl Simulation {
@@ -28,9 +28,14 @@ impl Simulation {
         behavior: &str,
         state: &NetworkState,
         broadcast_interval: u32,
-    ) -> anyhow::Result<NaiveFloodingScenario> {
+    ) -> anyhow::Result<AnyScenario> {
         match behavior {
-            "naive-flooding" => Ok(naive_flooding::naive_flooding(state.clone(), broadcast_interval)),
+            "naive-flooding" => Ok(AnyScenario::NaiveFlooding(
+                naive_flooding::naive_flooding(state.clone(), broadcast_interval),
+            )),
+            "no-routing" => Ok(AnyScenario::NoRouting(
+                no_routing::no_routing(state.clone(), broadcast_interval),
+            )),
             other => anyhow::bail!("Unknown behavior: {other}"),
         }
     }
@@ -41,6 +46,23 @@ impl Simulation {
 
     pub fn current_step(&self) -> usize {
         self.current_step
+    }
+
+    pub fn behavior_name(&self) -> &str {
+        &self.behavior_name
+    }
+
+    pub fn available_behaviors(&self) -> &[&str] {
+        AVAILABLE_BEHAVIORS
+    }
+
+    pub fn set_behavior(&mut self, behavior: &str) -> anyhow::Result<()> {
+        // Validate behavior name before changing
+        let scenario = Self::make_scenario(behavior, &self.initial_state, self.broadcast_interval)?;
+        self.behavior_name = behavior.to_string();
+        self.scenario = scenario;
+        self.current_step = 0;
+        Ok(())
     }
 
     pub fn step_forward(&mut self) -> anyhow::Result<()> {

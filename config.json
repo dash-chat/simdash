@@ -6,7 +6,7 @@
     {
       "element": "node",
       "subnet": "mesh",
-      "number": 100,
+      "number": 10,
       "rules": [
         {
           "element": "link",
