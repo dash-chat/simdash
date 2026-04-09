@@ -1,13 +1,13 @@
-use simdash_action::routing::flooding::FloodingAction;
-use simdash_model::routing::flooding::FloodingModel;
-use simdash_state::routing::flooding::FloodingState;
+use simdash_action::routing::{RoutingAction, flooding::FloodingAction};
+use simdash_model::routing::RoutingModel;
+use simdash_state::routing::RoutingState;
 
 use crate::Behavior;
 
 pub struct NaiveFloodingBehavior;
 
-impl Behavior<FloodingModel> for NaiveFloodingBehavior {
-    fn next(&mut self, _: &FloodingState) -> anyhow::Result<Option<FloodingAction>> {
-        Ok(Some(FloodingAction::TriggerBroadcast))
+impl Behavior<RoutingModel> for NaiveFloodingBehavior {
+    fn next(&mut self, _: &RoutingState) -> anyhow::Result<Option<RoutingAction>> {
+        Ok(Some(FloodingAction::TriggerBroadcast.into()))
     }
 }

@@ -1,5 +1,8 @@
 use polestar::{Machine, ext::MapExt};
-use simdash_action::{node::NodeAction, routing::RoutingAction};
+use simdash_action::{
+    node::NodeAction,
+    routing::{RoutingAction, flooding::FloodingAction},
+};
 use simdash_ids::NodeId;
 use simdash_state::{chat::Operation, network::NetworkState, node::NodeState};
 
@@ -67,13 +70,11 @@ impl NetworkModel {
             let (new, fx) = self
                 .node
                 .routing
-                .transition(n.routing, RoutingAction::ReceiveOp { from, op })?;
+                .transition(n.routing, FloodingAction::ReceiveOp { from, op }.into())?;
             n.routing = new;
             Ok((n, fx))
         })?;
-        if let Some(fx) = fx {
-            self.apply_routing_effects(state, to, fx)?;
-        }
+        self.apply_routing_effects(state, to, fx)?;
         Ok(())
     }
 
@@ -93,7 +94,7 @@ impl NetworkModel {
         fx: RoutingFx,
     ) -> anyhow::Result<()> {
         match fx {
-            FloodingFx::BroadcastOps(broadcast_ops) => {
+            RoutingFx::Flooding(Some(FloodingFx::BroadcastOps(broadcast_ops))) => {
                 let ops = broadcast_ops
                     .iter()
                     .map(|op_id| {
@@ -118,12 +119,13 @@ impl NetworkModel {
                     }
                 }
             }
-            FloodingFx::StoreOp(op) => {
+            RoutingFx::Flooding(Some(FloodingFx::StoreOp(op))) => {
                 state.graph.update_node(node_id, |mut node_state| {
                     node_state.dash.store_op(op)?;
                     Ok((node_state, ()))
                 })?;
             }
+            RoutingFx::Flooding(None) => {}
         }
         Ok(())
     }

@@ -8,7 +8,7 @@ use simdash_ids::Ticks;
 
 use crate::{
     chat::ChatModel,
-    routing::{RoutingFx, RoutingModel},
+    routing::{RoutingFx, RoutingModel, flooding::FloodingModel},
 };
 
 pub struct NodeModel {
@@ -25,7 +25,9 @@ impl NodeModel {
         Self {
             dash: ChatModel,
             routing: RoutingModel {
-                broadcast_interval: config.broadcast_interval,
+                flooding: FloodingModel {
+                    broadcast_interval: config.broadcast_interval,
+                },
             },
         }
     }
@@ -56,7 +58,7 @@ impl polestar::Machine for NodeModel {
                     ChatAction::StoreOp(op) => {
                         let (routing, fx) = self.routing.transition(
                             state.routing,
-                            FloodingAction::StoreOp { op: op.clone() },
+                            FloodingAction::StoreOp { op: op.clone() }.into(),
                         )?;
                         state.routing = routing;
                     }
@@ -69,12 +71,12 @@ impl polestar::Machine for NodeModel {
             NodeAction::Routing(action) => {
                 let (routing, fx) = self.routing.transition(state.routing, action)?;
                 state.routing = routing;
-                (state, fx.map(|fx| NodeFx { routing: fx }))
+                (state, Some(NodeFx { routing: fx }))
             }
             NodeAction::Tick => {
                 let (routing, fx) = self
                     .routing
-                    .transition(state.routing, RoutingAction::Tick)?;
+                    .transition(state.routing, FloodingAction::Tick.into())?;
                 state.routing = routing;
                 (state, None)
             }
@@ -116,7 +118,7 @@ mod tests {
             .transition(state, NodeAction::Chat(ChatAction::StoreOp(op)))
             .unwrap();
         assert!(state.dash.op_store.contains_key(&op_id));
-        assert!(state.routing.ops.contains_key(&op_id));
+        assert!(state.routing.flooding.ops.contains_key(&op_id));
     }
 
     /// Other ChatActions (e.g. AddContact) should not touch routing state.
@@ -129,7 +131,7 @@ mod tests {
             .transition(state, NodeAction::Chat(ChatAction::AddContact(contact)))
             .unwrap();
         assert!(state.dash.contacts.contains(&contact));
-        assert!(state.routing.ops.is_empty());
+        assert!(state.routing.flooding.ops.is_empty());
     }
 
     /// After StoreOp via Chat, TriggerBroadcast via Routing should include that op.
@@ -143,11 +145,16 @@ mod tests {
             .transition(state, NodeAction::Chat(ChatAction::StoreOp(op)))
             .unwrap();
         let (_, fx) = m
-            .transition(state, NodeAction::Routing(RoutingAction::TriggerBroadcast))
+            .transition(
+                state,
+                NodeAction::Routing(FloodingAction::TriggerBroadcast.into()),
+            )
             .unwrap();
         assert_eq!(
             fx.unwrap().routing,
-            FloodingFx::BroadcastOps([op_id].into_iter().collect())
+            RoutingFx::Flooding(Some(FloodingFx::BroadcastOps(
+                [op_id].into_iter().collect()
+            )))
         );
     }
 
@@ -161,13 +168,16 @@ mod tests {
         let (state, fx) = m
             .transition(
                 state,
-                NodeAction::Routing(RoutingAction::ReceiveOp {
-                    from: NodeId::from(9),
-                    op,
-                }),
+                NodeAction::Routing(
+                    FloodingAction::ReceiveOp {
+                        from: NodeId::from(9),
+                        op: op.clone(),
+                    }
+                    .into(),
+                ),
             )
             .unwrap();
-        assert!(state.routing.ops.contains_key(&op_id));
+        assert!(state.routing.flooding.ops.contains_key(&op_id));
         assert!(!state.dash.op_store.contains_key(&op_id));
     }
 }

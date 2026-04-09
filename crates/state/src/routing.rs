@@ -1,6 +1,14 @@
 pub mod flooding;
 
-use crate::chat::Operation;
+use serde::{Deserialize, Serialize};
 
-/// Only one possible routing state for now.
-pub type RoutingState = flooding::FloodingState;
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
+pub struct RoutingState {
+    pub flooding: flooding::FloodingState,
+}
+
+impl RoutingState {
+    pub fn tick(&mut self) {
+        self.flooding.tick();
+    }
+}
