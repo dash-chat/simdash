@@ -55,11 +55,7 @@ impl ApplyRule for LinkSpec {
         };
 
         let target_pool: Vec<NodeId> = match subnet {
-            Some(subnet) => state
-                .named_subnets
-                .get(subnet)
-                .cloned()
-                .unwrap_or_default(),
+            Some(subnet) => state.named_subnets.get(subnet).cloned().unwrap_or_default(),
             None => state.all_node_ids.clone(),
         };
 
