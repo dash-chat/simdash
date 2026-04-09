@@ -1,4 +1,5 @@
 mod api;
+mod scenarios;
 mod sim;
 
 use std::{fs, net::SocketAddr, path::PathBuf, sync::Arc};
@@ -23,10 +24,6 @@ struct Cli {
     /// Port to listen on
     #[arg(short, long, default_value = "3000")]
     port: u16,
-
-    /// Broadcast interval in ticks
-    #[arg(long, default_value = "1")]
-    broadcast_interval: u32,
 }
 
 #[tokio::main]
@@ -40,6 +37,16 @@ async fn main() {
         .unwrap_or_else(|e| panic!("Failed to parse '{}' as JSON: {e}", cli.config.display()));
 
     let seed = config.get("seed").and_then(|v| v.as_u64()).unwrap_or(0);
+
+    let behavior = config
+        .get("behavior")
+        .and_then(|v| v.as_str())
+        .unwrap_or("naive-flooding");
+
+    let broadcast_interval = config
+        .get("broadcast-interval")
+        .and_then(|v| v.as_u64())
+        .unwrap_or(1) as u32;
 
     let net_top_value = config
         .get("net-top")
@@ -69,7 +76,9 @@ async fn main() {
         graph
     };
 
-    let sim = Simulation::new(graph, cli.broadcast_interval.into());
+    println!("Using behavior: {behavior}");
+    let sim = Simulation::new(graph, behavior, broadcast_interval)
+        .unwrap_or_else(|e| panic!("Failed to create simulation: {e}"));
     let state: AppState = Arc::new(Mutex::new(sim));
 
     let app = Router::new()

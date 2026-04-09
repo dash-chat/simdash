@@ -25,6 +25,8 @@ pub struct Config {
     pub ops_per_node: Distribution,
     /// Payload size (in bytes) of each operation.
     pub op_payload_size: Distribution,
+    /// Storage capacity per node.
+    pub node_storage: Distribution,
 }
 
 impl Config {
@@ -42,6 +44,8 @@ impl Config {
             ops_per_node: Distribution::fixed(0.0),
             // typical message payload ~256 bytes
             op_payload_size: Distribution::normal(256.0, 50.0),
+            // default node storage ~50 MB, std_dev ~10 MB
+            node_storage: Distribution::normal(50_000_000.0, 10_000_000.0),
         }
     }
 
@@ -198,6 +202,7 @@ mod tests {
             group_size: Distribution::fixed(3.0),
             ops_per_node: Distribution::fixed(5.0),
             op_payload_size: Distribution::fixed(100.0),
+            node_storage: Distribution::fixed(50_000_000.0),
         };
 
         let graph1 = ChatStateGenerator {
@@ -226,6 +231,7 @@ mod tests {
             group_size: Distribution::fixed(2.0),
             ops_per_node: Distribution::fixed(3.0),
             op_payload_size: Distribution::fixed(64.0),
+            node_storage: Distribution::fixed(50_000_000.0),
         };
 
         let graph = ChatStateGenerator {
@@ -252,6 +258,7 @@ mod tests {
             group_size: Distribution::fixed(4.0),
             ops_per_node: Distribution::uniform(0.0, 10.0),
             op_payload_size: Distribution::normal(256.0, 50.0),
+            node_storage: Distribution::fixed(50_000_000.0),
         };
 
         let graph = ChatStateGenerator {
@@ -297,7 +304,8 @@ mod tests {
             "groups_per_node": { "type": "fixed", "value": 2.0 },
             "group_size": { "type": "fixed", "value": 3.0 },
             "ops_per_node": { "type": "uniform", "min": 1.0, "max": 5.0 },
-            "op_payload_size": { "type": "normal", "mean": 256.0, "std_dev": 50.0 }
+            "op_payload_size": { "type": "normal", "mean": 256.0, "std_dev": 50.0 },
+            "node_storage": { "type": "fixed", "value": 50000000.0 }
         }"#;
 
         let generator = ChatStateGenerator::from_json(json).unwrap();

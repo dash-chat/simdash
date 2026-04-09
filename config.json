@@ -1,6 +1,7 @@
 {
   "name": "simdash",
   "seed": 7,
+  "behavior": "naive-flooding",
   "net-top": [
     {
       "element": "node",
@@ -35,12 +36,17 @@
     },
     "ops_per_node": {
       "type": "fixed",
-      "value": 0.0
+      "value": 10.0
     },
     "op_payload_size": {
       "type": "normal",
       "mean": 256.0,
       "std_dev": 50.0
+    },
+    "node_storage": {
+      "type": "normal",
+      "mean": 50000000.0,
+      "std_dev": 10000000.0
     }
   }
 }
