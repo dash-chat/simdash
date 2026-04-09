@@ -2,20 +2,45 @@
   "name": "simdash",
   "seed": 7,
   "net-top": [
-    { "element": "node", "number": 100 },
+    {
+      "element": "node",
+      "number": 100
+    },
     {
       "element": "link",
       "strategy": "per_node",
-      "count": { "min": 0, "max": 4 },
+      "count": {
+        "min": 0,
+        "max": 4
+      },
       "destination": "random"
     }
   ],
   "dash-chat-top": {
     "seed": 7,
-    "contacts_per_node": { "type": "normal", "mean": 20.0, "std_dev": 8.0 },
-    "groups_per_node": { "type": "normal", "mean": 10.0, "std_dev": 4.0 },
-    "group_size": { "type": "normal", "mean": 7.0, "std_dev": 5.0 },
-    "ops_per_node": { "type": "uniform", "min": 0.0, "max": 10.0 },
-    "op_payload_size": { "type": "normal", "mean": 256.0, "std_dev": 50.0 }
+    "contacts_per_node": {
+      "type": "normal",
+      "mean": 20.0,
+      "std_dev": 8.0
+    },
+    "groups_per_node": {
+      "type": "normal",
+      "mean": 10.0,
+      "std_dev": 4.0
+    },
+    "group_size": {
+      "type": "normal",
+      "mean": 7.0,
+      "std_dev": 5.0
+    },
+    "ops_per_node": {
+      "type": "fixed",
+      "value": 0.0
+    },
+    "op_payload_size": {
+      "type": "normal",
+      "mean": 256.0,
+      "std_dev": 50.0
+    }
   }
 }
