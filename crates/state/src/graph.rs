@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use petgraph::graph::{Graph as PetGraph, NodeIndex};
 use serde::{Deserialize, Serialize};
@@ -10,6 +10,8 @@ use crate::node::NodeState;
 pub struct Graph<R = crate::routing::RoutingState, E = ()> {
     graph: PetGraph<NodeState<R>, E>,
     node_indices: HashMap<NodeId, NodeIndex>,
+    #[serde(skip, default)]
+    subnets: BTreeMap<String, Vec<NodeId>>,
 }
 
 impl<R, E> Default for Graph<R, E> {
@@ -17,6 +19,7 @@ impl<R, E> Default for Graph<R, E> {
         Self {
             graph: PetGraph::new(),
             node_indices: HashMap::new(),
+            subnets: BTreeMap::new(),
         }
     }
 }
@@ -91,5 +94,15 @@ impl<R: Clone, E> Graph<R, E> {
         };
         self.graph.add_edge(from_idx, to_idx, weight);
         true
+    }
+
+    pub fn set_subnet(&mut self, name: impl Into<String>, mut node_ids: Vec<NodeId>) {
+        node_ids.sort_unstable();
+        node_ids.dedup();
+        self.subnets.insert(name.into(), node_ids);
+    }
+
+    pub fn subnet_node_ids(&self, name: &str) -> Option<&[NodeId]> {
+        self.subnets.get(name).map(Vec::as_slice)
     }
 }

@@ -1,6 +1,6 @@
 //! Network topology generation utilities.
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use serde::Deserialize;
 use simdash_ids::NodeId;
@@ -17,7 +17,7 @@ pub struct BuildState<'a, R: rand::Rng> {
     pub graph: &'a mut Graph,
     pub next_id: &'a mut u32,
     pub all_node_ids: &'a mut Vec<NodeId>,
-    pub named_groups: &'a mut HashMap<String, Vec<NodeId>>,
+    pub named_subnets: &'a mut BTreeMap<String, Vec<NodeId>>,
     pub rng: &'a mut R,
 }
 
@@ -66,16 +66,20 @@ impl TopologyGenerator {
         let mut next_id: u32 = 0;
         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
         let mut all_node_ids: Vec<NodeId> = Vec::new();
-        let mut named_groups: HashMap<String, Vec<NodeId>> = HashMap::new();
+        let mut named_subnets: BTreeMap<String, Vec<NodeId>> = BTreeMap::new();
 
         for rule in &self.config {
             rule.apply(&mut BuildState {
                 graph: &mut graph,
                 next_id: &mut next_id,
                 all_node_ids: &mut all_node_ids,
-                named_groups: &mut named_groups,
+                named_subnets: &mut named_subnets,
                 rng: &mut rng,
             });
+        }
+
+        for (name, node_ids) in named_subnets {
+            graph.set_subnet(name, node_ids);
         }
 
         graph
@@ -220,7 +224,7 @@ mod tests {
         assert_eq!(graph.graph().node_count(), 4);
         assert_eq!(graph.graph().edge_count(), 2);
 
-        // First two nodes are isolated; only the nested group receives links.
+        // First two nodes are isolated; only the nested subnet receives links.
         let out_dist = outgoing_distribution(&graph);
         assert_eq!(out_dist[0], 2);
         assert_eq!(out_dist[1], 2);
@@ -232,16 +236,16 @@ mod tests {
     }
 
     #[test]
-    fn two_named_nested_node_groups_with_links_to_first_group() {
+    fn two_named_nested_node_subnets_with_links_to_first_subnet() {
         let json = r#"[
             {
                 "element": "node",
-                "name": "first_group",
+                "subnet": "first_subnet",
                 "number": 2
             },
             {
                 "element": "node",
-                "name": "second_group",
+                "subnet": "second_subnet",
                 "number": 2,
                 "rules": [
                    {
@@ -250,7 +254,7 @@ mod tests {
                         "count": 1,
                         "destination": {
                             "selection": "random",
-                            "group": "first_group"
+                            "subnet": "first_subnet"
                         }
                     }
                 ]
@@ -284,5 +288,14 @@ mod tests {
             assert!(from == NodeId::from(2) || from == NodeId::from(3));
             assert!(to == NodeId::from(0) || to == NodeId::from(1));
         }
+
+        assert_eq!(
+            graph.subnet_node_ids("first_subnet"),
+            Some(&[NodeId::from(0), NodeId::from(1)] as &[NodeId])
+        );
+        assert_eq!(
+            graph.subnet_node_ids("second_subnet"),
+            Some(&[NodeId::from(2), NodeId::from(3)] as &[NodeId])
+        );
     }
 }

@@ -25,7 +25,7 @@ pub enum Selection {
 pub struct DestinationSpec {
     pub selection: Selection,
     #[serde(default)]
-    pub group: Option<String>,
+    pub subnet: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -35,7 +35,7 @@ pub enum Destination {
     Spec(DestinationSpec),
 }
 
-/// Specification for links originating from a node group.
+/// Specification for links originating from a node subnet.
 #[derive(Debug, Clone, Deserialize)]
 pub struct LinkSpec {
     pub strategy: String,
@@ -49,17 +49,13 @@ impl ApplyRule for LinkSpec {
             return;
         }
 
-        let (selection, group) = match &self.destination {
+        let (selection, subnet) = match &self.destination {
             Destination::Selection(selection) => (selection, None),
-            Destination::Spec(spec) => (&spec.selection, spec.group.as_ref()),
+            Destination::Spec(spec) => (&spec.selection, spec.subnet.as_ref()),
         };
 
-        let target_pool: Vec<NodeId> = match group {
-            Some(group) => state
-                .named_groups
-                .get(group)
-                .cloned()
-                .unwrap_or_default(),
+        let target_pool: Vec<NodeId> = match subnet {
+            Some(subnet) => state.named_subnets.get(subnet).cloned().unwrap_or_default(),
             None => state.all_node_ids.clone(),
         };
 

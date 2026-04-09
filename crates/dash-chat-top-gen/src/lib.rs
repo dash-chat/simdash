@@ -25,6 +25,8 @@ pub struct Config {
     pub ops_per_node: Distribution,
     /// Payload size (in bytes) of each operation.
     pub op_payload_size: Distribution,
+    /// Storage capacity per node.
+    pub node_storage: Distribution,
 }
 
 impl Config {
@@ -42,6 +44,8 @@ impl Config {
             ops_per_node: Distribution::fixed(0.0),
             // typical message payload ~256 bytes
             op_payload_size: Distribution::normal(256.0, 50.0),
+            // default node storage ~50 MB, std_dev ~10 MB
+            node_storage: Distribution::normal(50_000_000.0, 10_000_000.0),
         }
     }
 
@@ -71,13 +75,14 @@ impl ChatStateGenerator {
         Ok(Self { config })
     }
 
-    /// Generate a `ChatState` for each node in the network topology.
-    pub fn generate(&self, graph: &Graph) -> BTreeMap<NodeId, ChatState> {
+    /// Generate a `ChatState` for each node and apply it to the graph.
+    pub fn generate(&self, mut graph: Graph) -> Graph {
         let mut rng = StdRng::seed_from_u64(self.config.seed);
-        let nodes: Vec<NodeId> = graph.node_ids().collect();
+        let mut nodes: Vec<NodeId> = graph.node_ids().collect();
+        nodes.sort();
         let n = nodes.len();
         if n == 0 {
-            return BTreeMap::new();
+            return graph;
         }
 
         // Step 1: Estimate total number of groups.
@@ -88,7 +93,6 @@ impl ChatStateGenerator {
 
         // Step 2: For each node, assign groups, contacts, and ops.
         let mut op_counter: u32 = 0;
-        let mut result = BTreeMap::new();
 
         for &node in &nodes {
             // Groups
@@ -151,25 +155,28 @@ impl ChatStateGenerator {
                 );
             }
 
-            result.insert(
-                node,
-                ChatState {
-                    op_store,
-                    contacts,
-                    groups,
-                },
-            );
+            let chat_state = ChatState {
+                op_store,
+                contacts,
+                groups,
+            };
+            graph
+                .update_node(node, |mut n| {
+                    n.dash = chat_state;
+                    Ok((n, ()))
+                })
+                .ok();
         }
 
-        result
+        graph
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use simdash_state::node::NodeState;
-
     use super::*;
+    use simdash_state::chat::ChatState;
+    use simdash_state::node::NodeState;
 
     fn make_graph(n: u32) -> Graph {
         let mut graph = Graph::new();
@@ -179,9 +186,15 @@ mod tests {
         graph
     }
 
+    fn assert_all_nodes(graph: &Graph, f: impl Fn(&ChatState)) {
+        for node_id in graph.node_ids() {
+            let state = graph.node_state(node_id).unwrap();
+            f(&state.dash);
+        }
+    }
+
     #[test]
     fn deterministic_with_seed() {
-        let graph = make_graph(10);
         let config = Config {
             seed: 42,
             contacts_per_node: Distribution::fixed(3.0),
@@ -189,22 +202,28 @@ mod tests {
             group_size: Distribution::fixed(3.0),
             ops_per_node: Distribution::fixed(5.0),
             op_payload_size: Distribution::fixed(100.0),
+            node_storage: Distribution::fixed(50_000_000.0),
         };
 
-        let result1 = ChatStateGenerator {
+        let graph1 = ChatStateGenerator {
             config: config.clone(),
         }
-        .generate(&graph);
-        let result2 = ChatStateGenerator {
+        .generate(make_graph(10));
+        let graph2 = ChatStateGenerator {
             config: config.clone(),
         }
-        .generate(&graph);
-        assert_eq!(result1, result2);
+        .generate(make_graph(10));
+
+        // Same seed produces same chat states
+        for node_id in graph1.node_ids() {
+            let s1 = &graph1.node_state(node_id).unwrap().dash;
+            let s2 = &graph2.node_state(node_id).unwrap().dash;
+            assert_eq!(s1, s2);
+        }
     }
 
     #[test]
     fn respects_fixed_counts() {
-        let graph = make_graph(5);
         let config = Config {
             seed: 1,
             contacts_per_node: Distribution::fixed(2.0),
@@ -212,26 +231,26 @@ mod tests {
             group_size: Distribution::fixed(2.0),
             ops_per_node: Distribution::fixed(3.0),
             op_payload_size: Distribution::fixed(64.0),
+            node_storage: Distribution::fixed(50_000_000.0),
         };
 
-        let result = ChatStateGenerator {
+        let graph = ChatStateGenerator {
             config: config.clone(),
         }
-        .generate(&graph);
-        assert_eq!(result.len(), 5);
-        for (_node_id, state) in &result {
+        .generate(make_graph(5));
+        assert_eq!(graph.graph().node_count(), 5);
+        assert_all_nodes(&graph, |state| {
             assert_eq!(state.contacts.len(), 2);
             assert_eq!(state.groups.len(), 1);
             assert_eq!(state.op_store.len(), 3);
             for op in state.op_store.values() {
                 assert_eq!(*op.header.payload_size, 64);
             }
-        }
+        });
     }
 
     #[test]
     fn uniform_distribution() {
-        let graph = make_graph(20);
         let config = Config {
             seed: 99,
             contacts_per_node: Distribution::uniform(1.0, 5.0),
@@ -239,14 +258,15 @@ mod tests {
             group_size: Distribution::fixed(4.0),
             ops_per_node: Distribution::uniform(0.0, 10.0),
             op_payload_size: Distribution::normal(256.0, 50.0),
+            node_storage: Distribution::fixed(50_000_000.0),
         };
 
-        let result = ChatStateGenerator {
+        let graph = ChatStateGenerator {
             config: config.clone(),
         }
-        .generate(&graph);
-        assert_eq!(result.len(), 20);
-        for state in result.values() {
+        .generate(make_graph(20));
+        assert_eq!(graph.graph().node_count(), 20);
+        assert_all_nodes(&graph, |state| {
             assert!(state.contacts.len() >= 1 && state.contacts.len() <= 5);
             assert!(state.groups.len() >= 1 && state.groups.len() <= 3);
             assert!(state.op_store.len() <= 10);
@@ -254,27 +274,26 @@ mod tests {
                 // Normal(256, 50) — payload should be in a reasonable range
                 assert!(*op.header.payload_size <= 500);
             }
-        }
+        });
     }
 
     #[test]
     fn disconnected_for_defaults() {
-        let graph = make_graph(10);
         // 1 hour disconnected, ~0.017 msgs/min (≈25/day)
         let config =
             Config::disconnected_for(42, Duration::from_secs(3600), Distribution::fixed(0.017));
 
-        let result = ChatStateGenerator {
+        let graph = ChatStateGenerator {
             config: config.clone(),
         }
-        .generate(&graph);
-        assert_eq!(result.len(), 10);
-        for state in result.values() {
+        .generate(make_graph(10));
+        assert_eq!(graph.graph().node_count(), 10);
+        assert_all_nodes(&graph, |state| {
             // With Normal(20,8) contacts, should have some
             assert!(state.contacts.len() > 0);
             // 0.017 msgs/min * 60 min ≈ 1 op per node
             assert!(state.op_store.len() <= 5);
-        }
+        });
     }
 
     #[test]
@@ -285,18 +304,18 @@ mod tests {
             "groups_per_node": { "type": "fixed", "value": 2.0 },
             "group_size": { "type": "fixed", "value": 3.0 },
             "ops_per_node": { "type": "uniform", "min": 1.0, "max": 5.0 },
-            "op_payload_size": { "type": "normal", "mean": 256.0, "std_dev": 50.0 }
+            "op_payload_size": { "type": "normal", "mean": 256.0, "std_dev": 50.0 },
+            "node_storage": { "type": "fixed", "value": 50000000.0 }
         }"#;
 
         let generator = ChatStateGenerator::from_json(json).unwrap();
-        let graph = make_graph(10);
-        let result = generator.generate(&graph);
+        let graph = generator.generate(make_graph(10));
 
-        assert_eq!(result.len(), 10);
-        for state in result.values() {
+        assert_eq!(graph.graph().node_count(), 10);
+        assert_all_nodes(&graph, |state| {
             assert_eq!(state.contacts.len(), 3);
             assert_eq!(state.groups.len(), 2);
             assert!(state.op_store.len() >= 1 && state.op_store.len() <= 5);
-        }
+        });
     }
 }
