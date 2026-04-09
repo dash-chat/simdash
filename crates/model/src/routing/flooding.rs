@@ -58,6 +58,10 @@ impl polestar::Machine for FloodingModel {
                     .collect();
                 (state, Some(FloodingFx::BroadcastOps(broadcasted)))
             }
+            FloodingAction::Tick => {
+                state.tick();
+                (state, None)
+            }
         };
         Ok((state, fx))
     }

@@ -4,4 +4,5 @@ use crate::{chat::ChatAction, routing::RoutingAction};
 pub enum NodeAction {
     Chat(ChatAction),
     Routing(RoutingAction),
+    Tick,
 }

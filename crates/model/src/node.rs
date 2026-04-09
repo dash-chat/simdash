@@ -1,5 +1,9 @@
 use polestar::util::update_replace;
-use simdash_action::{chat::ChatAction, node::NodeAction, routing::flooding::FloodingAction};
+use simdash_action::{
+    chat::ChatAction,
+    node::NodeAction,
+    routing::{RoutingAction, flooding::FloodingAction},
+};
 use simdash_ids::Ticks;
 
 use crate::{
@@ -66,6 +70,13 @@ impl polestar::Machine for NodeModel {
                 let (routing, fx) = self.routing.transition(state.routing, action)?;
                 state.routing = routing;
                 (state, fx.map(|fx| NodeFx { routing: fx }))
+            }
+            NodeAction::Tick => {
+                let (routing, fx) = self
+                    .routing
+                    .transition(state.routing, RoutingAction::Tick)?;
+                state.routing = routing;
+                (state, None)
             }
         })
     }

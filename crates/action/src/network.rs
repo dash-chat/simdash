@@ -4,6 +4,7 @@ use crate::node::NodeAction;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum NetworkAction {
+    /// Tick every node
     Tick,
     Node(NodeId, NodeAction),
 }

@@ -32,13 +32,11 @@ impl polestar::Machine for NetworkModel {
         action: Self::Action,
     ) -> polestar::TransitionResult<Self> {
         match action {
-            // Tick every node and run all effects
             simdash_action::network::NetworkAction::Tick => {
                 let all_keys = state.graph.node_ids().collect::<Vec<_>>();
                 for node_id in all_keys {
                     state.graph.update_node(node_id, |mut node_state| {
-                        node_state.tick();
-                        Ok((node_state, ()))
+                        self.node.transition(node_state, NodeAction::Tick)
                     })?;
                 }
                 Ok((state, ()))
