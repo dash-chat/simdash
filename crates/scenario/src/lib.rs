@@ -28,22 +28,22 @@ where
         }
     }
 
-    pub fn advance(&mut self) -> anyhow::Result<()> {
+    pub fn advance(&mut self) -> anyhow::Result<Option<M::Action>> {
         if let Some(state) = self.state.take() {
             let action = self.behavior.next(&state)?;
-            if let Some(action) = action {
+            if let Some(action) = action.clone() {
                 self.state = Some(self.model.transition_(state, action.clone())?);
                 self.history.push(action);
             } else {
                 self.state = Some(state);
             }
+            return Ok(action);
         } else {
             // TODO: invalid actions would be due to a misguided behavior.
             //       ideally the behavior should be written to not produce invalid actions.
             //       in practice maybe we should be lenient and just let it continue.
             anyhow::bail!("The scenario has already finished due to invalid action");
         }
-        Ok(())
     }
 
     pub fn state(&self) -> Option<&M::State> {

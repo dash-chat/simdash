@@ -1,6 +1,7 @@
 use simdash_behavior::{network::RoundRobinNodeScheduler, node::BasicRoutingBehavior, routing::NaiveFloodingBehavior};
 use simdash_model::network::NetworkModel;
 use simdash_model::node::NodeModelConfig;
+use simdash_scenario::Scenario;
 use simdash_state::network::NetworkState;
 use simdash_state::routing::RoutingState;
 use simdash_state::routing::flooding::{FloodingOp, FloodingState};
@@ -11,7 +12,7 @@ pub type NaiveFloodingBehaviorType =
 pub fn naive_flooding(
     mut initial_state: NetworkState,
     broadcast_interval: u32,
-) -> (NetworkModel, NaiveFloodingBehaviorType, NetworkState) {
+) -> Scenario<NetworkModel, NaiveFloodingBehaviorType> {
     // Seed each node's routing state from its chat op_store so flooding
     // knows about the initial ops and can broadcast them.
     let node_ids: Vec<_> = initial_state.graph.node_ids().collect();
@@ -30,5 +31,5 @@ pub fn naive_flooding(
     });
     let behavior =
         RoundRobinNodeScheduler::new(BasicRoutingBehavior::new(NaiveFloodingBehavior));
-    (model, behavior, initial_state)
+    Scenario::initial(model, initial_state, behavior)
 }
