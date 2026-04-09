@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
 use axum::{
-    Json,
     extract::State,
     http::StatusCode,
     response::{IntoResponse, Response},
+    Json,
 };
 use serde::Serialize;
 use simdash_ids::NodeId;
@@ -117,6 +117,7 @@ fn build_node_infos(state: &NetworkState) -> Vec<NodeInfo> {
 
             let routing_ops: Vec<RoutingOpInfo> = node_state
                 .routing
+                .flooding
                 .ops
                 .values()
                 .map(|op| RoutingOpInfo {
