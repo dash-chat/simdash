@@ -21,9 +21,12 @@ impl NetworkState {
     pub fn load_postcard(path: impl AsRef<Path>) -> Self {
         let path = path.as_ref();
         let path = path.canonicalize().unwrap();
+        let start_time = std::time::Instant::now();
         println!("Loading network state from {}", path.display());
         let bytes = std::fs::read(path).unwrap();
-        let graph = postcard::from_bytes(&bytes).unwrap();
+        let graph: Graph = postcard::from_bytes(&bytes).unwrap();
+        graph.assert_integrity();
+        println!("Loaded network state in {:.2?}", start_time.elapsed());
         Self { graph }
     }
 }

@@ -7,8 +7,8 @@ use crate::Behavior;
 pub struct NaiveFloodingBehavior;
 
 impl Behavior<RoutingModel> for NaiveFloodingBehavior {
-    fn next(&mut self, _: &RoutingState) -> anyhow::Result<Option<RoutingAction>> {
-        Ok(Some(FloodingAction::TriggerBroadcast.into()))
+    fn next(&mut self, _: &RoutingState) -> anyhow::Result<Vec<RoutingAction>> {
+        Ok(vec![FloodingAction::TriggerBroadcast.into()])
     }
 }
 
@@ -17,7 +17,7 @@ impl Behavior<RoutingModel> for NaiveFloodingBehavior {
 pub struct NoOpRoutingBehavior;
 
 impl Behavior<RoutingModel> for NoOpRoutingBehavior {
-    fn next(&mut self, _: &RoutingState) -> anyhow::Result<Option<RoutingAction>> {
-        Ok(None)
+    fn next(&mut self, _: &RoutingState) -> anyhow::Result<Vec<RoutingAction>> {
+        Ok(vec![])
     }
 }

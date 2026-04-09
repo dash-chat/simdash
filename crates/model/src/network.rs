@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use polestar::{Machine, ext::MapExt};
 use simdash_action::{
     node::NodeAction,
@@ -46,12 +48,19 @@ impl polestar::Machine for NetworkModel {
             }
 
             simdash_action::network::NetworkAction::Node(node_id, node_action) => {
-                if let Some(fx) = state.graph.update_node(node_id, |node_state| {
+                let fx = match state.graph.update_node(node_id, |node_state| {
                     let (node_state, node_fx) = self.node.transition(node_state, node_action)?;
                     Ok((node_state, node_fx))
-                })? {
-                    self.apply_node_effects(&mut state, node_id, fx)?;
-                }
+                }) {
+                    Ok(fx) => {
+                        if let Some(fx) = fx {
+                            self.apply_node_effects(&mut state, node_id, fx)?;
+                        }
+                    }
+                    Err(e) => {
+                        tracing::error!("Failed to transition node {node_id:?}: {e:?}");
+                    }
+                };
                 Ok((state, ()))
             }
         }

@@ -28,16 +28,16 @@ where
         }
     }
 
-    pub fn advance(&mut self) -> anyhow::Result<Option<M::Action>> {
-        if let Some(state) = self.state.take() {
-            let action = self.behavior.next(&state)?;
-            if let Some(action) = action.clone() {
-                self.state = Some(self.model.transition_(state, action.clone())?);
+    pub fn advance(&mut self) -> anyhow::Result<bool> {
+        if let Some(mut state) = self.state.take() {
+            let actions = self.behavior.next(&state)?;
+            let empty = actions.is_empty();
+            for action in actions {
+                state = self.model.transition_(state, action.clone())?;
                 self.history.push(action);
-            } else {
-                self.state = Some(state);
             }
-            return Ok(action);
+            self.state = Some(state);
+            Ok(!empty)
         } else {
             // TODO: invalid actions would be due to a misguided behavior.
             //       ideally the behavior should be written to not produce invalid actions.

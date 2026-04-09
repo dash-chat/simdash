@@ -1,7 +1,6 @@
 pub mod naive_flooding;
 pub mod no_routing;
 
-use simdash_action::network::NetworkAction;
 use simdash_model::network::NetworkModel;
 use simdash_scenario::Scenario;
 
@@ -24,24 +23,12 @@ impl AnyScenario {
         }
     }
 
-    pub fn advance(&mut self) -> anyhow::Result<Option<NetworkAction>> {
+    pub fn advance(&mut self) -> anyhow::Result<bool> {
         match self {
             AnyScenario::NaiveFlooding(s) => s.advance(),
             AnyScenario::NoRouting(s) => s.advance(),
         }
     }
-}
-
-/// Advance one round: call advance() until the returned action is a Tick.
-pub fn step_until_tick(scenario: &mut AnyScenario) -> anyhow::Result<()> {
-    loop {
-        match scenario.advance()? {
-            Some(NetworkAction::Tick) => break,
-            Some(_) => continue,
-            None => break,
-        }
-    }
-    Ok(())
 }
 
 pub const AVAILABLE_BEHAVIORS: &[&str] = &["naive-flooding", "no-routing"];

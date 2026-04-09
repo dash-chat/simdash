@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use petgraph::graph::{Graph as PetGraph, NodeIndex};
 use polestar::ext::MapExt;
@@ -10,7 +10,7 @@ use crate::node::NodeState;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Graph<R = crate::routing::RoutingState, E = ()> {
     graph: PetGraph<(), E>,
-    nodes: HashMap<NodeId, NodeState<R>>,
+    pub nodes: HashMap<NodeId, NodeState<R>>,
     #[serde(skip, default)]
     subnets: HashMap<String, Vec<NodeId>>,
 }
@@ -50,14 +50,6 @@ impl<R: Clone, E> Graph<R, E> {
         self.nodes.get_mut(&node_id)
     }
 
-    pub fn set_node(&mut self, node_id: NodeId, state: NodeState<R>) -> bool {
-        let Some(entry) = self.nodes.get_mut(&node_id) else {
-            return false;
-        };
-        *entry = state;
-        true
-    }
-
     pub fn update_node<O>(
         &mut self,
         node_id: NodeId,
@@ -93,5 +85,24 @@ impl<R: Clone, E> Graph<R, E> {
 
     pub fn subnet_node_ids(&self, name: &str) -> Option<&[NodeId]> {
         self.subnets.get(name).map(Vec::as_slice)
+    }
+
+    pub fn assert_integrity(&self) {
+        assert_eq!(
+            self.graph.node_count(),
+            self.nodes.len(),
+            "graph integrity check failed: node count mismatch"
+        );
+
+        let indices = self
+            .graph
+            .node_indices()
+            .map(|i| NodeId::from(i))
+            .collect::<BTreeSet<_>>();
+        let ids = self.nodes.keys().copied().collect::<BTreeSet<_>>();
+        assert_eq!(
+            indices, ids,
+            "graph integrity check failed: node id mismatch"
+        );
     }
 }

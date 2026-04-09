@@ -16,10 +16,12 @@ impl<B: Behavior<RoutingModel>> BasicRoutingBehavior<B> {
 }
 
 impl<B: Behavior<RoutingModel>> Behavior<NodeModel> for BasicRoutingBehavior<B> {
-    fn next(&mut self, state: &NodeState) -> anyhow::Result<Option<NodeAction>> {
+    fn next(&mut self, state: &NodeState) -> anyhow::Result<Vec<NodeAction>> {
         Ok(self
             .routing_behavior
             .next(&state.routing)?
-            .map(NodeAction::Routing))
+            .into_iter()
+            .map(NodeAction::Routing)
+            .collect())
     }
 }

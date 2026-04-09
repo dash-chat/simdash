@@ -8,6 +8,8 @@ use simdash_model::{network::NetworkModel, node::NodeModelConfig, util::basic_op
 use simdash_scenario::Scenario;
 use simdash_state::network::NetworkState;
 
+const STABLE_STEP_LIMIT: usize = 100;
+
 fn holding_count(state: &NetworkState, ops: impl IntoIterator<Item = OpId>) -> usize {
     let ops = ops.into_iter().collect::<Vec<_>>();
     state
@@ -45,33 +47,41 @@ fn main() {
     let mut prev_count = 0;
     let mut stable_steps = 0;
     let start_time = std::time::Instant::now();
+    println!("starting scenario");
+    let mut step = 0;
 
+    println!(" STEP | COUNT | ACTIONS  | TIME");
+    println!("------|-------|----------|----------");
     loop {
-        let Some(_action) = scenario.advance().unwrap() else {
-            println!("scenario can't advance");
+        let advanced = scenario.advance().unwrap();
+        if !advanced {
+            println!("scenario couldn't advance");
             break;
         };
+        step += 1;
         let state = scenario.state().unwrap();
         let count = holding_count(&state, ops.clone().map(|op| op.id));
         let num_actions = scenario.history().len();
-        if num_actions % 10_000 == 0 {
+        if num_actions % state.graph.graph().node_count() == 0 {
             println!("...");
         }
         if prev_count != count {
+            stable_steps = 0;
             prev_count = count;
             println!(
-                "step {:<5} | count={:<3} | time={:.2?}",
-                num_actions,
+                "{:<5} | {:<5} | {:<8} | {:.2?}",
+                step,
                 count,
+                num_actions,
                 start_time.elapsed()
             );
         } else {
             stable_steps += 1;
-            if stable_steps > state.graph.graph().node_count() {
+            if stable_steps > STABLE_STEP_LIMIT {
                 println!(
-                    "count is stable in {} steps. avg time per step: {:.2?}",
-                    num_actions,
-                    start_time.elapsed() / num_actions as u32
+                    "count is stable in {} steps, {num_actions} actions. avg time per step: {:.2?}",
+                    step - stable_steps,
+                    start_time.elapsed() / step as u32
                 );
                 break;
             }

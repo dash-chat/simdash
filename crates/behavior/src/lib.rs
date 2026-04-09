@@ -9,5 +9,5 @@ pub trait Behavior<M>
 where
     M: Machine<Error = anyhow::Error>,
 {
-    fn next(&mut self, state: &M::State) -> anyhow::Result<Option<M::Action>>;
+    fn next(&mut self, state: &M::State) -> anyhow::Result<Vec<M::Action>>;
 }
