@@ -36,7 +36,11 @@ impl polestar::Machine for FloodingModel {
                 (state, None)
             }
             FloodingAction::ReceiveOp { from: _, op } => {
-                let existing = state.ops.insert(op.id, FloodingOp::new(&op));
+                let mut flooding_op = FloodingOp::new(&op);
+                // Mark as recently sent so the node doesn't re-broadcast
+                // the op in the same round it was received.
+                flooding_op.touch();
+                let existing = state.ops.insert(op.id, flooding_op);
                 if existing.is_some() {
                     anyhow::bail!("Flooding op already exists: op={:?}", op.id);
                 }
