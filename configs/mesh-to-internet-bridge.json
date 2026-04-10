@@ -79,7 +79,7 @@
   "dash-chat-top": {
     "storage_capacity_per_node_kb": {
       "type": "fixed",
-      "value": 40
+      "value": 4000
     },
     "rules": [
       {

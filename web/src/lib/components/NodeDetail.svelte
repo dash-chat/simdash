@@ -13,6 +13,22 @@
 
 	let { node, selectedGroupId, selectedOpId, onselectgroup, onselectop, onselectnode, onclose }: Props = $props();
 
+	function isNodeOp(op: import('$lib/types').OpInfo): boolean {
+		return op.author === node.id
+			|| (op.body.type === 'DirectMessage'
+				? op.body.recipient === node.id
+				: node.groups.includes(op.body.group_id));
+	}
+
+	let ownOps = $derived(node.ops.filter(isNodeOp));
+	let relayOps = $derived(node.ops.filter((op) => !isNodeOp(op)));
+	let opStoreSize = $derived(ownOps.reduce((sum, op) => sum + op.payload_size, 0));
+	let relayStoreSize = $derived(node.stored_size - opStoreSize);
+
+	function kb(bytes: number): string {
+		return (bytes / 1024).toFixed(1);
+	}
+
 	function toggleGroup(id: number) {
 		onselectgroup(selectedGroupId === id ? null : id);
 	}
@@ -51,23 +67,27 @@
 			<tr><td>Neighbors</td><td>{node.neighbors.join(', ') || 'none'}</td></tr>
 			<tr><td>Routing ops</td><td>{node.routing_ops.length}</td></tr>
 			<tr>
+				<td>Storage capacity</td>
+				<td>{node.storage_capacity !== null ? kb(node.storage_capacity) + ' KB' : 'unlimited'}</td>
+			</tr>
+			<tr>
 				<td>Storage used</td>
 				<td>
 					{#if node.storage_capacity !== null}
 						{(node.stored_size / node.storage_capacity * 100).toFixed(1)}%
-						<span class="storage-detail">({node.stored_size}/{node.storage_capacity})</span>
+						<span class="storage-detail">({kb(node.stored_size)}/{kb(node.storage_capacity)} KB)</span>
 					{:else}
-						{node.stored_size} (unlimited)
+						{kb(node.stored_size)} KB (unlimited)
 					{/if}
 				</td>
 			</tr>
 		</tbody>
 	</table>
 
-	{#if node.ops.length > 0}
-		<h4>Operations</h4>
+	{#if ownOps.length > 0}
+		<h4>Operation Store <span class="size-label">({kb(opStoreSize)} KB)</span></h4>
 		<div class="ops-list">
-			{#each node.ops as op}
+			{#each ownOps as op}
 				<div class="op">
 					<button
 						class="op-link"
@@ -86,7 +106,35 @@
 							>Group {op.body.group_id}</button>
 						{/if}
 					</span>
-					<span class="op-size">{op.payload_size}B</span>
+					<span class="op-size">{kb(op.payload_size)} KB</span>
+				</div>
+			{/each}
+		</div>
+	{/if}
+
+	{#if relayOps.length > 0}
+		<h4>Relay Store <span class="size-label">({kb(relayStoreSize)} KB)</span></h4>
+		<div class="ops-list">
+			{#each relayOps as op}
+				<div class="op">
+					<button
+						class="op-link"
+						class:active={selectedOpId === op.id}
+						onclick={() => toggleOp(op.id)}
+					>#{op.id}</button>
+					<button class="author-link" onclick={() => onselectnode(op.author)}>from {op.author}</button>
+					<span class="op-type">
+						{#if op.body.type === 'DirectMessage'}
+							DM→{op.body.recipient}
+						{:else}
+							<button
+								class="group-link"
+								class:active={selectedGroupId === op.body.group_id}
+								onclick={() => toggleGroup(op.body.group_id)}
+							>Group {op.body.group_id}</button>
+						{/if}
+					</span>
+					<span class="op-size">{kb(op.payload_size)} KB</span>
 				</div>
 			{/each}
 		</div>
@@ -126,6 +174,10 @@
 		margin: 12px 0 6px;
 		font-size: 13px;
 		color: #8ecae6;
+	}
+	.size-label {
+		color: #666;
+		font-weight: normal;
 	}
 	table {
 		width: 100%;
