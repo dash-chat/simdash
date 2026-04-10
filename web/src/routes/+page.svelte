@@ -27,6 +27,14 @@
 			snapshot.nodes.filter((n) => n.groups.includes(selectedGroupId!)).map((n) => n.id)
 		);
 	});
+	let selectedAuthorId: number | null = $derived.by(() => {
+		if (selectedOpId === null || !snapshot) return null;
+		for (const node of snapshot.nodes) {
+			const op = node.ops.find((o) => o.id === selectedOpId);
+			if (op) return op.author;
+		}
+		return null;
+	});
 	let opTrace: OpTraceData | null = $derived.by(() => {
 		if (selectedOpId === null || !snapshot) return null;
 		const holders = new Set(
@@ -112,7 +120,7 @@
 	<div class="layout">
 		<div class="left-panel">
 			<div class="metrics-area">
-				<MetricsPanel {metrics} {selectedGroupId} {selectedOpId} onselectgroup={(id) => (selectedGroupId = id)} onselectop={toggleOp} />
+				<MetricsPanel {metrics} {selectedGroupId} {selectedOpId} onselectgroup={(id) => (selectedGroupId = id)} onselectop={toggleOp} onselectnode={(id) => { selectedNodeId = id; selectedGroupId = null; selectedOpId = null; }} />
 			</div>
 			<div class="controls-area">
 				<Controls
@@ -128,11 +136,11 @@
 			</div>
 		</div>
 		<div class="graph-area">
-			<GraphView {snapshot} {selectedNodeId} {highlightedNodeIds} {opTrace} onselect={(id) => { selectedNodeId = id; selectedGroupId = null; selectedOpId = null; }} />
+			<GraphView {snapshot} {selectedNodeId} {selectedAuthorId} {highlightedNodeIds} {opTrace} onselect={(id) => { selectedNodeId = id; selectedGroupId = null; selectedOpId = null; }} />
 		</div>
 		{#if selectedNode}
 			<div class="right-panel">
-				<NodeDetail node={selectedNode} {selectedGroupId} {selectedOpId} onselectgroup={(id) => (selectedGroupId = id)} onselectop={toggleOp} onclose={() => (selectedNodeId = null)} />
+				<NodeDetail node={selectedNode} {selectedGroupId} {selectedOpId} onselectgroup={(id) => (selectedGroupId = id)} onselectop={toggleOp} onselectnode={(id) => { selectedNodeId = id; selectedGroupId = null; selectedOpId = null; }} onclose={() => (selectedNodeId = null)} />
 			</div>
 		{/if}
 	</div>

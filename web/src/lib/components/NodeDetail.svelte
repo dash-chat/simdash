@@ -7,10 +7,11 @@
 		selectedOpId: number | null;
 		onselectgroup: (groupId: number | null) => void;
 		onselectop: (opId: number | null) => void;
+		onselectnode: (nodeId: number) => void;
 		onclose: () => void;
 	}
 
-	let { node, selectedGroupId, selectedOpId, onselectgroup, onselectop, onclose }: Props = $props();
+	let { node, selectedGroupId, selectedOpId, onselectgroup, onselectop, onselectnode, onclose }: Props = $props();
 
 	function toggleGroup(id: number) {
 		onselectgroup(selectedGroupId === id ? null : id);
@@ -62,7 +63,7 @@
 						class:active={selectedOpId === op.id}
 						onclick={() => toggleOp(op.id)}
 					>#{op.id}</button>
-					<span class="op-author">from {op.author}</span>
+					<button class="author-link" onclick={() => onselectnode(op.author)}>from {op.author}</button>
 					<span class="op-type">
 						{#if op.body.type === 'DirectMessage'}
 							DM→{op.body.recipient}
@@ -154,8 +155,18 @@
 		text-decoration-style: solid;
 		font-weight: bold;
 	}
-	.op-author {
-		color: #999;
+	.author-link {
+		background: none;
+		border: none;
+		color: #e060e0;
+		cursor: pointer;
+		padding: 0;
+		font-size: inherit;
+		text-decoration: underline;
+		text-decoration-style: dotted;
+	}
+	.author-link:hover {
+		color: #f090f0;
 	}
 	.op-type {
 		color: #bbb;

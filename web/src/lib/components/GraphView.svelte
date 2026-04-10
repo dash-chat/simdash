@@ -6,12 +6,13 @@
 	interface Props {
 		snapshot: SimSnapshot;
 		selectedNodeId: number | null;
+		selectedAuthorId: number | null;
 		highlightedNodeIds: Set<number>;
 		opTrace: OpTraceData | null;
 		onselect: (nodeId: number | null) => void;
 	}
 
-	let { snapshot, selectedNodeId, highlightedNodeIds, opTrace, onselect }: Props = $props();
+	let { snapshot, selectedNodeId, selectedAuthorId, highlightedNodeIds, opTrace, onselect }: Props = $props();
 
 	let container: HTMLDivElement;
 	let cy: cytoscape.Core | null = null;
@@ -88,6 +89,9 @@
 			if (id === selectedNodeId) {
 				ele.style('border-width', 3);
 				ele.style('border-color', '#fff');
+			} else if (id === selectedAuthorId) {
+				ele.style('border-width', 3);
+				ele.style('border-color', '#e060e0');
 			} else if (hasHighlight && highlightedNodeIds.has(id)) {
 				ele.style('border-width', 3);
 				ele.style('border-color', '#f0c040');
@@ -205,6 +209,7 @@
 	$effect(() => {
 		snapshot;
 		selectedNodeId;
+		selectedAuthorId;
 		highlightedNodeIds;
 		opTrace;
 		if (cy && layoutDone) {

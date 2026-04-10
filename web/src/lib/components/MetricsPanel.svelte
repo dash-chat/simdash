@@ -7,9 +7,10 @@
 		selectedOpId: number | null;
 		onselectgroup: (groupId: number | null) => void;
 		onselectop: (opId: number | null) => void;
+		onselectnode: (nodeId: number) => void;
 	}
 
-	let { metrics, selectedGroupId, selectedOpId, onselectgroup, onselectop }: Props = $props();
+	let { metrics, selectedGroupId, selectedOpId, onselectgroup, onselectop, onselectnode }: Props = $props();
 
 	function toggleGroup(id: number) {
 		onselectgroup(selectedGroupId === id ? null : id);
@@ -58,7 +59,7 @@
 									onclick={() => toggleOp(d.op_id)}
 								>{d.op_id}</button>
 							</td>
-							<td>{d.author}</td>
+							<td><button class="author-link" onclick={() => onselectnode(d.author)}>{d.author}</button></td>
 							<td>
 								{#if d.group_id !== null}
 									<button
@@ -132,6 +133,19 @@
 		color: #40e0a0;
 		text-decoration-style: solid;
 		font-weight: bold;
+	}
+	.author-link {
+		background: none;
+		border: none;
+		color: #e060e0;
+		cursor: pointer;
+		padding: 0;
+		font-size: inherit;
+		text-decoration: underline;
+		text-decoration-style: dotted;
+	}
+	.author-link:hover {
+		color: #f090f0;
 	}
 	.group-link {
 		background: none;
