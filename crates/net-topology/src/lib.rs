@@ -10,7 +10,7 @@ pub mod tag;
 
 pub use link::{Count, LinkSpec};
 pub use net_topology::NetTopology;
-pub use net_topology::{Destination, DestinationSpec, Selection};
+pub use net_topology::{Destination, DestinationSpec, Ordinality, Selection};
 pub use node::NodeSpec;
 pub use tag::NodeTagSpec;
 
@@ -175,22 +175,22 @@ mod tests {
 
         // dist[n] = number of nodes with exactly n outgoing edges
         let out_dist = outgoing_distribution(&graph);
-        assert_eq!(out_dist[0], 24);
-        assert_eq!(out_dist[1], 22);
-        assert_eq!(out_dist[2], 15);
-        assert_eq!(out_dist[3], 16);
-        assert_eq!(out_dist[4], 23);
+        assert_eq!(out_dist[0], 23);
+        assert_eq!(out_dist[1], 26);
+        assert_eq!(out_dist[2], 18);
+        assert_eq!(out_dist[3], 17);
+        assert_eq!(out_dist[4], 16);
 
         let inc_dist = incoming_distribution(&graph);
         // inc_dist[n] = number of nodes with exactly n incoming edges
         // (unbounded; any node may receive edges from multiple sources)
-        assert_eq!(inc_dist[&0], 15);
-        assert_eq!(inc_dist[&1], 28);
+        assert_eq!(inc_dist[&0], 17);
+        assert_eq!(inc_dist[&1], 30);
         assert_eq!(inc_dist[&2], 27);
-        assert_eq!(inc_dist[&3], 18);
-        assert_eq!(inc_dist[&4], 6);
-        assert_eq!(inc_dist[&5], 4);
-        assert_eq!(inc_dist[&6], 2);
+        assert_eq!(inc_dist[&3], 15);
+        assert_eq!(inc_dist[&4], 8);
+        assert_eq!(inc_dist[&5], 2);
+        assert_eq!(inc_dist[&6], 1);
     }
 
     #[test]
