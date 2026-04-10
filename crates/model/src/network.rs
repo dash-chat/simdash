@@ -1,6 +1,7 @@
 use std::collections::{BTreeSet, HashMap};
 
 use dash_chat_top_gen::ChatTopology;
+use net_topology::net_topology::Ordinality;
 use polestar::{Machine, ext::MapExt};
 use simdash_action::{
     node::NodeAction,
@@ -61,6 +62,40 @@ impl polestar::Machine for NetworkModel {
                     .graph
                     .graph_mut()
                     .retain_edges(|g, idx| g[idx].remaining_ticks != Some(0));
+
+                // Collect topology IDs that still have a live edge in the graph.
+                let existing_ids: BTreeSet<u32> = state
+                    .graph
+                    .graph()
+                    .edge_weights()
+                    .map(|e| e.topology_id)
+                    .collect();
+
+                for edge_topo in &self.topology.net.edges {
+                    if edge_topo.spawn_chance.is_none() {
+                        continue;
+                    }
+                    if existing_ids.contains(&edge_topo.id) {
+                        continue;
+                    }
+                    let candidates = self.topology.net.destination_candidates(edge_topo);
+                    if let Some(&to) = candidates.first() {
+                        use simdash_state::EdgeState;
+                        state.graph.add_edge(
+                            edge_topo.from,
+                            to,
+                            EdgeState::new(edge_topo.id, false, edge_topo.longevity),
+                        );
+                        if matches!(edge_topo.ordinality, Ordinality::Bidirectional) {
+                            state.graph.add_edge(
+                                to,
+                                edge_topo.from,
+                                EdgeState::new(edge_topo.id, true, edge_topo.longevity),
+                            );
+                        }
+                    }
+                }
+
                 Ok((state, ()))
             }
 

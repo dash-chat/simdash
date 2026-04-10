@@ -348,6 +348,58 @@ mod tests {
     }
 
     #[test]
+    fn link_spawn_chance_stored_on_edge_topology() {
+        let json = r#"[
+            {
+                "element": "node",
+                "number": 2
+            },
+            {
+                "element": "link",
+                "strategy": "per_node",
+                "count": 1,
+                "destination": {
+                    "selection": "random"
+                },
+                "spawn_chance": 0.5
+            },
+            {
+                "element": "link",
+                "strategy": "per_node",
+                "count": 1,
+                "destination": {
+                    "selection": "random"
+                }
+            }
+        ]"#;
+
+        let generator = TopologyGenerator::from_json(json).unwrap();
+        let topology = generator.generate(0);
+
+        let with_spawn_chance: Vec<_> = topology
+            .edges
+            .iter()
+            .filter(|e| e.spawn_chance == Some(0.5))
+            .collect();
+        let without_spawn_chance: Vec<_> = topology
+            .edges
+            .iter()
+            .filter(|e| e.spawn_chance.is_none())
+            .collect();
+
+        assert_eq!(
+            with_spawn_chance.len(),
+            2,
+            "two edges with spawn_chance 0.5 (one per node)"
+        );
+        assert_eq!(
+            without_spawn_chance.len(),
+            2,
+            "two edges with no spawn_chance set (one per node)"
+        );
+    }
+
+    #[test]
     fn link_longevity_stored_on_edge_topology() {
         let json = r#"[
             {

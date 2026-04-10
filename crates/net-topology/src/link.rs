@@ -27,6 +27,9 @@ pub struct LinkSpec {
     /// Number of ticks the link persists for. 0 means permanent.
     #[serde(default)]
     pub longevity: u32,
+    /// Probability [0, 1] that this link spawns if it is not already present.
+    #[serde(default)]
+    pub spawn_chance: Option<f64>,
 }
 
 impl ApplyRule for LinkSpec {
@@ -60,6 +63,7 @@ impl ApplyRule for LinkSpec {
                             destination: destination_record.clone(),
                             ordinality: self.ordinality.clone(),
                             longevity: self.longevity,
+                            spawn_chance: self.spawn_chance,
                         });
                     }
                 }
@@ -80,6 +84,7 @@ impl ApplyRule for LinkSpec {
                                 destination: destination_record.clone(),
                                 ordinality: self.ordinality.clone(),
                                 longevity: self.longevity,
+                                spawn_chance: self.spawn_chance,
                             });
                         }
                     }

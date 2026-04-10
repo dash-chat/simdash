@@ -20,7 +20,8 @@
             "subnet": "mesh"
           },
           "ordinality": "bidirectional",
-          "longevity": 6
+          "longevity": 6,
+          "spawn_chance": 0.5
         }
       ]
     },

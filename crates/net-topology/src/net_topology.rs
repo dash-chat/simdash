@@ -59,6 +59,8 @@ pub struct EdgeTopology {
     pub ordinality: Ordinality,
     /// Number of ticks the link persists for. 0 means permanent.
     pub longevity: u32,
+    /// Probability [0, 1] that this link spawns if it is not already present. None means always.
+    pub spawn_chance: Option<f64>,
 }
 
 /// Intermediate representation of a network topology before it is converted to a `Graph`.
@@ -78,49 +80,46 @@ impl NetTopology {
         }
     }
 
+    /// Returns the candidate destination nodes for a given edge topology entry,
+    /// excluding the `from` node itself.
+    pub fn destination_candidates(&self, edge: &EdgeTopology) -> Vec<NodeId> {
+        let all_node_ids: Vec<NodeId> = self.nodes.iter().map(|n| n.id).collect();
+        let pool: Vec<NodeId> = match &edge.destination {
+            Destination::Spec(DestinationSpec {
+                subnet: Some(name), ..
+            }) => self.subnets.get(name).cloned().unwrap_or_default(),
+            _ => all_node_ids,
+        };
+        pool.into_iter().filter(|&id| id != edge.from).collect()
+    }
+
     pub fn into_graph(self, seed: u64) -> Graph {
         use rand::SeedableRng;
         use rand::seq::IndexedRandom;
 
-        let NetTopology {
-            nodes,
-            edges,
-            subnets,
-        } = self;
-
         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
-        let all_node_ids: Vec<NodeId> = nodes.iter().map(|n| n.id).collect();
 
         let mut graph = Graph::new();
-        for NodeTopology { id, state, .. } in nodes {
-            graph.add_node(id, state);
+        for NodeTopology { id, state, .. } in &self.nodes {
+            graph.add_node(*id, state.clone());
         }
 
-        for EdgeTopology {
-            id,
-            from,
-            destination,
-            ordinality,
-            longevity,
-        } in edges
-        {
-            let pool: Vec<NodeId> = match &destination {
-                Destination::Spec(DestinationSpec {
-                    subnet: Some(name), ..
-                }) => subnets.get(name).cloned().unwrap_or_default(),
-                _ => all_node_ids.clone(),
-            };
-            let candidates: Vec<NodeId> = pool.into_iter().filter(|&id| id != from).collect();
+        for edge in &self.edges {
+            let candidates = self.destination_candidates(edge);
             if let Some(&to) = candidates.choose(&mut rng) {
-                graph.add_edge(from, to, EdgeState::new(id, false, longevity));
-                if matches!(ordinality, Ordinality::Bidirectional) {
-                    graph.add_edge(to, from, EdgeState::new(id, true, longevity));
+                graph.add_edge(
+                    edge.from,
+                    to,
+                    EdgeState::new(edge.id, false, edge.longevity),
+                );
+                if matches!(edge.ordinality, Ordinality::Bidirectional) {
+                    graph.add_edge(to, edge.from, EdgeState::new(edge.id, true, edge.longevity));
                 }
             }
         }
 
-        for (name, node_ids) in subnets {
-            graph.set_subnet(name, node_ids);
+        for (name, node_ids) in &self.subnets {
+            graph.set_subnet(name.clone(), node_ids.clone());
         }
         graph
     }
