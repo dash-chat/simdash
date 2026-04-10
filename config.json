@@ -29,35 +29,36 @@
     }
   ],
   "dash-chat-top": {
-    "seed": 7,
-    "contacts_per_node": {
-      "type": "normal",
-      "mean": 20.0,
-      "std_dev": 8.0
-    },
-    "groups_per_node": {
-      "type": "normal",
-      "mean": 10.0,
-      "std_dev": 4.0
-    },
-    "group_size": {
-      "type": "normal",
-      "mean": 7.0,
-      "std_dev": 5.0
-    },
-    "ops_per_node": {
+    "storage_capacity_per_node_kb": {
       "type": "fixed",
-      "value": 10.0
+      "value": 4000
     },
-    "op_payload_size": {
-      "type": "normal",
-      "mean": 256.0,
-      "std_dev": 50.0
-    },
-    "node_storage": {
-      "type": "normal",
-      "mean": 50000000.0,
-      "std_dev": 10000000.0
-    }
+    "rules": [
+      {
+        "type": "groups",
+        "subnets": "all",
+        "group_amount": 10,
+        "group_size": {
+          "type": "fixed",
+          "value": 10
+        },
+        "operations_count": {
+          "type": "fixed",
+          "value": 40
+        }
+      },
+      {
+        "type": "contacts",
+        "subnets": "all",
+        "contacts_amount": {
+          "type": "fixed",
+          "value": 15
+        },
+        "operations_count": {
+          "type": "fixed",
+          "value": 30
+        }
+      }
+    ]
   }
 }
