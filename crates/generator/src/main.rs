@@ -18,7 +18,7 @@ struct Cli {
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    let network_state = simdash_generator::generate_network_state(&cli.config)?;
+    let network_state = simdash_generator::generate_network_state::<RoutingState>(&cli.config)?;
 
     let bytes = postcard::to_stdvec(&network_state).context("Failed to serialize graph")?;
 

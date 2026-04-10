@@ -35,14 +35,14 @@ pub fn generate_topology(config_path: &Path) -> Result<(ChatTopology, u64)> {
     Ok((dash_topology, seed))
 }
 
-pub fn generate_graph(config_path: &Path) -> Result<Graph> {
+pub fn generate_graph<RS: Default + Clone>(config_path: &Path) -> Result<Graph<RS>> {
     let (topology, seed) = generate_topology(&config_path)?;
 
     let graph = topology.into_graph(seed);
     Ok(graph)
 }
 
-pub fn generate_network_state(config_path: &Path) -> Result<NetworkState> {
+pub fn generate_network_state<RS: Default + Clone>(config_path: &Path) -> Result<NetworkState<RS>> {
     let (topology, seed) = generate_topology(&config_path)?;
 
     let graph = topology.into_graph(seed);

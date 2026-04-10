@@ -11,6 +11,8 @@ simdash-action = { path = "../action" }
 simdash-ids = { path = "../ids" }
 simdash-state = { path = "../state" }
 
+paste = "1.0"
+
 anyhow = { workspace = true }
 polestar = { workspace = true }
 rand = "0.9"

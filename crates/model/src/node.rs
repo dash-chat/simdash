@@ -1,34 +1,26 @@
 use polestar::util::update_replace;
-use simdash_action::{
-    chat::ChatAction,
-    node::NodeAction,
-    routing::{RoutingAction, flooding::FloodingAction},
-};
+use simdash_action::{chat::ChatAction, node::NodeAction};
 use simdash_ids::Ticks;
 
-use crate::{
-    chat::ChatModel,
-    routing::{RoutingFx, RoutingModel, flooding::FloodingModel},
-};
+use crate::chat::ChatModel;
 
-pub struct NodeModel {
+pub struct NodeModel<RM> {
     pub dash: ChatModel,
-    pub routing: RoutingModel,
+    pub routing: RM,
 }
 
 pub struct NodeModelConfig {
     pub broadcast_interval: Ticks,
 }
 
-impl NodeModel {
-    pub fn new(config: NodeModelConfig) -> Self {
+impl<RM> NodeModel<RM>
+where
+    RM: polestar::Machine<Error = anyhow::Error>,
+{
+    pub fn new(routing: RM) -> Self {
         Self {
             dash: ChatModel,
-            routing: RoutingModel {
-                flooding: FloodingModel {
-                    broadcast_interval: config.broadcast_interval,
-                },
-            },
+            routing,
         }
     }
 }

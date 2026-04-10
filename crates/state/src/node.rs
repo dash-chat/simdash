@@ -1,15 +1,15 @@
 use derive_more::{Deref, From};
 use serde::{Deserialize, Serialize};
 
-use crate::{chat::ChatState, routing::RoutingState};
+use crate::{TickableState, chat::ChatState};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
-pub struct NodeState<R = RoutingState> {
+pub struct NodeState<RS> {
     pub dash: ChatState,
-    pub routing: R,
+    pub routing: RS,
 }
 
-impl NodeState<RoutingState> {
+impl<RS: TickableState> NodeState<RS> {
     pub fn dash(&self) -> &ChatState {
         &self.dash
     }

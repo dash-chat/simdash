@@ -71,7 +71,7 @@ impl EdgeTopology {
     }
 
     /// Adds this edge (and its reverse if bidirectional) to `graph` with `to` as the destination.
-    pub fn add_to_graph(&self, graph: &mut Graph, to: NodeId) {
+    pub fn add_to_graph<RS>(&self, graph: &mut Graph<RS>, to: NodeId) {
         graph.add_edge(
             self.from,
             to,
@@ -113,7 +113,7 @@ impl NetTopology {
         pool.into_iter().filter(|&id| id != edge.from).collect()
     }
 
-    pub fn into_graph(self, seed: u64) -> Graph {
+    pub fn into_graph<RS: Default>(self, seed: u64) -> Graph<RS> {
         use rand::{SeedableRng, seq::IndexedRandom};
 
         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);

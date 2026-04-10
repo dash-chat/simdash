@@ -1,32 +1,40 @@
-use std::collections::{BTreeSet, HashMap};
+use std::{
+    collections::{BTreeSet, HashMap},
+    marker::PhantomData,
+};
 
 use dash_chat_top_gen::ChatTopology;
 use net_topology::net_topology::Ordinality;
 use polestar::{Machine, ext::MapExt};
 use rand::seq::IndexedRandom;
-use simdash_action::{node::NodeAction, routing::RoutingAction};
+use simdash_action::node::NodeAction;
 use simdash_ids::NodeId;
 use simdash_state::{chat::Operation, network::NetworkState, node::NodeState};
 
-use crate::{
-    node::{NodeFx, NodeModel, NodeModelConfig},
-    routing::{RoutingFx, flooding::FloodingFx},
-};
+use crate::node::{NodeFx, NodeModel, NodeModelConfig};
 
-pub struct NetworkModel {
+pub struct NetworkModel<RM> {
     nodes: HashMap<NodeId, NodeModel>,
     pub topology: ChatTopology,
+    phantom: PhantomData<RM>,
 }
 
-impl NetworkModel {
-    pub fn new(nodes: HashMap<NodeId, NodeModel>, topology: ChatTopology) -> Self {
-        Self { nodes, topology }
+impl<RM> NetworkModel<RM> {
+    pub fn new(nodes: HashMap<NodeId, NodeModel<RM>>, topology: ChatTopology) -> Self {
+        Self {
+            nodes,
+            topology,
+            phantom: PhantomData,
+        }
     }
 }
 
-impl polestar::Machine for NetworkModel {
-    type State = simdash_state::network::NetworkState;
-    type Action = simdash_action::network::NetworkAction;
+impl<RM> polestar::Machine for NetworkModel<RM>
+where
+    RM: polestar::Machine<Error = anyhow::Error>,
+{
+    type State = simdash_state::network::NetworkState<RM::State>;
+    type Action = simdash_action::network::NetworkAction<RM::Action>;
     type Fx = ();
     type Error = anyhow::Error;
 
@@ -106,7 +114,10 @@ impl polestar::Machine for NetworkModel {
     }
 }
 
-impl NetworkModel {
+impl<RM> NetworkModel<RM>
+where
+    RM: polestar::Machine<Error = anyhow::Error>,
+{
     fn unspawned_edge_topos<'a>(
         &'a self,
         existing_ids: &'a BTreeSet<u32>,
@@ -120,7 +131,7 @@ impl NetworkModel {
 
     pub fn send_op(
         &self,
-        state: &mut NetworkState,
+        state: &mut NetworkState<RM::State>,
         from: NodeId,
         to: NodeId,
         op: Operation,
@@ -142,7 +153,7 @@ impl NetworkModel {
 
     pub fn apply_node_effects(
         &self,
-        state: &mut NetworkState,
+        state: &mut NetworkState<RM::State>,
         node_id: NodeId,
         fx: NodeFx,
     ) -> anyhow::Result<()> {
@@ -151,7 +162,7 @@ impl NetworkModel {
 
     pub fn apply_routing_effects(
         &self,
-        state: &mut NetworkState,
+        state: &mut NetworkState<RM::State>,
         node_id: NodeId,
         fx: RoutingFx,
     ) -> anyhow::Result<()> {

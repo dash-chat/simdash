@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use rand::{SeedableRng, rngs::StdRng};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use simdash_ids::NodeId;
 
 use crate::{Graph, node::NodeState};
@@ -31,26 +31,28 @@ impl NetworkTopologyState {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct NetworkState {
-    pub graph: Graph,
+pub struct NetworkState<RS> {
+    pub graph: Graph<RS>,
     pub topology: NetworkTopologyState,
 }
 
-impl NetworkState {
+impl<RS> NetworkState<RS> {
     pub fn neighborhood(&self, node_id: NodeId) -> impl Iterator<Item = NodeId> {
         self.graph
             .graph()
             .neighbors(node_id.into())
             .map(|n| n.into())
     }
+}
 
+impl<RS: DeserializeOwned> NetworkState<RS> {
     pub fn load_postcard(path: impl AsRef<Path>) -> Self {
         let path = path.as_ref();
         let path = path.canonicalize().unwrap();
         let start_time = std::time::Instant::now();
         println!("Loading network state from {}", path.display());
         let bytes = std::fs::read(path).unwrap();
-        let graph: Graph = postcard::from_bytes(&bytes).unwrap();
+        let graph: Graph<RS> = postcard::from_bytes(&bytes).unwrap();
         graph.assert_integrity();
         println!("Loaded network state in {:.2?}", start_time.elapsed());
         Self {
@@ -65,7 +67,7 @@ mod tests {
     use super::*;
     use crate::node::NodeState;
 
-    fn make_network() -> NetworkState {
+    fn make_network() -> NetworkState<()> {
         //  0 -> 1 -> 2
         //  |         ^
         //  +-> 3 ----+

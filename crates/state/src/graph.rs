@@ -29,9 +29,9 @@ impl EdgeState {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Graph<R = crate::routing::RoutingState> {
+pub struct Graph<RS> {
     graph: PetGraph<(), EdgeState>,
-    pub nodes: HashMap<NodeId, NodeState<R>>,
+    pub nodes: HashMap<NodeId, NodeState<RS>>,
     #[serde(skip, default)]
     subnets: HashMap<String, Vec<NodeId>>,
 }
@@ -47,6 +47,21 @@ impl<R> Default for Graph<R> {
 }
 
 impl<R: Clone> Graph<R> {
+    pub fn update_node<O>(
+        &mut self,
+        node_id: NodeId,
+        action: impl FnOnce(NodeState<R>) -> anyhow::Result<(NodeState<R>, O)>,
+    ) -> anyhow::Result<O> {
+        // TODO: PERF: use owned_update instead of cloned_update, but this
+        //       requires never triggering an error during state transition.
+        let state = self
+            .nodes
+            .cloned_update(node_id, |_, state| action(state))?;
+        Ok(state)
+    }
+}
+
+impl<RS> Graph<RS> {
     pub fn new() -> Self {
         Self::default()
     }
@@ -71,28 +86,15 @@ impl<R: Clone> Graph<R> {
         ids
     }
 
-    pub fn node_state(&self, node_id: NodeId) -> Option<&NodeState<R>> {
+    pub fn node_state(&self, node_id: NodeId) -> Option<&NodeState<RS>> {
         self.nodes.get(&node_id)
     }
 
-    pub fn node_state_mut(&mut self, node_id: NodeId) -> Option<&mut NodeState<R>> {
+    pub fn node_state_mut(&mut self, node_id: NodeId) -> Option<&mut NodeState<RS>> {
         self.nodes.get_mut(&node_id)
     }
 
-    pub fn update_node<O>(
-        &mut self,
-        node_id: NodeId,
-        action: impl FnOnce(NodeState<R>) -> anyhow::Result<(NodeState<R>, O)>,
-    ) -> anyhow::Result<O> {
-        // TODO: PERF: use owned_update instead of cloned_update, but this
-        //       requires never triggering an error during state transition.
-        let state = self
-            .nodes
-            .cloned_update(node_id, |_, state| action(state))?;
-        Ok(state)
-    }
-
-    pub fn add_node(&mut self, node_id: NodeId, state: NodeState<R>) {
+    pub fn add_node(&mut self, node_id: NodeId, state: NodeState<RS>) {
         let expected_idx = node_id.into();
         let idx = self.graph.add_node(());
         assert_eq!(

@@ -59,22 +59,22 @@ macro_rules! routing_protocols {
         }
 
         #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-        pub enum RoutingAction {
-            ReceiveData {
-                from: NodeId,
-                data: RoutingData,
-            },
-            Protocol(RoutingProtocolAction),
-        }
-
-        #[derive(Debug, Clone, PartialEq, Eq, Hash)]
         pub enum RoutingData {
             $( $Variant($data_ty), )+
         }
 
         #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+        pub enum RoutingAction {
+            $( $Variant(RoutingProtocolAction), )+
+        }
+
+        #[derive(Debug, Clone, PartialEq, Eq, Hash)]
         pub enum RoutingProtocolAction {
-            $( $Variant($action_ty), )+
+            ReceiveData {
+                from: simdash_ids::NodeId,
+                data: RoutingData,
+            },
+            Protocol($action_ty),
         }
 
         #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -124,11 +124,16 @@ macro_rules! routing_protocols {
             ) -> polestar::TransitionResult<Self> {
                 match action {
                     $(
-                        RoutingAction::$Variant(a) => {
+                        RoutingAction::Protocol(RoutingProtocolAction::$Variant(a)) => {
                             let (s, fx) = self.$field.transition(state.$field, a)?;
                             state.$field = s;
                             Ok((state, RoutingFx::$Variant(fx)))
-                        }
+                        },
+                        RoutingAction::ReceiveData { from, data } => {
+                            let (s, fx) = self.$field.transition(state.$field, data)?;
+                            state.$field = s;
+                            Ok((state, RoutingFx::Node(fx)))
+                        },
                     )+
                 }
             }

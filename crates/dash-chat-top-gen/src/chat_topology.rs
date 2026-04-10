@@ -26,7 +26,7 @@ impl ChatTopology {
         }
     }
 
-    pub fn into_graph(self, seed: u64) -> Graph {
+    pub fn into_graph<RS: Default + Clone>(self, seed: u64) -> Graph<RS> {
         let mut graph = self.net.into_graph(seed);
         for (node_id, chat_state) in self.chat_states {
             graph
