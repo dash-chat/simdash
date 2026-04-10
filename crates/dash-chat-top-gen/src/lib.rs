@@ -229,7 +229,7 @@ impl ChatStateGenerator {
 
                             // Only the author stores the op initially;
                             // routing will deliver it to other members.
-                            states.entry(author).or_default().op_store.insert(op_id, op);
+                            let _ = states.entry(author).or_default().store_op(op);
                         }
                     }
                 }
@@ -284,7 +284,7 @@ impl ChatStateGenerator {
                                 },
                                 body: Body::DirectMessage { recipient },
                             };
-                            states.entry(node).or_default().op_store.insert(op_id, op);
+                            let _ = states.entry(node).or_default().store_op(op);
                         }
 
                         states.entry(node).or_default().contacts.extend(contacts);
@@ -346,17 +346,14 @@ impl ChatStateGenerator {
                                 Body::DirectMessage { recipient }
                             };
 
-                            state.op_store.insert(
-                                op_id,
-                                Operation {
-                                    id: op_id,
-                                    header: Header {
-                                        author: node,
-                                        payload_size,
-                                    },
-                                    body,
+                            let _ = state.store_op(Operation {
+                                id: op_id,
+                                header: Header {
+                                    author: node,
+                                    payload_size,
                                 },
-                            );
+                                body,
+                            });
                         }
 
                         state.contacts.extend(contacts);

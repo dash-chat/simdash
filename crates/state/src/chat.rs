@@ -48,10 +48,21 @@ impl ChatState {
     }
 
     pub fn store_op(&mut self, op: Operation) -> anyhow::Result<()> {
-        let existing = self.op_store.insert(op.id, op);
-        if let Some(existing) = existing {
-            anyhow::bail!("Op already exists: {:?}", existing.id);
+        if self.op_store.contains_key(&op.id) {
+            anyhow::bail!("Op already exists: {:?}", op.id);
         }
+        if let Some(capacity) = self.storage_capacity {
+            let new_size = *self.stored_size() + *op.header.payload_size;
+            if new_size > *capacity {
+                anyhow::bail!(
+                    "Storage capacity exceeded: {} + {} > {}",
+                    *self.stored_size(),
+                    *op.header.payload_size,
+                    *capacity
+                );
+            }
+        }
+        self.op_store.insert(op.id, op);
         Ok(())
     }
 }

@@ -142,10 +142,19 @@ impl NetworkModel {
                 }
             }
             RoutingFx::Flooding(Some(FloodingFx::StoreOp(op))) => {
-                state.graph.update_node(node_id, |mut node_state| {
+                let op_id = op.id;
+                let stored = state.graph.update_node(node_id, |mut node_state| {
                     node_state.dash.store_op(op)?;
                     Ok((node_state, ()))
-                })?;
+                });
+                if stored.is_err() {
+                    // Chat rejected the op (e.g. capacity exceeded);
+                    // remove it from routing state so it won't be broadcast.
+                    state.graph.update_node(node_id, |mut node_state| {
+                        node_state.routing.flooding.ops.remove(&op_id);
+                        Ok((node_state, ()))
+                    })?;
+                }
             }
             RoutingFx::Flooding(None) => {}
         }
