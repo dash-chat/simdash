@@ -24,6 +24,9 @@ pub struct LinkSpec {
     pub destination: Destination,
     #[serde(default)]
     pub ordinality: Ordinality,
+    /// Number of ticks the link persists for. 0 means permanent.
+    #[serde(default)]
+    pub longevity: u32,
 }
 
 impl ApplyRule for LinkSpec {
@@ -54,6 +57,7 @@ impl ApplyRule for LinkSpec {
                             from: node,
                             destination: destination_record.clone(),
                             ordinality: self.ordinality.clone(),
+                            longevity: self.longevity,
                         });
                     }
                 }
@@ -71,6 +75,7 @@ impl ApplyRule for LinkSpec {
                                 from,
                                 destination: destination_record.clone(),
                                 ordinality: self.ordinality.clone(),
+                                longevity: self.longevity,
                             });
                         }
                     }

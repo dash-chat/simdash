@@ -346,4 +346,41 @@ mod tests {
         assert_eq!(graph.graph().node_count(), 2);
         assert_eq!(graph.graph().edge_count(), 2);
     }
+
+    #[test]
+    fn link_longevity_stored_on_edge_topology() {
+        let json = r#"[
+            {
+                "element": "node",
+                "number": 2
+            },
+            {
+                "element": "link",
+                "strategy": "per_node",
+                "count": 1,
+                "destination": {
+                    "selection": "random"
+                },
+                "longevity": 10
+            },
+            {
+                "element": "link",
+                "strategy": "per_node",
+                "count": 1,
+                "destination": {
+                    "selection": "random"
+                }
+            }
+        ]"#;
+
+        let generator = TopologyGenerator::from_json(json).unwrap();
+        let topology = generator.generate(0);
+
+        // First batch of edges (longevity = 10) come before the second batch (longevity = 0).
+        let finite: Vec<_> = topology.edges.iter().filter(|e| e.longevity == 10).collect();
+        let permanent: Vec<_> = topology.edges.iter().filter(|e| e.longevity == 0).collect();
+
+        assert_eq!(finite.len(), 2, "two edges with longevity 10 (one per node)");
+        assert_eq!(permanent.len(), 2, "two permanent edges (longevity 0, one per node)");
+    }
 }

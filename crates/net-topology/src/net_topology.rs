@@ -56,6 +56,8 @@ pub struct EdgeTopology {
     pub from: NodeId,
     pub destination: Destination,
     pub ordinality: Ordinality,
+    /// Number of ticks the link persists for. 0 means permanent.
+    pub longevity: u32,
 }
 
 /// Intermediate representation of a network topology before it is converted to a `Graph`.
@@ -97,6 +99,7 @@ impl NetTopology {
             from,
             destination,
             ordinality,
+            longevity: _,
         } in edges
         {
             let pool: Vec<NodeId> = match &destination {
