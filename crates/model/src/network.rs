@@ -1,9 +1,9 @@
 use std::collections::{BTreeSet, HashMap};
 
 use dash_chat_top_gen::ChatTopology;
-use rand::seq::IndexedRandom;
 use net_topology::net_topology::Ordinality;
 use polestar::{Machine, ext::MapExt};
+use rand::{Rng, seq::IndexedRandom};
 use simdash_action::{
     node::NodeAction,
     routing::{RoutingAction, flooding::FloodingAction},
@@ -64,7 +64,6 @@ impl polestar::Machine for NetworkModel {
                     .graph_mut()
                     .retain_edges(|g, idx| g[idx].remaining_ticks != Some(0));
 
-                // Collect topology IDs that still have a live edge in the graph.
                 let existing_ids: BTreeSet<u32> = state
                     .graph
                     .graph()
@@ -72,29 +71,15 @@ impl polestar::Machine for NetworkModel {
                     .map(|e| e.topology_id)
                     .collect();
 
-                for edge_topo in &self.topology.net.edges {
-                    if edge_topo.spawn_chance.is_none() {
-                        continue;
-                    }
-                    if existing_ids.contains(&edge_topo.id) {
+                for edge_topo in self.unspawned_edge_topos(&existing_ids) {
+                    let mut rng = state.topology.rng();
+                    let spawn_chance = edge_topo.spawn_chance.unwrap_or(1.0);
+                    if rng.random::<f64>() >= spawn_chance {
                         continue;
                     }
                     let candidates = self.topology.net.destination_candidates(edge_topo);
-                    let mut rng = state.topology.rng();
                     if let Some(&to) = candidates.choose(&mut rng) {
-                        use simdash_state::EdgeState;
-                        state.graph.add_edge(
-                            edge_topo.from,
-                            to,
-                            EdgeState::new(edge_topo.id, false, edge_topo.longevity),
-                        );
-                        if matches!(edge_topo.ordinality, Ordinality::Bidirectional) {
-                            state.graph.add_edge(
-                                to,
-                                edge_topo.from,
-                                EdgeState::new(edge_topo.id, true, edge_topo.longevity),
-                            );
-                        }
+                        edge_topo.add_to_graph(&mut state.graph, to);
                     }
                 }
 
@@ -126,6 +111,17 @@ impl polestar::Machine for NetworkModel {
 }
 
 impl NetworkModel {
+    fn unspawned_edge_topos<'a>(
+        &'a self,
+        existing_ids: &'a BTreeSet<u32>,
+    ) -> impl Iterator<Item = &'a net_topology::net_topology::EdgeTopology> {
+        self.topology
+            .net
+            .edges
+            .iter()
+            .filter(|e| e.spawn_chance.is_some() && !existing_ids.contains(&e.id))
+    }
+
     pub fn send_op(
         &self,
         state: &mut NetworkState,

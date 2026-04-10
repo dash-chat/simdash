@@ -63,6 +63,20 @@ pub struct EdgeTopology {
     pub spawn_chance: Option<f64>,
 }
 
+impl EdgeTopology {
+    /// Adds this edge (and its reverse if bidirectional) to `graph` with `to` as the destination.
+    pub fn add_to_graph(&self, graph: &mut Graph, to: NodeId) {
+        graph.add_edge(
+            self.from,
+            to,
+            EdgeState::new(self.id, false, self.longevity),
+        );
+        if matches!(self.ordinality, Ordinality::Bidirectional) {
+            graph.add_edge(to, self.from, EdgeState::new(self.id, true, self.longevity));
+        }
+    }
+}
+
 /// Intermediate representation of a network topology before it is converted to a `Graph`.
 #[derive(Clone)]
 pub struct NetTopology {
@@ -107,14 +121,7 @@ impl NetTopology {
         for edge in &self.edges {
             let candidates = self.destination_candidates(edge);
             if let Some(&to) = candidates.choose(&mut rng) {
-                graph.add_edge(
-                    edge.from,
-                    to,
-                    EdgeState::new(edge.id, false, edge.longevity),
-                );
-                if matches!(edge.ordinality, Ordinality::Bidirectional) {
-                    graph.add_edge(to, edge.from, EdgeState::new(edge.id, true, edge.longevity));
-                }
+                edge.add_to_graph(&mut graph, to);
             }
         }
 
