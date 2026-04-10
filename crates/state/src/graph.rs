@@ -29,14 +29,14 @@ impl EdgeState {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Graph<R = crate::routing::RoutingState, E = EdgeState> {
-    graph: PetGraph<(), E>,
+pub struct Graph<R = crate::routing::RoutingState> {
+    graph: PetGraph<(), EdgeState>,
     pub nodes: HashMap<NodeId, NodeState<R>>,
     #[serde(skip, default)]
     subnets: HashMap<String, Vec<NodeId>>,
 }
 
-impl<R, E> Default for Graph<R, E> {
+impl<R> Default for Graph<R> {
     fn default() -> Self {
         Self {
             graph: PetGraph::new(),
@@ -46,16 +46,16 @@ impl<R, E> Default for Graph<R, E> {
     }
 }
 
-impl<R: Clone, E> Graph<R, E> {
+impl<R: Clone> Graph<R> {
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn graph(&self) -> &PetGraph<(), E> {
+    pub fn graph(&self) -> &PetGraph<(), EdgeState> {
         &self.graph
     }
 
-    pub fn graph_mut(&mut self) -> &mut PetGraph<(), E> {
+    pub fn graph_mut(&mut self) -> &mut PetGraph<(), EdgeState> {
         &mut self.graph
     }
 
@@ -102,7 +102,7 @@ impl<R: Clone, E> Graph<R, E> {
         self.nodes.insert(node_id, state);
     }
 
-    pub fn add_edge(&mut self, from: NodeId, to: NodeId, weight: E) -> bool {
+    pub fn add_edge(&mut self, from: NodeId, to: NodeId, weight: EdgeState) -> bool {
         if !self.nodes.contains_key(&from) || !self.nodes.contains_key(&to) {
             return false;
         }
