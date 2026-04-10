@@ -1431,6 +1431,7 @@ name = "simdash-model"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "dash-chat-top-gen",
  "polestar",
  "simdash-action",
  "simdash-ids",
@@ -1469,6 +1470,7 @@ name = "simdash-scenario"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "dash-chat-top-gen",
  "derive_more 2.1.1",
  "polestar",
  "simdash-action",

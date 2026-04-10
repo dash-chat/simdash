@@ -1,5 +1,6 @@
 use std::collections::{BTreeSet, HashMap};
 
+use dash_chat_top_gen::ChatTopology;
 use polestar::{Machine, ext::MapExt};
 use simdash_action::{
     node::NodeAction,
@@ -15,11 +16,12 @@ use crate::{
 
 pub struct NetworkModel {
     nodes: HashMap<NodeId, NodeModel>,
+    pub topology: ChatTopology,
 }
 
 impl NetworkModel {
-    pub fn new(nodes: HashMap<NodeId, NodeModel>) -> Self {
-        Self { nodes }
+    pub fn new(nodes: HashMap<NodeId, NodeModel>, topology: ChatTopology) -> Self {
+        Self { nodes, topology }
     }
 }
 

@@ -1,3 +1,4 @@
+use dash_chat_top_gen::ChatTopology;
 use polestar::Machine;
 use simdash_action::{chat::ChatAction, network::NetworkAction, node::NodeAction};
 use simdash_behavior::{
@@ -39,6 +40,7 @@ fn main() {
                 )
             })
             .collect(),
+        ChatTopology::empty(),
     );
 
     let ops = (0..5).map(|i| basic_op(i as u32));

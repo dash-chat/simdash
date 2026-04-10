@@ -5,6 +5,7 @@ use simdash_ids::NodeId;
 use simdash_state::{chat::ChatState, graph::Graph};
 
 /// Intermediate representation of a network topology with dash-chat state added.
+#[derive(Clone)]
 pub struct ChatTopology {
     pub net: NetTopology,
     pub chat_states: BTreeMap<NodeId, ChatState>,
@@ -14,6 +15,13 @@ impl ChatTopology {
     pub fn from_net_topology(net: NetTopology) -> Self {
         Self {
             net,
+            chat_states: BTreeMap::new(),
+        }
+    }
+
+    pub fn empty() -> Self {
+        Self {
+            net: NetTopology::new(),
             chat_states: BTreeMap::new(),
         }
     }

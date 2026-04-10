@@ -5,6 +5,7 @@ use crate::scenarios::{naive_flooding, no_routing, AnyScenario, AVAILABLE_BEHAVI
 
 pub struct Simulation {
     initial_state: NetworkState,
+    topology: ChatTopology,
     current_step: usize,
     behavior_name: String,
     broadcast_interval: u32,
@@ -17,11 +18,12 @@ impl Simulation {
         behavior: &str,
         broadcast_interval: u32,
     ) -> anyhow::Result<Self> {
-        let graph = topology.into_graph();
+        let graph = topology.clone().into_graph();
         let state = NetworkState { graph };
-        let scenario = Self::make_scenario(behavior, &state, broadcast_interval)?;
+        let scenario = Self::make_scenario(behavior, &state, broadcast_interval, topology.clone())?;
         Ok(Self {
             initial_state: state,
+            topology: topology,
             current_step: 0,
             behavior_name: behavior.to_string(),
             broadcast_interval,
@@ -33,15 +35,18 @@ impl Simulation {
         behavior: &str,
         state: &NetworkState,
         broadcast_interval: u32,
+        topology: ChatTopology,
     ) -> anyhow::Result<AnyScenario> {
         match behavior {
             "naive-flooding" => Ok(AnyScenario::NaiveFlooding(naive_flooding::naive_flooding(
                 state.clone(),
                 broadcast_interval,
+                topology,
             ))),
             "no-routing" => Ok(AnyScenario::NoRouting(no_routing::no_routing(
                 state.clone(),
                 broadcast_interval,
+                topology,
             ))),
             other => anyhow::bail!("Unknown behavior: {other}"),
         }
@@ -65,7 +70,12 @@ impl Simulation {
 
     pub fn set_behavior(&mut self, behavior: &str) -> anyhow::Result<()> {
         // Validate behavior name before changing
-        let scenario = Self::make_scenario(behavior, &self.initial_state, self.broadcast_interval)?;
+        let scenario = Self::make_scenario(
+            behavior,
+            &self.initial_state,
+            self.broadcast_interval,
+            self.topology.clone(),
+        )?;
         self.behavior_name = behavior.to_string();
         self.scenario = scenario;
         self.current_step = 0;
@@ -91,6 +101,7 @@ impl Simulation {
             &self.behavior_name,
             &self.initial_state,
             self.broadcast_interval,
+            self.topology.clone(),
         )?;
         for _ in 0..step {
             self.scenario.advance()?;
@@ -104,6 +115,7 @@ impl Simulation {
             &self.behavior_name,
             &self.initial_state,
             self.broadcast_interval,
+            self.topology.clone(),
         )
         .expect("scenario was valid at creation");
         self.current_step = 0;

@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use simdash_ids::NodeId;
 use simdash_state::{Graph, node::NodeState};
 
+#[derive(Clone)]
 pub struct NodeTopology {
     pub id: NodeId,
     pub state: NodeState,
@@ -19,12 +20,14 @@ impl NodeTopology {
     }
 }
 
+#[derive(Clone)]
 pub struct EdgeTopology {
     pub from: NodeId,
     pub to: NodeId,
 }
 
 /// Intermediate representation of a network topology before it is converted to a `Graph`.
+#[derive(Clone)]
 pub struct NetTopology {
     pub nodes: Vec<NodeTopology>,
     pub edges: Vec<EdgeTopology>,

@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 
+dash-chat-top-gen = { path = "../dash-chat-top-gen" }
 simdash-action = { path = "../action" }
 simdash-ids = { path = "../ids" }
 simdash-state = { path = "../state" }

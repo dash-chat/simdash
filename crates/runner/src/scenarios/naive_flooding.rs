@@ -1,3 +1,4 @@
+use dash_chat_top_gen::ChatTopology;
 use simdash_behavior::{
     network::RoundRobinNodeScheduler, node::BasicRoutingBehavior, routing::NaiveFloodingBehavior,
 };
@@ -14,6 +15,7 @@ pub type NaiveFloodingBehaviorType =
 pub fn naive_flooding(
     mut initial_state: NetworkState,
     broadcast_interval: u32,
+    topology: ChatTopology,
 ) -> Scenario<NetworkModel, NaiveFloodingBehaviorType> {
     // Seed each node's routing state from its chat op_store so flooding
     // knows about the initial ops and can broadcast them.
@@ -49,6 +51,7 @@ pub fn naive_flooding(
                 )
             })
             .collect(),
+        topology,
     );
     let behavior = RoundRobinNodeScheduler::new(BasicRoutingBehavior::new(NaiveFloodingBehavior));
     Scenario::initial(model, initial_state, behavior)
