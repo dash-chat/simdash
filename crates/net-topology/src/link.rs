@@ -2,7 +2,10 @@ use rand::seq::IndexedRandom;
 use serde::Deserialize;
 use simdash_ids::NodeId;
 
-use crate::{ApplyRule, BuildState, net_topology::EdgeTopology};
+use crate::{
+    ApplyRule, BuildState,
+    net_topology::{Destination, DestinationSpec, EdgeTopology, Selection},
+};
 
 /// How many links to create for a rule.
 #[derive(Debug, Clone, Deserialize)]
@@ -12,27 +15,6 @@ pub enum Count {
     Fixed(u32),
     /// A uniformly random number of links in the range `[min, max]`.
     Range { min: u32, max: u32 },
-}
-
-/// How link destinations are chosen.
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Selection {
-    Random,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct DestinationSpec {
-    pub selection: Selection,
-    #[serde(default)]
-    pub subnet: Option<String>,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-#[serde(untagged)]
-pub enum Destination {
-    Selection(Selection),
-    Spec(DestinationSpec),
 }
 
 /// Whether a created link also generates a reverse edge.
@@ -65,6 +47,11 @@ impl ApplyRule for LinkSpec {
             Destination::Spec(spec) => (&spec.selection, spec.subnet.as_ref()),
         };
 
+        let destination_record = Destination::Spec(DestinationSpec {
+            selection: selection.clone(),
+            subnet: subnet.cloned(),
+        });
+
         let target_pool: Vec<NodeId> = match subnet {
             Some(subnet) => state
                 .topology
@@ -96,12 +83,17 @@ impl ApplyRule for LinkSpec {
                             .collect();
                         for _ in 0..n {
                             if let Some(&to) = candidates.choose(&mut state.rng) {
-                                state.topology.edges.push(EdgeTopology { from: node, to });
+                                state.topology.edges.push(EdgeTopology {
+                                    from: node,
+                                    to,
+                                    destination: destination_record.clone(),
+                                });
                                 if bidirectional {
-                                    state
-                                        .topology
-                                        .edges
-                                        .push(EdgeTopology { from: to, to: node });
+                                    state.topology.edges.push(EdgeTopology {
+                                        from: to,
+                                        to: node,
+                                        destination: destination_record.clone(),
+                                    });
                                 }
                             }
                         }
@@ -123,12 +115,17 @@ impl ApplyRule for LinkSpec {
                                 .filter(|&id| id != from)
                                 .collect();
                             if let Some(&to) = candidates.choose(&mut state.rng) {
-                                state.topology.edges.push(EdgeTopology { from, to });
+                                state.topology.edges.push(EdgeTopology {
+                                    from,
+                                    to,
+                                    destination: destination_record.clone(),
+                                });
                                 if bidirectional {
-                                    state
-                                        .topology
-                                        .edges
-                                        .push(EdgeTopology { from: to, to: from });
+                                    state.topology.edges.push(EdgeTopology {
+                                        from: to,
+                                        to: from,
+                                        destination: destination_record.clone(),
+                                    });
                                 }
                             }
                         }

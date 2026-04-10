@@ -1,7 +1,29 @@
 use std::collections::BTreeMap;
 
+use serde::Deserialize;
 use simdash_ids::NodeId;
 use simdash_state::{Graph, node::NodeState};
+
+/// How link destinations are chosen.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Selection {
+    Random,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct DestinationSpec {
+    pub selection: Selection,
+    #[serde(default)]
+    pub subnet: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(untagged)]
+pub enum Destination {
+    Selection(Selection),
+    Spec(DestinationSpec),
+}
 
 #[derive(Clone)]
 pub struct NodeTopology {
@@ -24,6 +46,7 @@ impl NodeTopology {
 pub struct EdgeTopology {
     pub from: NodeId,
     pub to: NodeId,
+    pub destination: Destination,
 }
 
 /// Intermediate representation of a network topology before it is converted to a `Graph`.
@@ -48,7 +71,7 @@ impl NetTopology {
         for NodeTopology { id, state, .. } in self.nodes {
             graph.add_node(id, state);
         }
-        for EdgeTopology { from, to } in self.edges {
+        for EdgeTopology { from, to, .. } in self.edges {
             graph.add_edge(from, to, ());
         }
         for (name, node_ids) in self.subnets {
