@@ -319,7 +319,6 @@ mod tests {
         assert_eq!(topology.nodes.len(), 3);
         for node in &topology.nodes[..2] {
             assert!(node.tags.contains(&"phone".to_string()));
-            assert_eq!(node.state, simdash_state::node::NodeState::default());
         }
         assert!(!topology.nodes[2].tags.contains(&"phone".to_string()));
     }
