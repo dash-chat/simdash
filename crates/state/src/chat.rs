@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde::{Deserialize, Serialize};
 use simdash_ids::{NodeId, OpId, Size};
 
-use crate::{ExtractMetadata, routing::flooding::FloodingMetadata};
+use crate::ExtractMetadata;
 
 pub type GroupId = u64;
 
@@ -137,13 +137,5 @@ mod tests {
         assert!(state.store_op(make_op(1, 100)).is_ok());
         assert!(state.store_op(make_op(1, 100)).is_err());
         assert_eq!(state.op_store.len(), 1);
-    }
-}
-
-impl ExtractMetadata<FloodingMetadata> for Operation {
-    fn extract_metadata(&self) -> FloodingMetadata {
-        FloodingMetadata {
-            size: self.header.payload_size,
-        }
     }
 }

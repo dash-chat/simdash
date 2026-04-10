@@ -80,7 +80,7 @@ mod tests {
         routing::flooding::FloodingState,
     };
 
-    use crate::util::basic_op;
+    use simdash_model::util::basic_op;
 
     use super::*;
 

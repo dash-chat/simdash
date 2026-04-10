@@ -4,10 +4,7 @@ use dash_chat_top_gen::ChatTopology;
 use net_topology::net_topology::Ordinality;
 use polestar::{Machine, ext::MapExt};
 use rand::seq::IndexedRandom;
-use simdash_action::{
-    node::NodeAction,
-    routing::{RoutingAction, flooding::FloodingAction},
-};
+use simdash_action::{node::NodeAction, routing::RoutingAction};
 use simdash_ids::NodeId;
 use simdash_state::{chat::Operation, network::NetworkState, node::NodeState};
 

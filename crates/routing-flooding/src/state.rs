@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde::{Deserialize, Serialize};
 use simdash_ids::*;
 
-use crate::{ExtractMetadata, chat::Operation};
+use simdash_state::{ExtractMetadata, chat::Operation};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct FloodingState {
@@ -23,6 +23,14 @@ impl FloodingState {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
 pub struct FloodingMetadata {
     pub size: Size,
+}
+
+impl ExtractMetadata<FloodingMetadata> for Operation {
+    fn extract_metadata(&self) -> FloodingMetadata {
+        FloodingMetadata {
+            size: self.header.payload_size,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]

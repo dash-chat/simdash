@@ -1455,6 +1455,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "simdash-routing-flooding"
+version = "0.1.0"
+dependencies = [
+ "polestar",
+ "serde",
+ "simdash-action",
+ "simdash-ids",
+ "simdash-model",
+ "simdash-state",
+]
+
+[[package]]
 name = "simdash-runner"
 version = "0.1.0"
 dependencies = [

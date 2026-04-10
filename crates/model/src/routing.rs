@@ -2,8 +2,6 @@ use std::collections::HashMap;
 
 use simdash_action::routing::RoutingAction;
 
-pub mod flooding;
-
 // crate::routing_protocols! {
 //     Flooding / flooding => {
 //         model:  flooding::FloodingModel,
@@ -18,13 +16,11 @@ pub enum RoutingProtocols {
     Flooding,
 }
 
-pub struct RoutingModel {
-    pub flooding: flooding::FloodingModel,
-}
+pub struct RoutingModel {}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum RoutingFx {
-    Flooding(Option<flooding::FloodingFx>),
+    // Flooding(Option<flooding::FloodingFx>),
 }
 
 impl polestar::Machine for RoutingModel {
