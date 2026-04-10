@@ -51,7 +51,22 @@ impl polestar::Machine for NetworkModel {
                 Ok((state, ()))
             }
 
-            simdash_action::network::NetworkAction::EvolveTopology => Ok((state, ())),
+            simdash_action::network::NetworkAction::EvolveTopology => {
+                state.graph.graph_mut().retain_edges(|g, idx| {
+                    let edge_ref = &g[idx];
+                    let Some(edge_top) = self
+                        .topology
+                        .net
+                        .edges
+                        .iter()
+                        .find(|e| e.id == edge_ref.topology_id)
+                    else {
+                        return true;
+                    };
+                    edge_top.longevity <= 5
+                });
+                Ok((state, ()))
+            }
 
             simdash_action::network::NetworkAction::Node(node_id, node_action) => {
                 let node_model = self

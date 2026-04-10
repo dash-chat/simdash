@@ -48,24 +48,43 @@
 		const seen = new Set<string>();
 		const edges: cytoscape.ElementDefinition[] = [];
 
-		snapshot.graph.edges.forEach((e, i) => {
-			const key = `${Math.min(e.source, e.target)}-${Math.max(e.source, e.target)}`;
+		snapshot.graph.edges.forEach((e) => {
+			const min = Math.min(e.source, e.target);
+			const max = Math.max(e.source, e.target);
 			const hasReverse = edgeSet.has(`${e.target}-${e.source}`);
 
 			if (hasReverse) {
+				const key = `eb${min}-${max}`;
 				if (seen.has(key)) return; // skip duplicate of bidirectional pair
 				seen.add(key);
 				edges.push({
-					data: { id: `e${i}`, source: `n${e.source}`, target: `n${e.target}`, bidir: 'true' }
+					data: { id: key, source: `n${e.source}`, target: `n${e.target}`, bidir: 'true' }
 				});
 			} else {
 				edges.push({
-					data: { id: `e${i}`, source: `n${e.source}`, target: `n${e.target}`, bidir: 'false' }
+					data: { id: `e${e.source}-${e.target}`, source: `n${e.source}`, target: `n${e.target}`, bidir: 'false' }
 				});
 			}
 		});
 
 		return [...nodes, ...edges];
+	}
+
+	function syncGraph(snapshot: SimSnapshot) {
+		if (!cy) return;
+		const newElements = snapshotToElements(snapshot);
+		const newIds = new Set(newElements.map((el) => el.data.id as string));
+
+		// Remove elements no longer in the snapshot
+		cy.elements().forEach((ele) => {
+			if (!newIds.has(ele.id())) ele.remove();
+		});
+
+		// Add elements not yet in cytoscape
+		const existingIds = new Set(cy.elements().map((ele) => ele.id()));
+		for (const el of newElements) {
+			if (!existingIds.has(el.data.id as string)) cy.add(el);
+		}
 	}
 
 	function saturationColor(ratio: number): string {
@@ -243,6 +262,7 @@
 		highlightedNodeIds;
 		opTrace;
 		if (cy && layoutDone) {
+			syncGraph(snapshot);
 			updateNodeStyles(snapshot);
 		}
 	});
