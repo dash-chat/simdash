@@ -3,7 +3,7 @@ use std::collections::{BTreeSet, HashMap};
 use dash_chat_top_gen::ChatTopology;
 use net_topology::net_topology::Ordinality;
 use polestar::{Machine, ext::MapExt};
-use rand::{Rng, seq::IndexedRandom};
+use rand::seq::IndexedRandom;
 use simdash_action::{
     node::NodeAction,
     routing::{RoutingAction, flooding::FloodingAction},
@@ -73,8 +73,7 @@ impl polestar::Machine for NetworkModel {
 
                 for edge_topo in self.unspawned_edge_topos(&existing_ids) {
                     let mut rng = state.topology.rng();
-                    let spawn_chance = edge_topo.spawn_chance.unwrap_or(1.0);
-                    if rng.random::<f64>() >= spawn_chance {
+                    if !edge_topo.should_spawn(&mut rng) {
                         continue;
                     }
                     let candidates = self.topology.net.destination_candidates(edge_topo);

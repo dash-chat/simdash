@@ -64,6 +64,14 @@ pub struct EdgeTopology {
 }
 
 impl EdgeTopology {
+    /// Returns true if this edge should be spawned, based on its spawn_chance.
+    pub fn should_spawn(&self, rng: &mut impl rand::Rng) -> bool {
+        match self.spawn_chance {
+            None => true,
+            Some(chance) => rng.random::<f64>() < chance,
+        }
+    }
+
     /// Adds this edge (and its reverse if bidirectional) to `graph` with `to` as the destination.
     pub fn add_to_graph(&self, graph: &mut Graph, to: NodeId) {
         graph.add_edge(
@@ -108,8 +116,7 @@ impl NetTopology {
     }
 
     pub fn into_graph(self, seed: u64) -> Graph {
-        use rand::SeedableRng;
-        use rand::seq::IndexedRandom;
+        use rand::{SeedableRng, seq::IndexedRandom};
 
         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
 
@@ -119,6 +126,9 @@ impl NetTopology {
         }
 
         for edge in &self.edges {
+            if !edge.should_spawn(&mut rng) {
+                continue;
+            }
             let candidates = self.destination_candidates(edge);
             if let Some(&to) = candidates.choose(&mut rng) {
                 edge.add_to_graph(&mut graph, to);
