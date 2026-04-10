@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::sync::Arc;
 
 use axum::{
@@ -11,33 +12,39 @@ use simdash_ids::NodeId;
 use simdash_state::network::NetworkState;
 use tokio::sync::Mutex;
 
-use crate::sim::Simulation;
+use crate::sim::{OpSnapshot, Simulation};
 
 pub type AppState = Arc<Mutex<Simulation>>;
 
-pub async fn get_state(State(sim): State<AppState>) -> Json<SimSnapshot> {
-    let sim = sim.lock().await;
-    Json(build_snapshot(&sim))
+pub async fn get_state(State(sim): State<AppState>) -> Json<SimResponse> {
+    let mut sim = sim.lock().await;
+    Json(build_full_response(&mut sim))
 }
 
-pub async fn step_forward(State(sim): State<AppState>) -> Result<Json<SimSnapshot>, AppError> {
+pub async fn step_forward(State(sim): State<AppState>) -> Result<Json<SimResponse>, AppError> {
     let mut sim = sim.lock().await;
+    let prev_seq = sim.seq();
+    let prev_ops = sim.snapshot_ops();
+    let prev_edges = snapshot_edges(sim.current_state());
     let t = std::time::Instant::now();
     sim.step_forward()?;
     tracing::info!("{:>6}ms", t.elapsed().as_millis());
-    Ok(Json(build_snapshot(&sim)))
+    let seq = sim.bump_seq();
+    Ok(Json(build_delta_response(
+        &sim, prev_seq, seq, &prev_ops, &prev_edges,
+    )))
 }
 
-pub async fn step_back(State(sim): State<AppState>) -> Result<Json<SimSnapshot>, AppError> {
+pub async fn step_back(State(sim): State<AppState>) -> Result<Json<SimResponse>, AppError> {
     let mut sim = sim.lock().await;
     sim.step_back()?;
-    Ok(Json(build_snapshot(&sim)))
+    Ok(Json(build_full_response(&mut sim)))
 }
 
-pub async fn reset(State(sim): State<AppState>) -> Json<SimSnapshot> {
+pub async fn reset(State(sim): State<AppState>) -> Json<SimResponse> {
     let mut sim = sim.lock().await;
     sim.reset();
-    Json(build_snapshot(&sim))
+    Json(build_full_response(&mut sim))
 }
 
 pub async fn get_behaviors(State(sim): State<AppState>) -> Json<BehaviorsResponse> {
@@ -55,17 +62,19 @@ pub async fn get_behaviors(State(sim): State<AppState>) -> Json<BehaviorsRespons
 pub async fn set_behavior(
     State(sim): State<AppState>,
     Json(body): Json<SetBehaviorRequest>,
-) -> Result<Json<SimSnapshot>, AppError> {
+) -> Result<Json<SimResponse>, AppError> {
     let mut sim = sim.lock().await;
     sim.set_behavior(&body.behavior)?;
-    Ok(Json(build_snapshot(&sim)))
+    Ok(Json(build_full_response(&mut sim)))
 }
 
-// --- Snapshot building (full state) ---
+// --- Response building ---
 
-fn build_snapshot(sim: &Simulation) -> SimSnapshot {
+fn build_full_response(sim: &mut Simulation) -> SimResponse {
+    let seq = sim.bump_seq();
     let state = sim.current_state();
-    SimSnapshot {
+    SimResponse::Full(SimSnapshot {
+        seq,
         step: sim.current_step(),
         behavior: sim.behavior_name().to_string(),
         available_behaviors: sim
@@ -75,7 +84,103 @@ fn build_snapshot(sim: &Simulation) -> SimSnapshot {
             .collect(),
         graph: build_graph_structure(state),
         nodes: build_node_infos(state),
+    })
+}
+
+fn snapshot_edges(state: &NetworkState) -> HashSet<(u32, u32)> {
+    state
+        .graph
+        .graph()
+        .edge_indices()
+        .filter_map(|e| {
+            let (src, dst) = state.graph.graph().edge_endpoints(e)?;
+            Some((src.index() as u32, dst.index() as u32))
+        })
+        .collect()
+}
+
+fn build_delta_response(
+    sim: &Simulation,
+    prev_seq: u64,
+    seq: u64,
+    prev_ops: &OpSnapshot,
+    prev_edges: &HashSet<(u32, u32)>,
+) -> SimResponse {
+    let state = sim.current_state();
+    let mut node_deltas = Vec::new();
+
+    for node_id in state.graph.node_ids() {
+        let Some(node_state) = state.graph.node_state(node_id) else {
+            continue;
+        };
+
+        let current_op_ids: HashSet<u32> =
+            node_state.dash.op_store.keys().map(|id| **id).collect();
+        let empty = HashSet::new();
+        let prev_op_ids = prev_ops.get(&*node_id).unwrap_or(&empty);
+
+        let ops_added: Vec<OpInfo> = current_op_ids
+            .difference(prev_op_ids)
+            .filter_map(|&id| {
+                node_state
+                    .dash
+                    .op_store
+                    .get(&id.into())
+                    .map(|op| build_op_info(op))
+            })
+            .collect();
+
+        let ops_removed: Vec<u32> = prev_op_ids
+            .difference(&current_op_ids)
+            .copied()
+            .collect();
+
+        // Skip nodes with no changes
+        if ops_added.is_empty() && ops_removed.is_empty() {
+            continue;
+        }
+
+        let routing_ops: Vec<RoutingOpInfo> = node_state
+            .routing
+            .flooding
+            .ops
+            .values()
+            .map(|op| RoutingOpInfo {
+                id: *op.id,
+                size: *op.metadata.size,
+                since_last_send: op.since_last_send.map(|t| *t),
+            })
+            .collect();
+
+        node_deltas.push(NodeDelta {
+            id: *node_id,
+            ops_added,
+            ops_removed,
+            routing_ops,
+            stored_size: *node_state.dash.stored_size(),
+        });
     }
+
+    let current_edges = snapshot_edges(state);
+
+    let edges_added: Vec<GraphEdge> = current_edges
+        .difference(prev_edges)
+        .map(|&(s, t)| GraphEdge { source: s, target: t })
+        .collect();
+
+    let edges_removed: Vec<GraphEdge> = prev_edges
+        .difference(&current_edges)
+        .map(|&(s, t)| GraphEdge { source: s, target: t })
+        .collect();
+
+    SimResponse::Delta(SimDelta {
+        seq,
+        prev_seq,
+        step: sim.current_step(),
+        node_deltas,
+        edges_added,
+        edges_removed,
+    })
 }
 
 fn build_graph_structure(state: &NetworkState) -> GraphStructure {
@@ -168,12 +273,39 @@ fn build_op_info(op: &simdash_state::chat::Operation) -> OpInfo {
 // --- Response types ---
 
 #[derive(Serialize)]
+#[serde(tag = "kind")]
+pub enum SimResponse {
+    Full(SimSnapshot),
+    Delta(SimDelta),
+}
+
+#[derive(Serialize)]
 pub struct SimSnapshot {
+    pub seq: u64,
     pub step: usize,
     pub behavior: String,
     pub available_behaviors: Vec<String>,
     pub graph: GraphStructure,
     pub nodes: Vec<NodeInfo>,
+}
+
+#[derive(Serialize)]
+pub struct SimDelta {
+    pub seq: u64,
+    pub prev_seq: u64,
+    pub step: usize,
+    pub node_deltas: Vec<NodeDelta>,
+    pub edges_added: Vec<GraphEdge>,
+    pub edges_removed: Vec<GraphEdge>,
+}
+
+#[derive(Serialize)]
+pub struct NodeDelta {
+    pub id: u32,
+    pub ops_added: Vec<OpInfo>,
+    pub ops_removed: Vec<u32>,
+    pub routing_ops: Vec<RoutingOpInfo>,
+    pub stored_size: u64,
 }
 
 #[derive(Serialize)]
@@ -231,7 +363,7 @@ pub enum OpBody {
     DirectMessage { recipient: u32 },
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 pub struct RoutingOpInfo {
     pub id: u32,
     pub size: u64,

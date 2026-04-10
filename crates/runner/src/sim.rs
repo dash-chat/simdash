@@ -1,7 +1,12 @@
+use std::collections::{HashMap, HashSet};
+
 use dash_chat_top_gen::ChatTopology;
 use simdash_state::network::NetworkState;
 
 use crate::scenarios::{naive_flooding, no_routing, AnyScenario, AVAILABLE_BEHAVIORS};
+
+/// Snapshot of op IDs per node, used to compute deltas.
+pub type OpSnapshot = HashMap<u32, HashSet<u32>>;
 
 pub struct Simulation {
     initial_state: NetworkState,
@@ -10,6 +15,7 @@ pub struct Simulation {
     behavior_name: String,
     broadcast_interval: u32,
     scenario: AnyScenario,
+    seq: u64,
 }
 
 impl Simulation {
@@ -29,6 +35,7 @@ impl Simulation {
             behavior_name: behavior.to_string(),
             broadcast_interval,
             scenario,
+            seq: 0,
         })
     }
 
@@ -81,6 +88,30 @@ impl Simulation {
         self.scenario = scenario;
         self.current_step = 0;
         Ok(())
+    }
+
+    pub fn seq(&self) -> u64 {
+        self.seq
+    }
+
+    pub fn bump_seq(&mut self) -> u64 {
+        self.seq += 1;
+        self.seq
+    }
+
+    /// Capture the current op IDs per node before a step.
+    pub fn snapshot_ops(&self) -> OpSnapshot {
+        let state = self.current_state();
+        let mut snap = HashMap::new();
+        for node_id in state.graph.node_ids() {
+            if let Some(node_state) = state.graph.node_state(node_id) {
+                snap.insert(
+                    *node_id,
+                    node_state.dash.op_store.keys().map(|id| **id).collect(),
+                );
+            }
+        }
+        snap
     }
 
     pub fn step_forward(&mut self) -> anyhow::Result<()> {

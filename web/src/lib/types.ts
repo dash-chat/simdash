@@ -1,9 +1,31 @@
+export type SimResponse =
+	| ({ kind: 'Full' } & SimSnapshot)
+	| ({ kind: 'Delta' } & SimDelta);
+
 export interface SimSnapshot {
+	seq: number;
 	step: number;
 	behavior: string;
 	available_behaviors: string[];
 	graph: GraphStructure;
 	nodes: NodeInfo[];
+}
+
+export interface SimDelta {
+	seq: number;
+	prev_seq: number;
+	step: number;
+	node_deltas: NodeDelta[];
+	edges_added: GraphEdge[];
+	edges_removed: GraphEdge[];
+}
+
+export interface NodeDelta {
+	id: number;
+	ops_added: OpInfo[];
+	ops_removed: number[];
+	routing_ops: RoutingOpInfo[];
+	stored_size: number;
 }
 
 export interface GraphStructure {

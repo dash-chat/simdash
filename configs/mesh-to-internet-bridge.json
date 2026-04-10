@@ -92,7 +92,7 @@
         },
         "operations_count": {
           "type": "fixed",
-          "value": 40
+          "value": 100
         }
       },
       {
@@ -104,7 +104,7 @@
         },
         "operations_count": {
           "type": "fixed",
-          "value": 30
+          "value": 80
         }
       }
     ]
