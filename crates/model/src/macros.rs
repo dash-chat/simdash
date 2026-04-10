@@ -14,6 +14,11 @@
 /// - `Fx     = Option<<fx type>>`
 /// - `Error  = anyhow::Error`
 ///
+/// Additionally, each protocol provides a Data type which is used to model
+/// datagrams flowing through the network.
+/// The `RoutingAction::ReceiveData` models incoming data,
+/// and the `RoutingFx::UnicastData` and `RoutingFx::BroadcastData` model outgoing data.
+///
 /// # Example
 ///
 /// ```rust,ignore
@@ -23,6 +28,7 @@
 ///         state:  my_crate::routing::flooding::FloodingState,
 ///         action: my_crate::routing::flooding::FloodingAction,
 ///         fx:     my_crate::routing::flooding::FloodingFx,
+///         data:   my_crate::routing::flooding::FloodingData,
 ///     },
 /// }
 /// ```
@@ -39,6 +45,7 @@ macro_rules! routing_protocols {
                 state:  $state_ty:ty,
                 action: $action_ty:ty,
                 fx:     $fx_ty:ty,
+                data:   $data_ty:ty,
             }
         ),+ $(,)?
     ) => {
@@ -53,13 +60,50 @@ macro_rules! routing_protocols {
 
         #[derive(Debug, Clone, PartialEq, Eq, Hash)]
         pub enum RoutingAction {
+            ReceiveData {
+                from: NodeId,
+                data: RoutingData,
+            },
+            Protocol(RoutingProtocolAction),
+        }
+
+        #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+        pub enum RoutingData {
+            $( $Variant($data_ty), )+
+        }
+
+        #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+        pub enum RoutingProtocolAction {
             $( $Variant($action_ty), )+
         }
 
         #[derive(Debug, Clone, PartialEq, Eq, Hash)]
         pub enum RoutingFx {
-            $( $Variant(Option<$fx_ty>), )+
+            Network(RoutingNetworkFx),
+            Node(RoutingNodeFx),
+            // Protocol(RoutingProtocolFx),
         }
+
+        #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+        pub enum RoutingNodeFx {
+            StoreOps { ops: Vec<simdash_state::chat::Operation> }
+        }
+
+        #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+        pub enum RoutingNetworkFx {
+            UnicastData {
+                to: simdash_ids::NodeId,
+                data: RoutingData,
+            },
+            BroadcastData {
+                data: RoutingData,
+            }
+        }
+
+        // #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+        // pub enum RoutingProtocolFx {
+        //     $( $Variant(Option<$fx_ty>), )+
+        // }
 
         impl RoutingState {
             pub fn tick(&mut self) {
