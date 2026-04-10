@@ -27,6 +27,8 @@ export interface NodeInfo {
 	groups: number[];
 	routing_ops: RoutingOpInfo[];
 	neighbors: number[];
+	storage_capacity: number | null;
+	stored_size: number;
 }
 
 export interface OpInfo {

@@ -50,6 +50,17 @@
 			</tr>
 			<tr><td>Neighbors</td><td>{node.neighbors.join(', ') || 'none'}</td></tr>
 			<tr><td>Routing ops</td><td>{node.routing_ops.length}</td></tr>
+			<tr>
+				<td>Storage used</td>
+				<td>
+					{#if node.storage_capacity !== null}
+						{(node.stored_size / node.storage_capacity * 100).toFixed(1)}%
+						<span class="storage-detail">({node.stored_size}/{node.storage_capacity})</span>
+					{:else}
+						{node.stored_size} (unlimited)
+					{/if}
+				</td>
+			</tr>
 		</tbody>
 	</table>
 
@@ -154,6 +165,10 @@
 		color: #40e0a0;
 		text-decoration-style: solid;
 		font-weight: bold;
+	}
+	.storage-detail {
+		color: #666;
+		font-size: 10px;
 	}
 	.author-link {
 		background: none;

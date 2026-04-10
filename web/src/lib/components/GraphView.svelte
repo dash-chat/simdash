@@ -97,10 +97,14 @@
 				}
 			} else if (node) {
 				const meantForNode = allOps.filter((op) => isOpMeantFor(op, node));
-				const heldIds = new Set(node.ops.map((op) => op.id));
-				const heldCount = meantForNode.filter((op) => heldIds.has(op.id)).length;
-				const ratio = meantForNode.length === 0 ? 1 : heldCount / meantForNode.length;
-				ele.style('background-color', saturationColor(ratio));
+				if (meantForNode.length === 0) {
+					ele.style('background-color', '#bbb');
+				} else {
+					const heldIds = new Set(node.ops.map((op) => op.id));
+					const heldCount = meantForNode.filter((op) => heldIds.has(op.id)).length;
+					const ratio = heldCount / meantForNode.length;
+					ele.style('background-color', saturationColor(ratio));
+				}
 			} else {
 				ele.style('background-color', '#555');
 			}

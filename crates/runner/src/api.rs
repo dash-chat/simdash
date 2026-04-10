@@ -142,6 +142,8 @@ fn build_node_infos(state: &NetworkState) -> Vec<NodeInfo> {
                 groups: node_state.dash.groups.iter().copied().collect(),
                 routing_ops,
                 neighbors,
+                storage_capacity: node_state.dash.storage_capacity.map(|s| *s),
+                stored_size: *node_state.dash.stored_size(),
             })
         })
         .collect()
@@ -210,6 +212,8 @@ pub struct NodeInfo {
     pub groups: Vec<u64>,
     pub routing_ops: Vec<RoutingOpInfo>,
     pub neighbors: Vec<u32>,
+    pub storage_capacity: Option<u64>,
+    pub stored_size: u64,
 }
 
 #[derive(Serialize, Clone)]
