@@ -2,7 +2,7 @@ use rand::seq::IndexedRandom;
 use serde::Deserialize;
 use simdash_ids::NodeId;
 
-use crate::{ApplyRule, BuildState};
+use crate::{ApplyRule, BuildState, net_topology::EdgeTopology};
 
 /// How many links to create for a rule.
 #[derive(Debug, Clone, Deserialize)]
@@ -83,7 +83,7 @@ impl ApplyRule for LinkSpec {
                             .collect();
                         for _ in 0..n {
                             if let Some(&to) = candidates.choose(&mut state.rng) {
-                                state.topology.edges.push((node, to));
+                                state.topology.edges.push(EdgeTopology { from: node, to });
                             }
                         }
                     }
@@ -104,7 +104,7 @@ impl ApplyRule for LinkSpec {
                                 .filter(|&id| id != from)
                                 .collect();
                             if let Some(&to) = candidates.choose(&mut state.rng) {
-                                state.topology.edges.push((from, to));
+                                state.topology.edges.push(EdgeTopology { from, to });
                             }
                         }
                     }

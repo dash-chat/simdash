@@ -3,10 +3,20 @@ use std::collections::BTreeMap;
 use simdash_ids::NodeId;
 use simdash_state::{Graph, node::NodeState};
 
+pub struct NodeTopology {
+    pub id: NodeId,
+    pub state: NodeState,
+}
+
+pub struct EdgeTopology {
+    pub from: NodeId,
+    pub to: NodeId,
+}
+
 /// Intermediate representation of a network topology before it is converted to a `Graph`.
 pub struct NetTopology {
-    pub nodes: Vec<(NodeId, NodeState)>,
-    pub edges: Vec<(NodeId, NodeId)>,
+    pub nodes: Vec<NodeTopology>,
+    pub edges: Vec<EdgeTopology>,
     pub subnets: BTreeMap<String, Vec<NodeId>>,
 }
 
@@ -21,10 +31,10 @@ impl NetTopology {
 
     pub(crate) fn into_graph(self) -> Graph {
         let mut graph = Graph::new();
-        for (id, state) in self.nodes {
+        for NodeTopology { id, state } in self.nodes {
             graph.add_node(id, state);
         }
-        for (from, to) in self.edges {
+        for EdgeTopology { from, to } in self.edges {
             graph.add_edge(from, to, ());
         }
         for (name, node_ids) in self.subnets {

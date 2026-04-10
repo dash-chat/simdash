@@ -2,7 +2,7 @@ use serde::Deserialize;
 use simdash_ids::NodeId;
 use simdash_state::node::NodeState;
 
-use crate::{ApplyRule, BuildState, Rule};
+use crate::{ApplyRule, BuildState, Rule, net_topology::NodeTopology};
 
 fn default_strategy() -> String {
     "default".to_string()
@@ -28,7 +28,10 @@ impl ApplyRule for NodeSpec {
         *state.next_id += self.number;
 
         for &node_id in &node_ids {
-            state.topology.nodes.push((node_id, NodeState::default()));
+            state.topology.nodes.push(NodeTopology {
+                id: node_id,
+                state: NodeState::default(),
+            });
         }
         state.all_node_ids.extend_from_slice(&node_ids);
         if let Some(subnet) = &self.subnet {
