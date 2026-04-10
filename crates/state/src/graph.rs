@@ -8,13 +8,28 @@ use simdash_ids::NodeId;
 use crate::node::NodeState;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct EdgeRef {
+pub struct EdgeState {
     pub topology_id: u32,
     pub reversed: bool,
+    pub remaining_ticks: Option<u32>,
+}
+
+impl EdgeState {
+    pub fn new(topology_id: u32, reversed: bool, longevity: u32) -> Self {
+        Self {
+            topology_id,
+            reversed,
+            remaining_ticks: if longevity == 0 {
+                None
+            } else {
+                Some(longevity)
+            },
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Graph<R = crate::routing::RoutingState, E = EdgeRef> {
+pub struct Graph<R = crate::routing::RoutingState, E = EdgeState> {
     graph: PetGraph<(), E>,
     pub nodes: HashMap<NodeId, NodeState<R>>,
     #[serde(skip, default)]

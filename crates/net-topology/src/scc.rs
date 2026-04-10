@@ -2,7 +2,7 @@ use itertools::Itertools;
 
 use rand::seq::IndexedRandom;
 use simdash_ids::NodeId;
-use simdash_state::{EdgeRef, Graph, node::NodeState};
+use simdash_state::{EdgeState, Graph, node::NodeState};
 
 pub fn strongly_connected_graph<R: Clone>(
     nodes: Vec<NodeState<R>>,
@@ -33,7 +33,7 @@ pub fn strongly_connected_graph<R: Clone>(
                     graph.add_edge(
                         graph.node_id(*sccs[0].choose(rng).unwrap()).unwrap(),
                         graph.node_id(*sccs[1].choose(rng).unwrap()).unwrap(),
-                        EdgeRef::default(),
+                        EdgeState::default(),
                     );
                 }
             });

@@ -38,6 +38,11 @@ impl polestar::Machine for NetworkModel {
     ) -> polestar::TransitionResult<Self> {
         match action {
             simdash_action::network::NetworkAction::Tick => {
+                for edge in state.graph.graph_mut().edge_weights_mut() {
+                    if let Some(ref mut ticks) = edge.remaining_ticks {
+                        *ticks = ticks.saturating_sub(1);
+                    }
+                }
                 let all_keys = state.graph.node_ids().collect::<Vec<_>>();
                 for node_id in all_keys {
                     let node_model = self
@@ -52,19 +57,10 @@ impl polestar::Machine for NetworkModel {
             }
 
             simdash_action::network::NetworkAction::EvolveTopology => {
-                state.graph.graph_mut().retain_edges(|g, idx| {
-                    let edge_ref = &g[idx];
-                    let Some(edge_top) = self
-                        .topology
-                        .net
-                        .edges
-                        .iter()
-                        .find(|e| e.id == edge_ref.topology_id)
-                    else {
-                        return true;
-                    };
-                    edge_top.longevity <= 5
-                });
+                state
+                    .graph
+                    .graph_mut()
+                    .retain_edges(|g, idx| g[idx].remaining_ticks != Some(0));
                 Ok((state, ()))
             }
 

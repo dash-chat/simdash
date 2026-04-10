@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use serde::Deserialize;
 use simdash_ids::NodeId;
-use simdash_state::{EdgeRef, Graph, node::NodeState};
+use simdash_state::{EdgeState, Graph, node::NodeState};
 
 /// How link destinations are chosen.
 #[derive(Debug, Clone, Deserialize)]
@@ -101,7 +101,7 @@ impl NetTopology {
             from,
             destination,
             ordinality,
-            longevity: _,
+            longevity,
         } in edges
         {
             let pool: Vec<NodeId> = match &destination {
@@ -112,23 +112,9 @@ impl NetTopology {
             };
             let candidates: Vec<NodeId> = pool.into_iter().filter(|&id| id != from).collect();
             if let Some(&to) = candidates.choose(&mut rng) {
-                graph.add_edge(
-                    from,
-                    to,
-                    EdgeRef {
-                        topology_id: id,
-                        reversed: false,
-                    },
-                );
+                graph.add_edge(from, to, EdgeState::new(id, false, longevity));
                 if matches!(ordinality, Ordinality::Bidirectional) {
-                    graph.add_edge(
-                        to,
-                        from,
-                        EdgeRef {
-                            topology_id: id,
-                            reversed: true,
-                        },
-                    );
+                    graph.add_edge(to, from, EdgeState::new(id, true, longevity));
                 }
             }
         }

@@ -12,6 +12,11 @@ pub struct NodeId(u32);
 pub struct OpId(u32);
 
 #[derive(
+    Serialize, Deserialize, PartialOrd, Ord, Debug, Clone, Copy, PartialEq, Eq, Hash, From, Deref,
+)]
+pub struct EdgeId(u32);
+
+#[derive(
     Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, From, Deref,
 )]
 pub struct Size(u64);

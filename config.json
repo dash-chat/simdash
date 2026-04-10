@@ -19,7 +19,8 @@
             "selection": "random",
             "subnet": "mesh"
           },
-          "ordinality": "bidirectional"
+          "ordinality": "bidirectional",
+          "longevity": 6
         }
       ]
     },
