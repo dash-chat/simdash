@@ -10,27 +10,8 @@
     },
     {
       "element": "node",
-      "subnet": "exit_node",
-      "number": 1,
-      "rules": [
-        {
-          "element": "link",
-          "strategy": "per_node",
-          "count": {
-            "min": 1,
-            "max": 1
-          },
-          "destination": {
-            "selection": "random",
-            "subnet": "server"
-          }
-        }
-      ]
-    },
-    {
-      "element": "node",
       "subnet": "mesh",
-      "number": 10,
+      "number": 100,
       "rules": [
         {
           "element": "link",
@@ -43,18 +24,36 @@
             "selection": "random",
             "subnet": "mesh"
           }
+        }
+      ]
+    },
+    {
+      "element": "node",
+      "subnet": "exit_node",
+      "number": 1,
+      "rules": [
+        {
+          "element": "link",
+          "strategy": "per_node",
+          "count": 1,
+          "destination": {
+            "selection": "random",
+            "subnet": "server"
+          },
+          "ordinality": "bidirectional"
         },
         {
           "element": "link",
           "strategy": "per_node",
           "count": {
-            "min": 0,
-            "max": 1
+            "min": 1,
+            "max": 2
           },
           "destination": {
             "selection": "random",
-            "subnet": "exit_node"
-          }
+            "subnet": "mesh"
+          },
+          "ordinality": "bidirectional"
         }
       ]
     },
@@ -66,14 +65,12 @@
         {
           "element": "link",
           "strategy": "per_node",
-          "count": {
-            "min": 1,
-            "max": 1
-          },
+          "ordinality": "bidirectional",
           "destination": {
             "selection": "random",
             "subnet": "server"
-          }
+          },
+          "count": 1
         }
       ]
     }

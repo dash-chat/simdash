@@ -42,9 +42,29 @@
 		const nodes = snapshot.graph.nodes.map((n) => ({
 			data: { id: `n${n.id}`, label: `${n.id}` }
 		}));
-		const edges = snapshot.graph.edges.map((e, i) => ({
-			data: { id: `e${i}`, source: `n${e.source}`, target: `n${e.target}` }
-		}));
+
+		// Detect bidirectional pairs and deduplicate
+		const edgeSet = new Set(snapshot.graph.edges.map((e) => `${e.source}-${e.target}`));
+		const seen = new Set<string>();
+		const edges: cytoscape.ElementDefinition[] = [];
+
+		snapshot.graph.edges.forEach((e, i) => {
+			const key = `${Math.min(e.source, e.target)}-${Math.max(e.source, e.target)}`;
+			const hasReverse = edgeSet.has(`${e.target}-${e.source}`);
+
+			if (hasReverse) {
+				if (seen.has(key)) return; // skip duplicate of bidirectional pair
+				seen.add(key);
+				edges.push({
+					data: { id: `e${i}`, source: `n${e.source}`, target: `n${e.target}`, bidir: 'true' }
+				});
+			} else {
+				edges.push({
+					data: { id: `e${i}`, source: `n${e.source}`, target: `n${e.target}`, bidir: 'false' }
+				});
+			}
+		});
+
 		return [...nodes, ...edges];
 	}
 
@@ -179,6 +199,12 @@
 						'target-arrow-shape': 'triangle',
 						'curve-style': 'bezier',
 						'arrow-scale': 0.6
+					}
+				},
+				{
+					selector: 'edge[bidir="true"]',
+					style: {
+						'target-arrow-shape': 'none'
 					}
 				}
 			],
