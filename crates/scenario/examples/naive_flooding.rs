@@ -4,7 +4,11 @@ use simdash_behavior::{
     network::RoundRobinNodeScheduler, node::BasicRoutingBehavior, routing::NaiveFloodingBehavior,
 };
 use simdash_ids::{NodeId, OpId};
-use simdash_model::{network::NetworkModel, node::NodeModelConfig, util::basic_op};
+use simdash_model::{
+    network::NetworkModel,
+    node::{NodeModel, NodeModelConfig},
+    util::basic_op,
+};
 use simdash_scenario::Scenario;
 use simdash_state::network::NetworkState;
 
@@ -22,9 +26,20 @@ fn holding_count(state: &NetworkState, ops: impl IntoIterator<Item = OpId>) -> u
 
 fn main() {
     let initial_state = NetworkState::load_postcard("gen/topology.postcard");
-    let model = NetworkModel::new(NodeModelConfig {
-        broadcast_interval: 3.into(),
-    });
+    let model = NetworkModel::new(
+        initial_state
+            .graph
+            .node_ids()
+            .map(|id| {
+                (
+                    id,
+                    NodeModel::new(NodeModelConfig {
+                        broadcast_interval: 3.into(),
+                    }),
+                )
+            })
+            .collect(),
+    );
 
     let ops = (0..5).map(|i| basic_op(i as u32));
     let stores = ops

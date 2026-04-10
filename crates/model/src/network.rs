@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashMap};
 
 use polestar::{Machine, ext::MapExt};
 use simdash_action::{
@@ -14,14 +14,12 @@ use crate::{
 };
 
 pub struct NetworkModel {
-    node: NodeModel,
+    nodes: HashMap<NodeId, NodeModel>,
 }
 
 impl NetworkModel {
-    pub fn new(config: NodeModelConfig) -> Self {
-        Self {
-            node: NodeModel::new(config),
-        }
+    pub fn new(nodes: HashMap<NodeId, NodeModel>) -> Self {
+        Self { nodes }
     }
 }
 
@@ -40,16 +38,24 @@ impl polestar::Machine for NetworkModel {
             simdash_action::network::NetworkAction::Tick => {
                 let all_keys = state.graph.node_ids().collect::<Vec<_>>();
                 for node_id in all_keys {
-                    state.graph.update_node(node_id, |mut node_state| {
-                        self.node.transition(node_state, NodeAction::Tick)
+                    let node_model = self
+                        .nodes
+                        .get(&node_id)
+                        .ok_or_else(|| anyhow::anyhow!("No model for node {:?}", node_id))?;
+                    state.graph.update_node(node_id, |node_state| {
+                        node_model.transition(node_state, NodeAction::Tick)
                     })?;
                 }
                 Ok((state, ()))
             }
 
             simdash_action::network::NetworkAction::Node(node_id, node_action) => {
+                let node_model = self
+                    .nodes
+                    .get(&node_id)
+                    .ok_or_else(|| anyhow::anyhow!("No model for node {:?}", node_id))?;
                 let fx = match state.graph.update_node(node_id, |node_state| {
-                    let (node_state, node_fx) = self.node.transition(node_state, node_action)?;
+                    let (node_state, node_fx) = node_model.transition(node_state, node_action)?;
                     Ok((node_state, node_fx))
                 }) {
                     Ok(fx) => {
@@ -75,9 +81,12 @@ impl NetworkModel {
         to: NodeId,
         op: Operation,
     ) -> anyhow::Result<()> {
+        let node_model = self
+            .nodes
+            .get(&to)
+            .ok_or_else(|| anyhow::anyhow!("No model for node {:?}", to))?;
         let fx = state.graph.update_node(to, |mut n| {
-            let (new, fx) = self
-                .node
+            let (new, fx) = node_model
                 .routing
                 .transition(n.routing, FloodingAction::ReceiveOp { from, op }.into())?;
             n.routing = new;
