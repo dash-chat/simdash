@@ -17,6 +17,7 @@
 	let container: HTMLDivElement;
 	let cy: cytoscape.Core | null = null;
 	let layoutDone = false;
+	let prevGraphRef: object | null = null;
 
 	// Collect all unique ops across the network
 	function allUniqueOps(snapshot: SimSnapshot): OpInfo[] {
@@ -96,12 +97,54 @@
 
 	function updateNodeStyles(snapshot: SimSnapshot) {
 		if (!cy) return;
-		const allOps = allUniqueOps(snapshot);
 		const nodeMap = new Map(snapshot.nodes.map((n) => [n.id, n]));
 		const hasHighlight = highlightedNodeIds.size > 0;
 		const tracing = opTrace !== null;
 
-		cy.nodes().forEach((ele) => {
+		// Pre-compute: for each node, how many ops are meant for it and how many it holds
+		// Build a map of opId -> Set<nodeId> that should have it
+		let meantForCount: Map<number, number> | null = null;
+		let heldOfMeantFor: Map<number, number> | null = null;
+		if (!tracing) {
+			const allOps = allUniqueOps(snapshot);
+			meantForCount = new Map();
+			heldOfMeantFor = new Map();
+
+			// Build group membership lookup: groupId -> Set<nodeId>
+			const groupMembers = new Map<number, Set<number>>();
+			for (const node of snapshot.nodes) {
+				for (const gid of node.groups) {
+					let s = groupMembers.get(gid);
+					if (!s) { s = new Set(); groupMembers.set(gid, s); }
+					s.add(node.id);
+				}
+			}
+
+			// Build per-node held op sets
+			const nodeHeldOps = new Map<number, Set<number>>();
+			for (const node of snapshot.nodes) {
+				nodeHeldOps.set(node.id, new Set(node.ops.map((op) => op.id)));
+			}
+
+			// For each op, find target nodes and update counts
+			for (const op of allOps) {
+				let targets: Iterable<number>;
+				if (op.body.type === 'DirectMessage') {
+					targets = [op.body.recipient];
+				} else {
+					targets = groupMembers.get(op.body.group_id) ?? [];
+				}
+				for (const nid of targets) {
+					meantForCount.set(nid, (meantForCount.get(nid) ?? 0) + 1);
+					if (nodeHeldOps.get(nid)?.has(op.id)) {
+						heldOfMeantFor.set(nid, (heldOfMeantFor.get(nid) ?? 0) + 1);
+					}
+				}
+			}
+		}
+
+		cy.batch(() => {
+		cy!.nodes().forEach((ele) => {
 			const id = parseInt(ele.id().slice(1));
 			const node = nodeMap.get(id);
 
@@ -115,14 +158,12 @@
 					ele.style('background-color', '#555');
 				}
 			} else if (node) {
-				const meantForNode = allOps.filter((op) => isOpMeantFor(op, node));
-				if (meantForNode.length === 0) {
+				const total = meantForCount!.get(id) ?? 0;
+				if (total === 0) {
 					ele.style('background-color', '#bbb');
 				} else {
-					const heldIds = new Set(node.ops.map((op) => op.id));
-					const heldCount = meantForNode.filter((op) => heldIds.has(op.id)).length;
-					const ratio = heldCount / meantForNode.length;
-					ele.style('background-color', saturationColor(ratio));
+					const held = heldOfMeantFor!.get(id) ?? 0;
+					ele.style('background-color', saturationColor(held / total));
 				}
 			} else {
 				ele.style('background-color', '#555');
@@ -155,7 +196,7 @@
 			}
 		});
 
-		cy.edges().forEach((ele) => {
+		cy!.edges().forEach((ele) => {
 			if (tracing) {
 				const src = parseInt(ele.source().id().slice(1));
 				const tgt = parseInt(ele.target().id().slice(1));
@@ -193,6 +234,7 @@
 				ele.style('opacity', 1);
 			}
 		});
+		}); // end cy.batch
 	}
 
 	onMount(() => {
@@ -262,8 +304,15 @@
 		highlightedNodeIds;
 		opTrace;
 		if (cy && layoutDone) {
-			syncGraph(snapshot);
+			if (prevGraphRef !== snapshot.graph) {
+				console.time('syncGraph');
+				syncGraph(snapshot);
+				console.timeEnd('syncGraph');
+				prevGraphRef = snapshot.graph;
+			}
+			console.time('updateNodeStyles');
 			updateNodeStyles(snapshot);
+			console.timeEnd('updateNodeStyles');
 		}
 	});
 </script>
