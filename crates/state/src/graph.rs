@@ -39,7 +39,15 @@ impl<R: Clone, E> Graph<R, E> {
     }
 
     pub fn node_ids(&self) -> impl Iterator<Item = NodeId> + '_ {
-        self.nodes.keys().copied()
+        let ids = self.nodes.keys().copied();
+        debug_assert_eq!(
+            ids.clone().collect::<BTreeSet<_>>(),
+            self.graph
+                .node_indices()
+                .map(|i| NodeId::from(i))
+                .collect::<BTreeSet<_>>()
+        );
+        ids
     }
 
     pub fn node_state(&self, node_id: NodeId) -> Option<&NodeState<R>> {
@@ -55,7 +63,11 @@ impl<R: Clone, E> Graph<R, E> {
         node_id: NodeId,
         action: impl FnOnce(NodeState<R>) -> anyhow::Result<(NodeState<R>, O)>,
     ) -> anyhow::Result<O> {
-        let state = self.nodes.owned_update(node_id, |_, state| action(state))?;
+        // TODO: PERF: use owned_update instead of cloned_update, but this
+        //       requires never triggering an error during state transition.
+        let state = self
+            .nodes
+            .cloned_update(node_id, |_, state| action(state))?;
         Ok(state)
     }
 
