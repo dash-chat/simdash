@@ -1,5 +1,5 @@
+use dash_chat_top_gen::ChatTopology;
 use simdash_state::network::NetworkState;
-use simdash_state::Graph;
 
 use crate::scenarios::{naive_flooding, no_routing, AnyScenario, AVAILABLE_BEHAVIORS};
 
@@ -12,7 +12,12 @@ pub struct Simulation {
 }
 
 impl Simulation {
-    pub fn new(graph: Graph, behavior: &str, broadcast_interval: u32) -> anyhow::Result<Self> {
+    pub fn new(
+        topology: ChatTopology,
+        behavior: &str,
+        broadcast_interval: u32,
+    ) -> anyhow::Result<Self> {
+        let graph = topology.into_graph();
         let state = NetworkState { graph };
         let scenario = Self::make_scenario(behavior, &state, broadcast_interval)?;
         Ok(Self {

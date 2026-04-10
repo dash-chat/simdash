@@ -84,8 +84,6 @@ async fn main() {
         dash_topology.net.edges.len(),
     );
 
-    let graph = dash_topology.into_graph();
-
     // {
     //     std::fs::create_dir_all("gen").unwrap();
     //     let bytes = postcard::to_stdvec(&graph).unwrap();
@@ -98,7 +96,7 @@ async fn main() {
     }
 
     println!("Using behavior: {behavior}");
-    let sim = Simulation::new(graph, behavior, broadcast_interval)
+    let sim = Simulation::new(dash_topology, behavior, broadcast_interval)
         .unwrap_or_else(|e| panic!("Failed to create simulation: {e}"));
     let state: AppState = Arc::new(Mutex::new(sim));
 
