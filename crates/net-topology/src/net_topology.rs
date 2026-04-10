@@ -42,11 +42,20 @@ impl NodeTopology {
     }
 }
 
+/// Whether a link produces a reverse edge in addition to the forward edge.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Ordinality {
+    #[default]
+    Unidirectional,
+    Bidirectional,
+}
+
 #[derive(Clone)]
 pub struct EdgeTopology {
     pub from: NodeId,
-    pub to: NodeId,
     pub destination: Destination,
+    pub ordinality: Ordinality,
 }
 
 /// Intermediate representation of a network topology before it is converted to a `Graph`.
@@ -66,15 +75,46 @@ impl NetTopology {
         }
     }
 
-    pub fn into_graph(self, _seed: u64) -> Graph {
+    pub fn into_graph(self, seed: u64) -> Graph {
+        use rand::SeedableRng;
+        use rand::seq::IndexedRandom;
+
+        let NetTopology {
+            nodes,
+            edges,
+            subnets,
+        } = self;
+
+        let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+        let all_node_ids: Vec<NodeId> = nodes.iter().map(|n| n.id).collect();
+
         let mut graph = Graph::new();
-        for NodeTopology { id, state, .. } in self.nodes {
+        for NodeTopology { id, state, .. } in nodes {
             graph.add_node(id, state);
         }
-        for EdgeTopology { from, to, .. } in self.edges {
-            graph.add_edge(from, to, ());
+
+        for EdgeTopology {
+            from,
+            destination,
+            ordinality,
+        } in edges
+        {
+            let pool: Vec<NodeId> = match &destination {
+                Destination::Spec(DestinationSpec {
+                    subnet: Some(name), ..
+                }) => subnets.get(name).cloned().unwrap_or_default(),
+                _ => all_node_ids.clone(),
+            };
+            let candidates: Vec<NodeId> = pool.into_iter().filter(|&id| id != from).collect();
+            if let Some(&to) = candidates.choose(&mut rng) {
+                graph.add_edge(from, to, ());
+                if matches!(ordinality, Ordinality::Bidirectional) {
+                    graph.add_edge(to, from, ());
+                }
+            }
         }
-        for (name, node_ids) in self.subnets {
+
+        for (name, node_ids) in subnets {
             graph.set_subnet(name, node_ids);
         }
         graph
