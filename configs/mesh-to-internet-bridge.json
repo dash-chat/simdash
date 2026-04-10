@@ -11,7 +11,7 @@
     {
       "element": "node",
       "subnet": "mesh",
-      "number": 30,
+      "number": 10,
       "rules": [
         {
           "element": "link",
@@ -24,7 +24,9 @@
             "selection": "random",
             "subnet": "mesh"
           },
-          "ordinality": "bidirectional"
+          "ordinality": "bidirectional",
+          "longevity": 6,
+          "spawn_chance": 0.1
         }
       ]
     },

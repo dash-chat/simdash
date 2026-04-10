@@ -203,7 +203,14 @@ fn build_graph_structure(state: &NetworkState) -> GraphStructure {
         })
         .collect();
 
-    GraphStructure { nodes, edges }
+    let subnets: std::collections::HashMap<String, Vec<u32>> = state
+        .graph
+        .subnets()
+        .iter()
+        .map(|(name, ids)| (name.clone(), ids.iter().map(|id| **id).collect()))
+        .collect();
+
+    GraphStructure { nodes, edges, subnets }
 }
 
 fn build_node_infos(state: &NetworkState) -> Vec<NodeInfo> {
@@ -323,6 +330,7 @@ pub struct SetBehaviorRequest {
 pub struct GraphStructure {
     pub nodes: Vec<GraphNode>,
     pub edges: Vec<GraphEdge>,
+    pub subnets: std::collections::HashMap<String, Vec<u32>>,
 }
 
 #[derive(Serialize)]

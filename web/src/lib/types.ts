@@ -31,6 +31,7 @@ export interface NodeDelta {
 export interface GraphStructure {
 	nodes: GraphNode[];
 	edges: GraphEdge[];
+	subnets: Record<string, number[]>;
 }
 
 export interface GraphNode {

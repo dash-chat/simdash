@@ -36,25 +36,7 @@ async fn main() {
 
     let cli = Cli::parse();
 
-    let contents = fs::read_to_string(&cli.config)
-        .unwrap_or_else(|e| panic!("Failed to read '{}': {e}", cli.config.display()));
-
-    let config: serde_json::Value = serde_json::from_str(&contents)
-        .unwrap_or_else(|e| panic!("Failed to parse '{}' as JSON: {e}", cli.config.display()));
-
-    let seed = config.get("seed").and_then(|v| v.as_u64()).unwrap_or(0);
-
-    let behavior = config
-        .get("behavior")
-        .and_then(|v| v.as_str())
-        .unwrap_or("naive-flooding");
-
-    let broadcast_interval = config
-        .get("broadcast-interval")
-        .and_then(|v| v.as_u64())
-        .unwrap_or(1) as u32;
-
-    let (dash_topology, _seed) = simdash_generator::generate(&cli.config)
+    let (dash_topology, seed) = simdash_generator::generate_topology(&cli.config)
         .unwrap_or_else(|e| panic!("Failed to generate topology: {e}"));
 
     println!(
@@ -67,8 +49,7 @@ async fn main() {
         return;
     }
 
-    println!("Using behavior: {behavior}");
-    let sim = Simulation::new(dash_topology, behavior, broadcast_interval, seed)
+    let sim = Simulation::new(dash_topology, seed)
         .unwrap_or_else(|e| panic!("Failed to create simulation: {e}"));
     let state: AppState = Arc::new(Mutex::new(sim));
 

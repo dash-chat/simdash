@@ -50,6 +50,10 @@ where
         self.state.as_ref()
     }
 
+    pub fn model(&self) -> &M {
+        &self.model
+    }
+
     pub fn history(&self) -> &Vec<M::Action> {
         &self.history
     }

@@ -40,9 +40,29 @@
 	}
 
 	function snapshotToElements(snapshot: SimSnapshot): cytoscape.ElementDefinition[] {
-		const nodes = snapshot.graph.nodes.map((n) => ({
-			data: { id: `n${n.id}`, label: `${n.id}` }
+		// Build node-to-subnet lookup
+		const nodeSubnet = new Map<number, string>();
+		for (const [name, ids] of Object.entries(snapshot.graph.subnets)) {
+			for (const id of ids) {
+				nodeSubnet.set(id, name);
+			}
+		}
+
+		// Create parent nodes for each subnet
+		const subnetParents: cytoscape.ElementDefinition[] = Object.keys(snapshot.graph.subnets).map((name) => ({
+			data: { id: `subnet_${name}`, label: name }
 		}));
+
+		const nodes = snapshot.graph.nodes.map((n) => {
+			const subnet = nodeSubnet.get(n.id);
+			return {
+				data: {
+					id: `n${n.id}`,
+					label: `${n.id}`,
+					...(subnet ? { parent: `subnet_${subnet}` } : {})
+				}
+			};
+		});
 
 		// Detect bidirectional pairs and deduplicate
 		const edgeSet = new Set(snapshot.graph.edges.map((e) => `${e.source}-${e.target}`));
@@ -68,24 +88,34 @@
 			}
 		});
 
-		return [...nodes, ...edges];
+		return [...subnetParents, ...nodes, ...edges];
 	}
 
-	function syncGraph(snapshot: SimSnapshot) {
-		if (!cy) return;
+	function syncGraph(snapshot: SimSnapshot): boolean {
+		if (!cy) return false;
 		const newElements = snapshotToElements(snapshot);
 		const newIds = new Set(newElements.map((el) => el.data.id as string));
 
+		let edgesChanged = false;
+
 		// Remove elements no longer in the snapshot
 		cy.elements().forEach((ele) => {
-			if (!newIds.has(ele.id())) ele.remove();
+			if (!newIds.has(ele.id())) {
+				if (ele.isEdge()) edgesChanged = true;
+				ele.remove();
+			}
 		});
 
 		// Add elements not yet in cytoscape
 		const existingIds = new Set(cy.elements().map((ele) => ele.id()));
 		for (const el of newElements) {
-			if (!existingIds.has(el.data.id as string)) cy.add(el);
+			if (!existingIds.has(el.data.id as string)) {
+				cy.add(el);
+				if (el.data.source) edgesChanged = true;
+			}
 		}
+
+		return edgesChanged;
 	}
 
 	function saturationColor(ratio: number): string {
@@ -256,6 +286,22 @@
 					}
 				},
 				{
+					selector: ':parent',
+					style: {
+						'background-color': '#1a2233',
+						'background-opacity': 0.6,
+						'border-color': '#334',
+						'border-width': 1,
+						label: 'data(label)',
+						'font-size': 10,
+						color: '#889',
+						'text-valign': 'top',
+						'text-halign': 'center',
+						'text-margin-y': -6,
+						'padding': '10px'
+					}
+				},
+				{
 					selector: 'edge',
 					style: {
 						width: 1,
@@ -306,9 +352,12 @@
 		if (cy && layoutDone) {
 			if (prevGraphRef !== snapshot.graph) {
 				console.time('syncGraph');
-				syncGraph(snapshot);
+				const edgesChanged = syncGraph(snapshot);
 				console.timeEnd('syncGraph');
 				prevGraphRef = snapshot.graph;
+				if (edgesChanged) {
+					cy.layout({ name: 'cose', animate: true, animationDuration: 300, randomize: false }).run();
+				}
 			}
 			console.time('updateNodeStyles');
 			updateNodeStyles(snapshot);

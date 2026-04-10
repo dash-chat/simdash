@@ -8,59 +8,61 @@ use crate::scenarios::{naive_flooding, no_routing, AnyScenario, AVAILABLE_BEHAVI
 /// Snapshot of op IDs per node, used to compute deltas.
 pub type OpSnapshot = HashMap<u32, HashSet<u32>>;
 
+const DEFAULT_BEHAVIOR: &str = "naive-flooding";
+const DEFAULT_BROADCAST_INTERVAL: u32 = 1;
+
 pub struct Simulation {
-    initial_state: NetworkState,
-    topology: ChatTopology,
-    current_step: usize,
+    seed: u64,
     behavior_name: String,
-    broadcast_interval: u32,
+    current_step: usize,
     scenario: AnyScenario,
     seq: u64,
 }
 
 impl Simulation {
-    pub fn new(
-        topology: ChatTopology,
-        behavior: &str,
-        broadcast_interval: u32,
-        seed: u64,
-    ) -> anyhow::Result<Self> {
-        let graph = topology.clone().into_graph(seed);
-        let state = NetworkState {
-            graph,
-            topology: NetworkTopologyState::new(seed),
-        };
-        let scenario = Self::make_scenario(behavior, &state, broadcast_interval, topology.clone())?;
+    pub fn new(topology: ChatTopology, seed: u64) -> anyhow::Result<Self> {
+        let state = Self::build_initial_state(&topology, seed);
+        let scenario =
+            Self::make_scenario(DEFAULT_BEHAVIOR, &state, &topology)?;
         Ok(Self {
-            initial_state: state,
-            topology: topology,
+            seed,
+            behavior_name: DEFAULT_BEHAVIOR.to_string(),
             current_step: 0,
-            behavior_name: behavior.to_string(),
-            broadcast_interval,
             scenario,
             seq: 0,
         })
     }
 
+    fn build_initial_state(topology: &ChatTopology, seed: u64) -> NetworkState {
+        let graph = topology.clone().into_graph(seed);
+        NetworkState {
+            graph,
+            topology: NetworkTopologyState::new(seed),
+        }
+    }
+
     fn make_scenario(
         behavior: &str,
         state: &NetworkState,
-        broadcast_interval: u32,
-        topology: ChatTopology,
+        topology: &ChatTopology,
     ) -> anyhow::Result<AnyScenario> {
         match behavior {
             "naive-flooding" => Ok(AnyScenario::NaiveFlooding(naive_flooding::naive_flooding(
                 state.clone(),
-                broadcast_interval,
-                topology,
+                DEFAULT_BROADCAST_INTERVAL,
+                topology.clone(),
             ))),
             "no-routing" => Ok(AnyScenario::NoRouting(no_routing::no_routing(
                 state.clone(),
-                broadcast_interval,
-                topology,
+                DEFAULT_BROADCAST_INTERVAL,
+                topology.clone(),
             ))),
             other => anyhow::bail!("Unknown behavior: {other}"),
         }
+    }
+
+    fn topology(&self) -> &ChatTopology {
+        self.scenario.topology()
     }
 
     pub fn current_state(&self) -> &NetworkState {
@@ -80,13 +82,9 @@ impl Simulation {
     }
 
     pub fn set_behavior(&mut self, behavior: &str) -> anyhow::Result<()> {
-        // Validate behavior name before changing
-        let scenario = Self::make_scenario(
-            behavior,
-            &self.initial_state,
-            self.broadcast_interval,
-            self.topology.clone(),
-        )?;
+        let topology = self.topology().clone();
+        let state = Self::build_initial_state(&topology, self.seed);
+        let scenario = Self::make_scenario(behavior, &state, &topology)?;
         self.behavior_name = behavior.to_string();
         self.scenario = scenario;
         self.current_step = 0;
@@ -132,12 +130,9 @@ impl Simulation {
     }
 
     pub fn jump_to(&mut self, step: usize) -> anyhow::Result<()> {
-        self.scenario = Self::make_scenario(
-            &self.behavior_name,
-            &self.initial_state,
-            self.broadcast_interval,
-            self.topology.clone(),
-        )?;
+        let topology = self.topology().clone();
+        let state = Self::build_initial_state(&topology, self.seed);
+        self.scenario = Self::make_scenario(&self.behavior_name, &state, &topology)?;
         for _ in 0..step {
             self.scenario.advance()?;
         }
@@ -146,13 +141,10 @@ impl Simulation {
     }
 
     pub fn reset(&mut self) {
-        self.scenario = Self::make_scenario(
-            &self.behavior_name,
-            &self.initial_state,
-            self.broadcast_interval,
-            self.topology.clone(),
-        )
-        .expect("scenario was valid at creation");
+        let topology = self.topology().clone();
+        let state = Self::build_initial_state(&topology, self.seed);
+        self.scenario = Self::make_scenario(&self.behavior_name, &state, &topology)
+            .expect("scenario was valid at creation");
         self.current_step = 0;
     }
 }

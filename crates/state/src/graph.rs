@@ -120,6 +120,10 @@ impl<R: Clone, E> Graph<R, E> {
         self.subnets.get(name).map(Vec::as_slice)
     }
 
+    pub fn subnets(&self) -> &HashMap<String, Vec<NodeId>> {
+        &self.subnets
+    }
+
     pub fn assert_integrity(&self) {
         assert_eq!(
             self.graph.node_count(),

@@ -29,6 +29,13 @@ impl AnyScenario {
             AnyScenario::NoRouting(s) => s.advance(),
         }
     }
+
+    pub fn topology(&self) -> &dash_chat_top_gen::ChatTopology {
+        match self {
+            AnyScenario::NaiveFlooding(s) => &s.model().topology,
+            AnyScenario::NoRouting(s) => &s.model().topology,
+        }
+    }
 }
 
 pub const AVAILABLE_BEHAVIORS: &[&str] = &["naive-flooding", "no-routing"];
