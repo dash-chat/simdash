@@ -96,7 +96,7 @@ async fn main() {
     }
 
     println!("Using behavior: {behavior}");
-    let sim = Simulation::new(dash_topology, behavior, broadcast_interval)
+    let sim = Simulation::new(dash_topology, behavior, broadcast_interval, seed)
         .unwrap_or_else(|e| panic!("Failed to create simulation: {e}"));
     let state: AppState = Arc::new(Mutex::new(sim));
 

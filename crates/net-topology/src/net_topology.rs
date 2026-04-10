@@ -43,7 +43,7 @@ impl NetTopology {
         }
     }
 
-    pub fn into_graph(self) -> Graph {
+    pub fn into_graph(self, _seed: u64) -> Graph {
         let mut graph = Graph::new();
         for NodeTopology { id, state, .. } in self.nodes {
             graph.add_node(id, state);

@@ -17,8 +17,9 @@ impl Simulation {
         topology: ChatTopology,
         behavior: &str,
         broadcast_interval: u32,
+        seed: u64,
     ) -> anyhow::Result<Self> {
-        let graph = topology.clone().into_graph();
+        let graph = topology.clone().into_graph(seed);
         let state = NetworkState { graph };
         let scenario = Self::make_scenario(behavior, &state, broadcast_interval, topology.clone())?;
         Ok(Self {
