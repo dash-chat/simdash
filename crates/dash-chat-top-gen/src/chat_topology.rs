@@ -1,0 +1,26 @@
+use std::collections::BTreeMap;
+
+use net_top_gen::NetTopology;
+use simdash_ids::NodeId;
+use simdash_state::{chat::ChatState, graph::Graph};
+
+/// Intermediate representation of a network topology with dash-chat state added.
+pub struct ChatTopology {
+    pub net: NetTopology,
+    pub chat_states: BTreeMap<NodeId, ChatState>,
+}
+
+impl ChatTopology {
+    pub fn into_graph(self) -> Graph {
+        let mut graph = self.net.into_graph();
+        for (node_id, chat_state) in self.chat_states {
+            graph
+                .update_node(node_id, |mut n| {
+                    n.dash = chat_state;
+                    Ok((n, ()))
+                })
+                .ok();
+        }
+        graph
+    }
+}

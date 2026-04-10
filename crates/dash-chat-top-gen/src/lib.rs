@@ -3,6 +3,9 @@ use std::{
     time::Duration,
 };
 
+pub mod chat_topology;
+pub use chat_topology::ChatTopology;
+
 use net_top_gen::NetTopology;
 use rand::prelude::*;
 use serde::Deserialize;
@@ -78,13 +81,16 @@ impl ChatStateGenerator {
 
     /// Generate a `ChatState` for each node and apply it to the graph.
     pub fn generate(&self, topology: NetTopology) -> Graph {
-        let mut graph = topology.into_graph();
         let mut rng = StdRng::seed_from_u64(self.config.seed);
-        let mut nodes: Vec<NodeId> = graph.node_ids().collect();
+        let mut nodes: Vec<NodeId> = topology.nodes.iter().map(|n| n.id).collect();
         nodes.sort();
         let n = nodes.len();
         if n == 0 {
-            return graph;
+            return ChatTopology {
+                net: topology,
+                chat_states: BTreeMap::new(),
+            }
+            .into_graph();
         }
 
         // Step 1: Estimate total number of groups.
@@ -95,6 +101,7 @@ impl ChatStateGenerator {
 
         // Step 2: For each node, assign groups, contacts, and ops.
         let mut op_counter: u32 = 0;
+        let mut chat_states = BTreeMap::new();
 
         for &node in &nodes {
             // Groups
@@ -158,21 +165,22 @@ impl ChatStateGenerator {
             }
 
             let storage_capacity = Some(Size::from(self.config.node_storage.sample(&mut rng)));
-            let chat_state = ChatState {
-                op_store,
-                contacts,
-                groups,
-                storage_capacity,
-            };
-            graph
-                .update_node(node, |mut n| {
-                    n.dash = chat_state;
-                    Ok((n, ()))
-                })
-                .ok();
+            chat_states.insert(
+                node,
+                ChatState {
+                    op_store,
+                    contacts,
+                    groups,
+                    storage_capacity,
+                },
+            );
         }
 
-        graph
+        ChatTopology {
+            net: topology,
+            chat_states,
+        }
+        .into_graph()
     }
 }
 
