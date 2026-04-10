@@ -28,12 +28,13 @@ impl ApplyRule for NodeSpec {
         *state.next_id += self.number;
 
         for &node_id in &node_ids {
-            state.graph.add_node(node_id, NodeState::default());
+            state.topology.nodes.push((node_id, NodeState::default()));
         }
         state.all_node_ids.extend_from_slice(&node_ids);
         if let Some(subnet) = &self.subnet {
             state
-                .named_subnets
+                .topology
+                .subnets
                 .entry(subnet.clone())
                 .or_default()
                 .extend_from_slice(&node_ids);
@@ -43,10 +44,9 @@ impl ApplyRule for NodeSpec {
             let mut scoped_node_ids = node_ids;
             for rule in &self.rules {
                 rule.apply(&mut BuildState {
-                    graph: state.graph,
+                    topology: state.topology,
                     next_id: state.next_id,
                     all_node_ids: &mut scoped_node_ids,
-                    named_subnets: state.named_subnets,
                     rng: state.rng,
                 });
             }

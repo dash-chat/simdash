@@ -1,23 +1,22 @@
 //! Network topology generation utilities.
 
-use std::collections::BTreeMap;
-
 use serde::Deserialize;
 use simdash_ids::NodeId;
 use simdash_state::Graph;
 
 pub mod link;
+pub mod net_topology;
 pub mod node;
 
 pub use link::{Count, Destination, LinkSpec};
+pub use net_topology::NetTopology;
 pub use node::NodeSpec;
 
 /// Shared mutable state threaded through rule application.
 pub struct BuildState<'a, R: rand::Rng> {
-    pub graph: &'a mut Graph,
+    pub topology: &'a mut NetTopology,
     pub next_id: &'a mut u32,
     pub all_node_ids: &'a mut Vec<NodeId>,
-    pub named_subnets: &'a mut BTreeMap<String, Vec<NodeId>>,
     pub rng: &'a mut R,
 }
 
@@ -62,27 +61,21 @@ impl TopologyGenerator {
     pub fn generate(&self, seed: u64) -> Graph {
         use rand::SeedableRng;
 
-        let mut graph = Graph::new();
+        let mut topology = NetTopology::new();
         let mut next_id: u32 = 0;
         let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
         let mut all_node_ids: Vec<NodeId> = Vec::new();
-        let mut named_subnets: BTreeMap<String, Vec<NodeId>> = BTreeMap::new();
 
         for rule in &self.config {
             rule.apply(&mut BuildState {
-                graph: &mut graph,
+                topology: &mut topology,
                 next_id: &mut next_id,
                 all_node_ids: &mut all_node_ids,
-                named_subnets: &mut named_subnets,
                 rng: &mut rng,
             });
         }
 
-        for (name, node_ids) in named_subnets {
-            graph.set_subnet(name, node_ids);
-        }
-
-        graph
+        topology.into_graph()
     }
 }
 

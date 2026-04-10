@@ -55,7 +55,12 @@ impl ApplyRule for LinkSpec {
         };
 
         let target_pool: Vec<NodeId> = match subnet {
-            Some(subnet) => state.named_subnets.get(subnet).cloned().unwrap_or_default(),
+            Some(subnet) => state
+                .topology
+                .subnets
+                .get(subnet)
+                .cloned()
+                .unwrap_or_default(),
             None => state.all_node_ids.clone(),
         };
 
@@ -78,7 +83,7 @@ impl ApplyRule for LinkSpec {
                             .collect();
                         for _ in 0..n {
                             if let Some(&to) = candidates.choose(&mut state.rng) {
-                                state.graph.add_edge(node, to, ());
+                                state.topology.edges.push((node, to));
                             }
                         }
                     }
@@ -99,7 +104,7 @@ impl ApplyRule for LinkSpec {
                                 .filter(|&id| id != from)
                                 .collect();
                             if let Some(&to) = candidates.choose(&mut state.rng) {
-                                state.graph.add_edge(from, to, ());
+                                state.topology.edges.push((from, to));
                             }
                         }
                     }
