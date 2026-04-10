@@ -9,6 +9,7 @@ axum = "0.8"
 clap = { version = "4", features = ["derive"] }
 dash-chat-top-gen = { path = "../dash-chat-top-gen" }
 net-topology = { path = "../net-topology" }
+simdash-generator = { path = "../generator" }
 petgraph = { workspace = true }
 polestar = { workspace = true }
 postcard = { workspace = true }

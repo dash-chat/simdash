@@ -9,8 +9,6 @@ use axum::{
     Router,
 };
 use clap::Parser;
-use dash_chat_top_gen::{ChatStateGenerator, ChatTopology};
-use net_topology::TopologyGenerator;
 use tokio::sync::Mutex;
 use tower_http::cors::CorsLayer;
 
@@ -56,40 +54,14 @@ async fn main() {
         .and_then(|v| v.as_u64())
         .unwrap_or(1) as u32;
 
-    let net_top_value = config
-        .get("net-top")
-        .expect("config.json must have a 'net-top' key");
-
-    let net_top_json =
-        serde_json::to_string(net_top_value).expect("Failed to serialize net-top config");
-    let generator =
-        TopologyGenerator::from_json(&net_top_json).expect("Failed to parse net-top config");
-    let topology = generator.generate(seed);
-
-    let dash_topology: ChatTopology = if let Some(dash_chat_value) = config.get("dash-chat-top") {
-        let dash_chat_json = serde_json::to_string(dash_chat_value)
-            .expect("Failed to serialize dash-chat-top config");
-        let chat_gen = ChatStateGenerator::from_json(&dash_chat_json)
-            .expect("Failed to parse dash-chat-top config");
-        let result = chat_gen.generate(seed, topology);
-        println!("Generated dash chat state");
-        result
-    } else {
-        ChatTopology::from_net_topology(topology)
-    };
+    let (dash_topology, _seed) = simdash_generator::generate(&cli.config)
+        .unwrap_or_else(|e| panic!("Failed to generate topology: {e}"));
 
     println!(
         "Generated network topology: {} nodes, {} edges",
         dash_topology.net.nodes.len(),
         dash_topology.net.edges.len(),
     );
-
-    // {
-    //     std::fs::create_dir_all("gen").unwrap();
-    //     let bytes = postcard::to_stdvec(&graph).unwrap();
-    //     fs::write("gen/topology.postcard", bytes).unwrap();
-    //     println!("Serialized graph to gen/topology.postcard");
-    // }
 
     if cli.no_serve {
         return;

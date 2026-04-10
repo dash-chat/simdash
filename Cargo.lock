@@ -1418,6 +1418,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "simdash-generator"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "dash-chat-top-gen",
+ "net-topology",
+ "postcard",
+ "serde_json",
+ "simdash-state",
+]
+
+[[package]]
 name = "simdash-ids"
 version = "0.1.0"
 dependencies = [
@@ -1457,6 +1470,7 @@ dependencies = [
  "serde_json",
  "simdash-action",
  "simdash-behavior",
+ "simdash-generator",
  "simdash-ids",
  "simdash-model",
  "simdash-scenario",
