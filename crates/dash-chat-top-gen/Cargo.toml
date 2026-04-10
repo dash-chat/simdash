@@ -12,3 +12,4 @@ serde_json = "1"
 simdash-distribution = { path = "../distribution" }
 simdash-ids = { path = "../ids" }
 simdash-state = { path = "../state" }
+net-top-gen = { path = "../net-top-gen" }

@@ -64,25 +64,25 @@ async fn main() {
         serde_json::to_string(net_top_value).expect("Failed to serialize net-top config");
     let generator =
         TopologyGenerator::from_json(&net_top_json).expect("Failed to parse net-top config");
-    let graph = generator.generate(seed).into_graph();
-
-    println!(
-        "Generated network topology: {} nodes, {} edges",
-        graph.graph().node_count(),
-        graph.graph().edge_count(),
-    );
+    let topology = generator.generate(seed);
 
     let graph = if let Some(dash_chat_value) = config.get("dash-chat-top") {
         let dash_chat_json = serde_json::to_string(dash_chat_value)
             .expect("Failed to serialize dash-chat-top config");
         let chat_gen = ChatStateGenerator::from_json(&dash_chat_json)
             .expect("Failed to parse dash-chat-top config");
-        let graph = chat_gen.generate(graph);
+        let graph = chat_gen.generate(topology);
         println!("Generated dash chat state");
         graph
     } else {
-        graph
+        topology.into_graph()
     };
+
+    println!(
+        "Generated network topology: {} nodes, {} edges",
+        graph.graph().node_count(),
+        graph.graph().edge_count(),
+    );
 
     {
         std::fs::create_dir_all("gen").unwrap();

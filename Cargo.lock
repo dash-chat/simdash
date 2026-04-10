@@ -373,6 +373,7 @@ name = "dash-chat-top-gen"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "net-top-gen",
  "petgraph 0.8.3",
  "rand",
  "serde",

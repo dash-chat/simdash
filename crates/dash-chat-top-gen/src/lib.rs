@@ -3,6 +3,7 @@ use std::{
     time::Duration,
 };
 
+use net_top_gen::NetTopology;
 use rand::prelude::*;
 use serde::Deserialize;
 use simdash_distribution::Distribution;
@@ -76,7 +77,8 @@ impl ChatStateGenerator {
     }
 
     /// Generate a `ChatState` for each node and apply it to the graph.
-    pub fn generate(&self, mut graph: Graph) -> Graph {
+    pub fn generate(&self, topology: NetTopology) -> Graph {
+        let mut graph = topology.into_graph();
         let mut rng = StdRng::seed_from_u64(self.config.seed);
         let mut nodes: Vec<NodeId> = graph.node_ids().collect();
         nodes.sort();
@@ -177,15 +179,19 @@ impl ChatStateGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use net_top_gen::net_topology::NodeTopology;
     use simdash_state::chat::ChatState;
     use simdash_state::node::NodeState;
 
-    fn make_graph(n: u32) -> Graph {
-        let mut graph = Graph::new();
+    fn make_topology(n: u32) -> NetTopology {
+        let mut topology = NetTopology::new();
         for i in 0..n {
-            graph.add_node(NodeId::from(i), NodeState::default());
+            topology.nodes.push(NodeTopology {
+                id: NodeId::from(i),
+                state: NodeState::default(),
+            });
         }
-        graph
+        topology
     }
 
     fn assert_all_nodes(graph: &Graph, f: impl Fn(&ChatState)) {
@@ -210,11 +216,11 @@ mod tests {
         let graph1 = ChatStateGenerator {
             config: config.clone(),
         }
-        .generate(make_graph(10));
+        .generate(make_topology(10));
         let graph2 = ChatStateGenerator {
             config: config.clone(),
         }
-        .generate(make_graph(10));
+        .generate(make_topology(10));
 
         // Same seed produces same chat states
         for node_id in graph1.node_ids() {
@@ -239,7 +245,7 @@ mod tests {
         let graph = ChatStateGenerator {
             config: config.clone(),
         }
-        .generate(make_graph(5));
+        .generate(make_topology(5));
         assert_eq!(graph.graph().node_count(), 5);
         assert_all_nodes(&graph, |state| {
             assert_eq!(state.contacts.len(), 2);
@@ -266,7 +272,7 @@ mod tests {
         let graph = ChatStateGenerator {
             config: config.clone(),
         }
-        .generate(make_graph(20));
+        .generate(make_topology(20));
         assert_eq!(graph.graph().node_count(), 20);
         assert_all_nodes(&graph, |state| {
             assert!(state.contacts.len() >= 1 && state.contacts.len() <= 5);
@@ -288,7 +294,7 @@ mod tests {
         let graph = ChatStateGenerator {
             config: config.clone(),
         }
-        .generate(make_graph(10));
+        .generate(make_topology(10));
         assert_eq!(graph.graph().node_count(), 10);
         assert_all_nodes(&graph, |state| {
             // With Normal(20,8) contacts, should have some
@@ -311,7 +317,7 @@ mod tests {
         }"#;
 
         let generator = ChatStateGenerator::from_json(json).unwrap();
-        let graph = generator.generate(make_graph(10));
+        let graph = generator.generate(make_topology(10));
 
         assert_eq!(graph.graph().node_count(), 10);
         assert_all_nodes(&graph, |state| {
