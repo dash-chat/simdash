@@ -1,6 +1,7 @@
 use std::collections::{BTreeSet, HashMap};
 
 use dash_chat_top_gen::ChatTopology;
+use rand::seq::IndexedRandom;
 use net_topology::net_topology::Ordinality;
 use polestar::{Machine, ext::MapExt};
 use simdash_action::{
@@ -79,7 +80,8 @@ impl polestar::Machine for NetworkModel {
                         continue;
                     }
                     let candidates = self.topology.net.destination_candidates(edge_topo);
-                    if let Some(&to) = candidates.first() {
+                    let mut rng = state.topology.rng();
+                    if let Some(&to) = candidates.choose(&mut rng) {
                         use simdash_state::EdgeState;
                         state.graph.add_edge(
                             edge_topo.from,

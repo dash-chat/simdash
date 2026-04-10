@@ -1434,6 +1434,7 @@ dependencies = [
  "dash-chat-top-gen",
  "net-topology",
  "polestar",
+ "rand",
  "simdash-action",
  "simdash-ids",
  "simdash-state",
@@ -1490,6 +1491,7 @@ dependencies = [
  "petgraph 0.8.3",
  "polestar",
  "postcard",
+ "rand",
  "serde",
  "simdash-ids",
 ]

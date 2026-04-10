@@ -1,13 +1,39 @@
-use std::{collections::BTreeMap, path::Path};
+use std::path::Path;
 
+use rand::{SeedableRng, rngs::StdRng};
 use serde::{Deserialize, Serialize};
 use simdash_ids::NodeId;
 
-use crate::{Graph, chat::Operation, node::NodeState};
+use crate::{Graph, node::NodeState};
+
+/// Seeded RNG for topology evolution operations.
+/// Stores seed + call count so the full state is serializable.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct NetworkTopologyState {
+    seed: u64,
+    call_count: u64,
+}
+
+impl NetworkTopologyState {
+    pub fn new(seed: u64) -> Self {
+        Self {
+            seed,
+            call_count: 0,
+        }
+    }
+
+    /// Returns a fresh seeded RNG for one topology operation and advances the counter.
+    pub fn rng(&mut self) -> StdRng {
+        let rng = StdRng::seed_from_u64(self.seed.wrapping_add(self.call_count));
+        self.call_count += 1;
+        rng
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NetworkState {
     pub graph: Graph,
+    pub topology: NetworkTopologyState,
 }
 
 impl NetworkState {
@@ -27,7 +53,10 @@ impl NetworkState {
         let graph: Graph = postcard::from_bytes(&bytes).unwrap();
         graph.assert_integrity();
         println!("Loaded network state in {:.2?}", start_time.elapsed());
-        Self { graph }
+        Self {
+            graph,
+            topology: Default::default(),
+        }
     }
 }
 
@@ -48,7 +77,10 @@ mod tests {
         graph.add_edge(1.into(), 2.into(), Default::default());
         graph.add_edge(0.into(), 3.into(), Default::default());
         graph.add_edge(3.into(), 2.into(), Default::default());
-        NetworkState { graph }
+        NetworkState {
+            graph,
+            topology: Default::default(),
+        }
     }
 
     #[test]

@@ -13,6 +13,7 @@ simdash-state = { path = "../state" }
 
 anyhow = { workspace = true }
 polestar = { workspace = true }
+rand = "0.9"
 tracing = { workspace = true }
 
 [dev-dependencies]

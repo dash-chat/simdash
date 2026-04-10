@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use dash_chat_top_gen::ChatTopology;
-use simdash_state::network::NetworkState;
+use simdash_state::network::{NetworkState, NetworkTopologyState};
 
 use crate::scenarios::{naive_flooding, no_routing, AnyScenario, AVAILABLE_BEHAVIORS};
 
@@ -26,7 +26,10 @@ impl Simulation {
         seed: u64,
     ) -> anyhow::Result<Self> {
         let graph = topology.clone().into_graph(seed);
-        let state = NetworkState { graph };
+        let state = NetworkState {
+            graph,
+            topology: NetworkTopologyState::new(seed),
+        };
         let scenario = Self::make_scenario(behavior, &state, broadcast_interval, topology.clone())?;
         Ok(Self {
             initial_state: state,

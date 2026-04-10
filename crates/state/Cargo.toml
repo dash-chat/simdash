@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 anyhow = { workspace = true }
 derive_more = { workspace = true }
+rand = "0.9"
 serde = { workspace = true }
 petgraph = { workspace = true }
 polestar = { workspace = true }
