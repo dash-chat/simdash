@@ -1,7 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import cytoscape from 'cytoscape';
+	import fcose from 'cytoscape-fcose';
 	import type { SimSnapshot, OpTraceData, OpInfo, NodeInfo } from '$lib/types';
+
+	cytoscape.use(fcose);
 
 	interface Props {
 		snapshot: SimSnapshot;
@@ -90,6 +93,20 @@
 
 		return [...subnetParents, ...nodes, ...edges];
 	}
+
+	const layoutOptions = {
+		name: 'fcose',
+		animate: true,
+		animationDuration: 2000,
+		quality: 'proof',
+		gravity: 1,
+		gravityCompound: 1.5,
+		gravityRange: 1.5,
+		nodeRepulsion: () => 800,
+		idealEdgeLength: () => 40,
+		edgeElasticity: () => 0.1,
+		padding: 10,
+	};
 
 	function syncGraph(snapshot: SimSnapshot): boolean {
 		if (!cy) return false;
@@ -319,7 +336,7 @@
 					}
 				}
 			],
-			layout: { name: 'cose', animate: false, randomize: true },
+			layout: { ...layoutOptions, randomize: true },
 			userZoomingEnabled: true,
 			userPanningEnabled: true
 		});
@@ -351,17 +368,13 @@
 		opTrace;
 		if (cy && layoutDone) {
 			if (prevGraphRef !== snapshot.graph) {
-				console.time('syncGraph');
 				const edgesChanged = syncGraph(snapshot);
-				console.timeEnd('syncGraph');
 				prevGraphRef = snapshot.graph;
 				if (edgesChanged) {
-					cy.layout({ name: 'cose', animate: true, animationDuration: 300, randomize: false }).run();
+					cy.layout({ ...layoutOptions, randomize: false }).run();
 				}
 			}
-			console.time('updateNodeStyles');
 			updateNodeStyles(snapshot);
-			console.timeEnd('updateNodeStyles');
 		}
 	});
 </script>
