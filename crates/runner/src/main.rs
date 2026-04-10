@@ -71,7 +71,7 @@ async fn main() {
             .expect("Failed to serialize dash-chat-top config");
         let chat_gen = ChatStateGenerator::from_json(&dash_chat_json)
             .expect("Failed to parse dash-chat-top config");
-        let graph = chat_gen.generate(topology);
+        let graph = chat_gen.generate(topology).into_graph();
         println!("Generated dash chat state");
         graph
     } else {
