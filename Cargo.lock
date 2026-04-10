@@ -373,7 +373,7 @@ name = "dash-chat-top-gen"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "net-top-gen",
+ "net-topology",
  "petgraph 0.8.3",
  "rand",
  "serde",
@@ -871,7 +871,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "net-top-gen"
+name = "net-topology"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -1432,6 +1432,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "dash-chat-top-gen",
+ "net-topology",
  "polestar",
  "simdash-action",
  "simdash-ids",
@@ -1447,7 +1448,7 @@ dependencies = [
  "axum",
  "clap",
  "dash-chat-top-gen",
- "net-top-gen",
+ "net-topology",
  "petgraph 0.8.3",
  "polestar",
  "postcard",

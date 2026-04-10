@@ -13,3 +13,6 @@ simdash-state = { path = "../state" }
 anyhow = { workspace = true }
 polestar = { workspace = true }
 tracing = { workspace = true }
+
+[dev-dependencies]
+net-topology = { path = "../net-topology" }

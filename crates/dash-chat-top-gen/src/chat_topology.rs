@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use net_top_gen::NetTopology;
+use net_topology::NetTopology;
 use simdash_ids::NodeId;
 use simdash_state::{chat::ChatState, graph::Graph};
 

@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 pub mod chat_topology;
 pub use chat_topology::ChatTopology;
 
-use net_top_gen::NetTopology;
+use net_topology::NetTopology;
 use rand::prelude::*;
 use serde::Deserialize;
 use serde::Serialize;
@@ -163,11 +163,7 @@ impl ChatStateGenerator {
 
                     // Collect per-subnet node lists for cross-subnet guarantees.
                     let subnet_buckets: Vec<Vec<NodeId>> = match &spec.subnets {
-                        Subnets::All(_) => topology
-                            .subnets
-                            .values()
-                            .cloned()
-                            .collect(),
+                        Subnets::All(_) => topology.subnets.values().cloned().collect(),
                         Subnets::Specific(names) => names
                             .iter()
                             .filter_map(|n| topology.subnets.get(n).cloned())
@@ -220,8 +216,7 @@ impl ChatStateGenerator {
                             let &author = members.choose(&mut rng).unwrap();
                             let op_id = OpId::from(op_counter);
                             op_counter += 1;
-                            let payload_size =
-                                Size::from(spec.operations_size.sample(&mut rng));
+                            let payload_size = Size::from(spec.operations_size.sample(&mut rng));
 
                             let op = Operation {
                                 id: op_id,
@@ -234,11 +229,7 @@ impl ChatStateGenerator {
 
                             // Only the author stores the op initially;
                             // routing will deliver it to other members.
-                            states
-                                .entry(author)
-                                .or_default()
-                                .op_store
-                                .insert(op_id, op);
+                            states.entry(author).or_default().op_store.insert(op_id, op);
                         }
                     }
                 }
@@ -250,8 +241,8 @@ impl ChatStateGenerator {
                     }
 
                     for &node in &nodes {
-                        let num_contacts = (spec.contacts_amount.sample(&mut rng) as usize)
-                            .min(nodes.len() - 1);
+                        let num_contacts =
+                            (spec.contacts_amount.sample(&mut rng) as usize).min(nodes.len() - 1);
                         let my_subnet = node_subnet.get(&node);
 
                         // Build candidate list; prefer cross-subnet contacts.
@@ -266,11 +257,8 @@ impl ChatStateGenerator {
                             cross.extend(same);
                             cross
                         } else {
-                            let mut v: Vec<NodeId> = nodes
-                                .iter()
-                                .copied()
-                                .filter(|&id| id != node)
-                                .collect();
+                            let mut v: Vec<NodeId> =
+                                nodes.iter().copied().filter(|&id| id != node).collect();
                             v.shuffle(&mut rng);
                             v
                         };
@@ -285,12 +273,8 @@ impl ChatStateGenerator {
                         for _ in 0..num_ops {
                             let op_id = OpId::from(op_counter);
                             op_counter += 1;
-                            let payload_size =
-                                Size::from(spec.operations_size.sample(&mut rng));
-                            let recipient = contacts_vec
-                                .choose(&mut rng)
-                                .copied()
-                                .unwrap_or(node);
+                            let payload_size = Size::from(spec.operations_size.sample(&mut rng));
+                            let recipient = contacts_vec.choose(&mut rng).copied().unwrap_or(node);
 
                             let op = Operation {
                                 id: op_id,
@@ -321,20 +305,16 @@ impl ChatStateGenerator {
 
                     for &node in &nodes {
                         // Groups: pick a random subset from the group id range.
-                        let gpn =
-                            spec.groups_per_node.sample(&mut rng).min(num_groups) as usize;
-                        let groups: BTreeSet<GroupId> =
-                            (group_counter..group_counter + num_groups)
-                                .collect::<Vec<_>>()
-                                .choose_multiple(&mut rng, gpn)
-                                .copied()
-                                .collect();
+                        let gpn = spec.groups_per_node.sample(&mut rng).min(num_groups) as usize;
+                        let groups: BTreeSet<GroupId> = (group_counter..group_counter + num_groups)
+                            .collect::<Vec<_>>()
+                            .choose_multiple(&mut rng, gpn)
+                            .copied()
+                            .collect();
 
                         // Contacts: pick from other nodes.
-                        let num_contacts = spec
-                            .contacts_per_node
-                            .sample(&mut rng)
-                            .min((n - 1) as u64) as usize;
+                        let num_contacts =
+                            spec.contacts_per_node.sample(&mut rng).min((n - 1) as u64) as usize;
                         let others: Vec<NodeId> =
                             nodes.iter().copied().filter(|&id| id != node).collect();
                         let contacts: BTreeSet<NodeId> = others
@@ -349,8 +329,7 @@ impl ChatStateGenerator {
                         for _ in 0..num_ops {
                             let op_id = OpId::from(op_counter);
                             op_counter += 1;
-                            let payload_size =
-                                Size::from(spec.operations_size.sample(&mut rng));
+                            let payload_size = Size::from(spec.operations_size.sample(&mut rng));
 
                             let body = if let Some(&&gid) =
                                 groups.iter().collect::<Vec<_>>().choose(&mut rng)
@@ -399,8 +378,7 @@ impl ChatStateGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use net_top_gen::net_topology::NodeTopology;
-    use simdash_state::node::NodeState;
+    use net_topology::net_topology::NodeTopology;
     use std::collections::BTreeMap;
 
     fn make_topology(n: u32) -> NetTopology {
@@ -409,10 +387,9 @@ mod tests {
             topology.nodes.push(NodeTopology::new(NodeId::from(i)));
         }
         // All nodes in a single "default" subnet.
-        topology.subnets.insert(
-            "default".to_string(),
-            (0..n).map(NodeId::from).collect(),
-        );
+        topology
+            .subnets
+            .insert("default".to_string(), (0..n).map(NodeId::from).collect());
         topology
     }
 
@@ -532,11 +509,23 @@ mod tests {
         // For each alpha node, majority of contacts should be from beta (and vice versa).
         for (&node, state) in &result.chat_states {
             let is_alpha = alpha_ids.contains(&node);
-            let cross_count = state.contacts.iter().filter(|c| {
-                if is_alpha { beta_ids.contains(c) } else { alpha_ids.contains(c) }
-            }).count();
+            let cross_count = state
+                .contacts
+                .iter()
+                .filter(|c| {
+                    if is_alpha {
+                        beta_ids.contains(c)
+                    } else {
+                        alpha_ids.contains(c)
+                    }
+                })
+                .count();
             // With 3 contacts and 5 cross-subnet candidates, all 3 should be cross-subnet.
-            assert_eq!(cross_count, 3, "node {:?} should have 3 cross-subnet contacts", node);
+            assert_eq!(
+                cross_count, 3,
+                "node {:?} should have 3 cross-subnet contacts",
+                node
+            );
         }
     }
 
@@ -606,7 +595,7 @@ mod tests {
             },
         };
 
-       let result = generator.generate(1, make_topology(5));
+        let result = generator.generate(1, make_topology(5));
         assert_all_chat_states(&result, |state| {
             assert_eq!(state.storage_capacity, Some(Size::from(100 * 1024)));
         });

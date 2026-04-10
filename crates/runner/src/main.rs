@@ -10,7 +10,7 @@ use axum::{
 };
 use clap::Parser;
 use dash_chat_top_gen::{ChatStateGenerator, ChatTopology};
-use net_top_gen::TopologyGenerator;
+use net_topology::TopologyGenerator;
 use tokio::sync::Mutex;
 use tower_http::cors::CorsLayer;
 

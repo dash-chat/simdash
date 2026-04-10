@@ -1,5 +1,5 @@
 [package]
-name = "net-top-gen"
+name = "net-topology"
 version = "0.1.0"
 edition = "2024"
 

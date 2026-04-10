@@ -55,7 +55,7 @@ mod tests {
     #[test]
     fn test_stig_model() {
         let nodes = vec![NodeState::<StigState>::default(); 10];
-        let graph = net_top_gen::scc::strongly_connected_graph(nodes, &mut rand::rng(), 1.5);
+        let graph = net_topology::scc::strongly_connected_graph(nodes, &mut rand::rng(), 1.5);
         let state: NetworkState<StigState> = graph.into();
 
         // let model = StigModel::new();

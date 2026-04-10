@@ -8,7 +8,7 @@ anyhow = { workspace = true }
 axum = "0.8"
 clap = { version = "4", features = ["derive"] }
 dash-chat-top-gen = { path = "../dash-chat-top-gen" }
-net-top-gen = { path = "../net-top-gen" }
+net-topology = { path = "../net-topology" }
 petgraph = { workspace = true }
 polestar = { workspace = true }
 postcard = { workspace = true }
