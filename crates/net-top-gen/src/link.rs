@@ -35,12 +35,23 @@ pub enum Destination {
     Spec(DestinationSpec),
 }
 
+/// Whether a created link also generates a reverse edge.
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Ordinality {
+    #[default]
+    Unidirectional,
+    Bidirectional,
+}
+
 /// Specification for links originating from a node subnet.
 #[derive(Debug, Clone, Deserialize)]
 pub struct LinkSpec {
     pub strategy: String,
     pub count: Count,
     pub destination: Destination,
+    #[serde(default)]
+    pub ordinality: Ordinality,
 }
 
 impl ApplyRule for LinkSpec {
@@ -68,6 +79,8 @@ impl ApplyRule for LinkSpec {
             return;
         }
 
+        let bidirectional = matches!(self.ordinality, Ordinality::Bidirectional);
+
         match self.strategy.as_str() {
             "per_node" => match selection {
                 Selection::Random => {
@@ -84,6 +97,12 @@ impl ApplyRule for LinkSpec {
                         for _ in 0..n {
                             if let Some(&to) = candidates.choose(&mut state.rng) {
                                 state.topology.edges.push(EdgeTopology { from: node, to });
+                                if bidirectional {
+                                    state
+                                        .topology
+                                        .edges
+                                        .push(EdgeTopology { from: to, to: node });
+                                }
                             }
                         }
                     }
@@ -105,6 +124,12 @@ impl ApplyRule for LinkSpec {
                                 .collect();
                             if let Some(&to) = candidates.choose(&mut state.rng) {
                                 state.topology.edges.push(EdgeTopology { from, to });
+                                if bidirectional {
+                                    state
+                                        .topology
+                                        .edges
+                                        .push(EdgeTopology { from: to, to: from });
+                                }
                             }
                         }
                     }

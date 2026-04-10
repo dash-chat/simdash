@@ -1,7 +1,4 @@
-use std::{
-    collections::{BTreeMap, BTreeSet, HashMap},
-    time::Duration,
-};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 pub mod chat_topology;
 pub use chat_topology::ChatTopology;
@@ -102,6 +99,7 @@ pub struct ChatStateGenerator {
 }
 
 pub struct NodeConfig {
+    #[allow(dead_code)]
     subnet: String,
 }
 

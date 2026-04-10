@@ -322,4 +322,27 @@ mod tests {
         }
         assert!(!topology.nodes[2].tags.contains(&"phone".to_string()));
     }
+
+    #[test]
+    fn bidirectional_link_creates_two_edges() {
+        let json = r#"[
+            {
+                "element": "node",
+                "number": 2
+            },
+            {
+                "element": "link",
+                "strategy": "random",
+                "count": 1,
+                "destination": "random",
+                "ordinality": "bidirectional"
+            }
+        ]"#;
+
+        let generator = TopologyGenerator::from_json(json).unwrap();
+        let graph = generator.generate(0).into_graph();
+
+        assert_eq!(graph.graph().node_count(), 2);
+        assert_eq!(graph.graph().edge_count(), 2);
+    }
 }
