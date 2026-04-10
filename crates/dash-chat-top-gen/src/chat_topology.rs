@@ -11,6 +11,13 @@ pub struct ChatTopology {
 }
 
 impl ChatTopology {
+    pub fn from_net_topology(net: NetTopology) -> Self {
+        Self {
+            net,
+            chat_states: BTreeMap::new(),
+        }
+    }
+
     pub fn into_graph(self) -> Graph {
         let mut graph = self.net.into_graph();
         for (node_id, chat_state) in self.chat_states {
