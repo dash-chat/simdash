@@ -18,11 +18,9 @@ struct Cli {
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    let (topology, seed) = simdash_generator::generate(&cli.config)?;
+    let network_state = simdash_generator::generate_network_state(&cli.config)?;
 
-    let graph = topology.into_graph(seed);
-
-    let bytes = postcard::to_stdvec(&graph).context("Failed to serialize graph")?;
+    let bytes = postcard::to_stdvec(&network_state).context("Failed to serialize graph")?;
 
     if let Some(parent) = cli.output.parent() {
         std::fs::create_dir_all(parent)

@@ -5,9 +5,10 @@ use dash_chat_top_gen::ChatStateGenerator;
 pub use dash_chat_top_gen::ChatTopology;
 use net_topology::TopologyGenerator;
 pub use simdash_state::graph::Graph;
+use simdash_state::network::{NetworkState, NetworkTopologyState};
 
 /// Reads a JSON config file and generates the chat topology (intermediate representation).
-pub fn generate(config_path: &Path) -> Result<(ChatTopology, u64)> {
+pub fn generate_topology(config_path: &Path) -> Result<(ChatTopology, u64)> {
     let contents = std::fs::read_to_string(config_path).context("Failed to read config file")?;
 
     let config: serde_json::Value =
@@ -32,4 +33,22 @@ pub fn generate(config_path: &Path) -> Result<(ChatTopology, u64)> {
     };
 
     Ok((dash_topology, seed))
+}
+
+pub fn generate_graph(config_path: &Path) -> Result<Graph> {
+    let (topology, seed) = generate_topology(&config_path)?;
+
+    let graph = topology.into_graph(seed);
+    Ok(graph)
+}
+
+pub fn generate_network_state(config_path: &Path) -> Result<NetworkState> {
+    let (topology, seed) = generate_topology(&config_path)?;
+
+    let graph = topology.into_graph(seed);
+
+    Ok(NetworkState {
+        graph,
+        topology: NetworkTopologyState::new(seed),
+    })
 }
