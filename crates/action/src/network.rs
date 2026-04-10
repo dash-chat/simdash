@@ -6,5 +6,7 @@ use crate::node::NodeAction;
 pub enum NetworkAction {
     /// Tick every node
     Tick,
+    /// Evolve the network topology
+    EvolveTopology,
     Node(NodeId, NodeAction),
 }

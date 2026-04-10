@@ -377,10 +377,22 @@ mod tests {
         let topology = generator.generate(0);
 
         // First batch of edges (longevity = 10) come before the second batch (longevity = 0).
-        let finite: Vec<_> = topology.edges.iter().filter(|e| e.longevity == 10).collect();
+        let finite: Vec<_> = topology
+            .edges
+            .iter()
+            .filter(|e| e.longevity == 10)
+            .collect();
         let permanent: Vec<_> = topology.edges.iter().filter(|e| e.longevity == 0).collect();
 
-        assert_eq!(finite.len(), 2, "two edges with longevity 10 (one per node)");
-        assert_eq!(permanent.len(), 2, "two permanent edges (longevity 0, one per node)");
+        assert_eq!(
+            finite.len(),
+            2,
+            "two edges with longevity 10 (one per node)"
+        );
+        assert_eq!(
+            permanent.len(),
+            2,
+            "two permanent edges (longevity 0, one per node)"
+        );
     }
 }

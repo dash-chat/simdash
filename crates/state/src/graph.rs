@@ -7,8 +7,14 @@ use simdash_ids::NodeId;
 
 use crate::node::NodeState;
 
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct EdgeRef {
+    pub topology_id: u32,
+    pub reversed: bool,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Graph<R = crate::routing::RoutingState, E = ()> {
+pub struct Graph<R = crate::routing::RoutingState, E = EdgeRef> {
     graph: PetGraph<(), E>,
     pub nodes: HashMap<NodeId, NodeState<R>>,
     #[serde(skip, default)]

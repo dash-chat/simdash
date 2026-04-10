@@ -29,7 +29,7 @@ impl<B: Behavior<NodeModel>> Behavior<NetworkModel> for RoundRobinNodeScheduler<
                     .into_iter()
                     .map(|action| NetworkAction::Node(*node_id, action))
             })
-            .chain([NetworkAction::Tick])
+            .chain([NetworkAction::Tick, NetworkAction::EvolveTopology])
             .collect())
     }
 }

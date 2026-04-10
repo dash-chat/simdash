@@ -53,7 +53,9 @@ impl ApplyRule for LinkSpec {
                         Count::Range { min, max } => state.rng.random_range(min..=max),
                     };
                     for _ in 0..n {
+                        let id = state.topology.edges.len() as u32;
                         state.topology.edges.push(EdgeTopology {
+                            id,
                             from: node,
                             destination: destination_record.clone(),
                             ordinality: self.ordinality.clone(),
@@ -71,7 +73,9 @@ impl ApplyRule for LinkSpec {
                     Selection::Random => {
                         for _ in 0..total_links {
                             let from = *state.all_node_ids.choose(&mut state.rng).unwrap();
+                            let id = state.topology.edges.len() as u32;
                             state.topology.edges.push(EdgeTopology {
+                                id,
                                 from,
                                 destination: destination_record.clone(),
                                 ordinality: self.ordinality.clone(),

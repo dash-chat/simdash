@@ -51,6 +51,8 @@ impl polestar::Machine for NetworkModel {
                 Ok((state, ()))
             }
 
+            simdash_action::network::NetworkAction::EvolveTopology => Ok((state, ())),
+
             simdash_action::network::NetworkAction::Node(node_id, node_action) => {
                 let node_model = self
                     .nodes

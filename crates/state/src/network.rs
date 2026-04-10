@@ -44,10 +44,10 @@ mod tests {
         for i in 0..4u32 {
             graph.add_node(NodeId::from(i), NodeState::default());
         }
-        graph.add_edge(0.into(), 1.into(), ());
-        graph.add_edge(1.into(), 2.into(), ());
-        graph.add_edge(0.into(), 3.into(), ());
-        graph.add_edge(3.into(), 2.into(), ());
+        graph.add_edge(0.into(), 1.into(), Default::default());
+        graph.add_edge(1.into(), 2.into(), Default::default());
+        graph.add_edge(0.into(), 3.into(), Default::default());
+        graph.add_edge(3.into(), 2.into(), Default::default());
         NetworkState { graph }
     }
 
