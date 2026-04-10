@@ -64,7 +64,7 @@ async fn main() {
         serde_json::to_string(net_top_value).expect("Failed to serialize net-top config");
     let generator =
         TopologyGenerator::from_json(&net_top_json).expect("Failed to parse net-top config");
-    let graph = generator.generate(seed);
+    let graph = generator.generate(seed).into_graph();
 
     println!(
         "Generated network topology: {} nodes, {} edges",

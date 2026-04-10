@@ -21,7 +21,7 @@ pub struct NetTopology {
 }
 
 impl NetTopology {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             nodes: Vec::new(),
             edges: Vec::new(),
@@ -29,7 +29,7 @@ impl NetTopology {
         }
     }
 
-    pub(crate) fn into_graph(self) -> Graph {
+    pub fn into_graph(self) -> Graph {
         let mut graph = Graph::new();
         for NodeTopology { id, state } in self.nodes {
             graph.add_node(id, state);

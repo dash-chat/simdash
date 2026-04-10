@@ -2,7 +2,6 @@
 
 use serde::Deserialize;
 use simdash_ids::NodeId;
-use simdash_state::Graph;
 
 pub mod link;
 pub mod net_topology;
@@ -58,7 +57,7 @@ impl TopologyGenerator {
         Ok(Self { config })
     }
 
-    pub fn generate(&self, seed: u64) -> Graph {
+    pub fn generate(&self, seed: u64) -> NetTopology {
         use rand::SeedableRng;
 
         let mut topology = NetTopology::new();
@@ -75,7 +74,7 @@ impl TopologyGenerator {
             });
         }
 
-        topology.into_graph()
+        topology
     }
 }
 
@@ -102,7 +101,7 @@ mod tests {
         ]"#;
 
         let generator = TopologyGenerator::from_json(json).unwrap();
-        let graph = generator.generate(0);
+        let graph = generator.generate(0).into_graph();
 
         assert_eq!(graph.graph().node_count(), 2);
         assert_eq!(graph.graph().edge_count(), 2);
@@ -126,8 +125,8 @@ mod tests {
         ]"#;
 
         let generator = TopologyGenerator::from_json(json).unwrap();
-        let graph1 = generator.generate(42);
-        let graph2 = generator.generate(42);
+        let graph1 = generator.generate(42).into_graph();
+        let graph2 = generator.generate(42).into_graph();
 
         assert_eq!(graph1.graph().node_count(), 3);
 
@@ -163,7 +162,7 @@ mod tests {
         ]"#;
 
         let generator = TopologyGenerator::from_json(json).unwrap();
-        let graph = generator.generate(7);
+        let graph = generator.generate(7).into_graph();
 
         assert_eq!(graph.graph().node_count(), 100);
         assert!(graph.graph().edge_count() <= 400);
@@ -212,7 +211,7 @@ mod tests {
         ]"#;
 
         let generator = TopologyGenerator::from_json(json).unwrap();
-        let graph = generator.generate(0);
+        let graph = generator.generate(0).into_graph();
 
         assert_eq!(graph.graph().node_count(), 4);
         assert_eq!(graph.graph().edge_count(), 2);
@@ -255,7 +254,7 @@ mod tests {
         ]"#;
 
         let generator = TopologyGenerator::from_json(json).unwrap();
-        let graph = generator.generate(0);
+        let graph = generator.generate(0).into_graph();
 
         assert_eq!(graph.graph().node_count(), 4);
         assert_eq!(graph.graph().edge_count(), 2);
