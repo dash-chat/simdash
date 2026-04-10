@@ -67,6 +67,79 @@ impl ChatState {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_op(id: u32, size: u64) -> Operation {
+        Operation {
+            id: OpId::from(id),
+            header: Header {
+                author: NodeId::from(1),
+                payload_size: Size::from(size),
+            },
+            body: Body::DirectMessage {
+                recipient: NodeId::from(2),
+            },
+        }
+    }
+
+    #[test]
+    fn store_op_within_capacity() {
+        let mut state = ChatState {
+            storage_capacity: Some(Size::from(200u64)),
+            ..Default::default()
+        };
+        assert!(state.store_op(make_op(1, 100)).is_ok());
+        assert!(state.store_op(make_op(2, 100)).is_ok());
+        assert_eq!(state.op_store.len(), 2);
+    }
+
+    #[test]
+    fn store_op_exceeding_capacity_is_rejected() {
+        let mut state = ChatState {
+            storage_capacity: Some(Size::from(150u64)),
+            ..Default::default()
+        };
+        assert!(state.store_op(make_op(1, 100)).is_ok());
+        assert!(state.store_op(make_op(2, 100)).is_err());
+        assert_eq!(state.op_store.len(), 1);
+    }
+
+    #[test]
+    fn store_op_exactly_at_capacity() {
+        let mut state = ChatState {
+            storage_capacity: Some(Size::from(200u64)),
+            ..Default::default()
+        };
+        assert!(state.store_op(make_op(1, 100)).is_ok());
+        assert!(state.store_op(make_op(2, 100)).is_ok());
+        assert!(state.store_op(make_op(3, 1)).is_err());
+        assert_eq!(state.op_store.len(), 2);
+    }
+
+    #[test]
+    fn store_op_unlimited_capacity() {
+        let mut state = ChatState::default();
+        assert!(state.storage_capacity.is_none());
+        for i in 0..100 {
+            assert!(state.store_op(make_op(i, 1000)).is_ok());
+        }
+        assert_eq!(state.op_store.len(), 100);
+    }
+
+    #[test]
+    fn store_op_duplicate_is_rejected() {
+        let mut state = ChatState {
+            storage_capacity: Some(Size::from(500u64)),
+            ..Default::default()
+        };
+        assert!(state.store_op(make_op(1, 100)).is_ok());
+        assert!(state.store_op(make_op(1, 100)).is_err());
+        assert_eq!(state.op_store.len(), 1);
+    }
+}
+
 impl ExtractMetadata<FloodingMetadata> for Operation {
     fn extract_metadata(&self) -> FloodingMetadata {
         FloodingMetadata {
