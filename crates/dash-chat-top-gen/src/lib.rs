@@ -234,14 +234,13 @@ impl ChatStateGenerator {
                                 body: Body::GroupMessage { group_id },
                             };
 
-                            // Every group member stores the operation.
-                            for &member in &members {
-                                states
-                                    .entry(member)
-                                    .or_default()
-                                    .op_store
-                                    .insert(op_id, op.clone());
-                            }
+                            // Only the author stores the op initially;
+                            // routing will deliver it to other members.
+                            states
+                                .entry(author)
+                                .or_default()
+                                .op_store
+                                .insert(op_id, op);
                         }
                     }
                 }
