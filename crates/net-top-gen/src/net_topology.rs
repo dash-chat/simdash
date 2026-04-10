@@ -6,6 +6,17 @@ use simdash_state::{Graph, node::NodeState};
 pub struct NodeTopology {
     pub id: NodeId,
     pub state: NodeState,
+    pub tags: Vec<String>,
+}
+
+impl NodeTopology {
+    pub fn new(id: NodeId) -> Self {
+        Self {
+            id,
+            state: NodeState::default(),
+            tags: Vec::new(),
+        }
+    }
 }
 
 pub struct EdgeTopology {
@@ -31,7 +42,7 @@ impl NetTopology {
 
     pub fn into_graph(self) -> Graph {
         let mut graph = Graph::new();
-        for NodeTopology { id, state } in self.nodes {
+        for NodeTopology { id, state, .. } in self.nodes {
             graph.add_node(id, state);
         }
         for EdgeTopology { from, to } in self.edges {

@@ -1,6 +1,5 @@
 use serde::Deserialize;
 use simdash_ids::NodeId;
-use simdash_state::node::NodeState;
 
 use crate::{ApplyRule, BuildState, Rule, net_topology::NodeTopology};
 
@@ -28,10 +27,7 @@ impl ApplyRule for NodeSpec {
         *state.next_id += self.number;
 
         for &node_id in &node_ids {
-            state.topology.nodes.push(NodeTopology {
-                id: node_id,
-                state: NodeState::default(),
-            });
+            state.topology.nodes.push(NodeTopology::new(node_id));
         }
         state.all_node_ids.extend_from_slice(&node_ids);
         if let Some(subnet) = &self.subnet {

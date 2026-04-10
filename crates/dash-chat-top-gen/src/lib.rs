@@ -181,15 +181,11 @@ mod tests {
     use super::*;
     use net_top_gen::net_topology::NodeTopology;
     use simdash_state::chat::ChatState;
-    use simdash_state::node::NodeState;
 
     fn make_topology(n: u32) -> NetTopology {
         let mut topology = NetTopology::new();
         for i in 0..n {
-            topology.nodes.push(NodeTopology {
-                id: NodeId::from(i),
-                state: NodeState::default(),
-            });
+            topology.nodes.push(NodeTopology::new(NodeId::from(i)));
         }
         topology
     }

@@ -6,10 +6,12 @@ use simdash_ids::NodeId;
 pub mod link;
 pub mod net_topology;
 pub mod node;
+pub mod tag;
 
 pub use link::{Count, Destination, LinkSpec};
 pub use net_topology::NetTopology;
 pub use node::NodeSpec;
+pub use tag::NodeTagSpec;
 
 /// Shared mutable state threaded through rule application.
 pub struct BuildState<'a, R: rand::Rng> {
@@ -30,6 +32,8 @@ pub trait ApplyRule {
 pub enum Rule {
     Node(NodeSpec),
     Link(LinkSpec),
+    #[serde(rename = "node_tag")]
+    NodeTag(NodeTagSpec),
 }
 
 impl ApplyRule for Rule {
@@ -37,6 +41,7 @@ impl ApplyRule for Rule {
         match self {
             Rule::Node(spec) => spec.apply(state),
             Rule::Link(spec) => spec.apply(state),
+            Rule::NodeTag(spec) => spec.apply(state),
         }
     }
 }
@@ -286,5 +291,35 @@ mod tests {
             graph.subnet_node_ids("second_subnet"),
             Some(&[NodeId::from(2), NodeId::from(3)] as &[NodeId])
         );
+    }
+
+    #[test]
+    fn node_tag_applies_to_nodes_not_node_state() {
+        let json = r#"[
+            {
+                "element": "node",
+                "number": 2,
+                "rules": [
+                    {
+                        "element": "node_tag",
+                        "tag": "phone"
+                    }
+                ]
+            },
+            {
+                "element": "node",
+                "number": 1
+            }
+        ]"#;
+
+        let generator = TopologyGenerator::from_json(json).unwrap();
+        let topology = generator.generate(0);
+
+        assert_eq!(topology.nodes.len(), 3);
+        for node in &topology.nodes[..2] {
+            assert!(node.tags.contains(&"phone".to_string()));
+            assert_eq!(node.state, simdash_state::node::NodeState::default());
+        }
+        assert!(!topology.nodes[2].tags.contains(&"phone".to_string()));
     }
 }
