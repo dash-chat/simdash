@@ -1,8 +1,8 @@
-/// Generates `RoutingModel`, `RoutingState`, `RoutingAction`, `RoutingFx`,
+/// Generates `RoutingModel`, `RoutingState`, `RoutingDispatch`, `RoutingFx`,
 /// and their `polestar::Machine` impl, dispatching across all listed protocols.
 ///
 /// Each protocol is active simultaneously — `RoutingState` is a struct with one
-/// field per protocol, and `RoutingAction`/`RoutingFx` are enums that name which
+/// field per protocol, and `RoutingDispatch`/`RoutingFx` are enums that name which
 /// protocol produced or receives the action/effect.
 ///
 /// # Requirements
@@ -16,7 +16,7 @@
 ///
 /// Additionally, each protocol provides a Data type which is used to model
 /// datagrams flowing through the network.
-/// The `RoutingAction::ReceiveData` models incoming data,
+/// The `RoutingDispatch::ReceiveData` models incoming data,
 /// and the `RoutingFx::UnicastData` and `RoutingFx::BroadcastData` model outgoing data.
 ///
 /// # Example
@@ -33,9 +33,41 @@
 /// }
 /// ```
 ///
-/// Expands to structs `RoutingModel`, `RoutingState`, enum `RoutingAction`,
+/// Expands to structs `RoutingModel`, `RoutingState`, enum `RoutingDispatch`,
 /// enum `RoutingFx`, method `RoutingState::tick()`, and a `polestar::Machine`
 /// impl on `RoutingModel` that dispatches across all listed protocols.
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum RoutingAction<Action, D> {
+    Network(NetworkRoutingAction<D>),
+    Protocol(Action),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum NetworkRoutingAction<D> {
+    ReceiveData { from: simdash_ids::NodeId, data: D },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum RoutingFx<Fx, D> {
+    Network(NetworkRoutingFx<D>),
+    Node(NodeRoutingFx),
+    Protocol(Fx),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum NodeRoutingFx {
+    StoreOps {
+        ops: Vec<simdash_state::chat::Operation>,
+    },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum NetworkRoutingFx<D> {
+    UnicastData { to: simdash_ids::NodeId, data: D },
+    BroadcastData { data: D },
+}
+
 #[macro_export]
 macro_rules! routing_protocols {
     (
@@ -64,46 +96,14 @@ macro_rules! routing_protocols {
         }
 
         #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-        pub enum RoutingAction {
-            $( $Variant(RoutingProtocolAction), )+
-        }
-
-        #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-        pub enum RoutingProtocolAction {
-            ReceiveData {
-                from: simdash_ids::NodeId,
-                data: RoutingData,
-            },
-            Protocol($action_ty),
+        pub enum RoutingDispatch {
+            $( $Variant($crate::macros::RoutingAction<$action_ty, $data_ty>), )+
         }
 
         #[derive(Debug, Clone, PartialEq, Eq, Hash)]
         pub enum RoutingFx {
-            Network(RoutingNetworkFx),
-            Node(RoutingNodeFx),
-            // Protocol(RoutingProtocolFx),
+            $( $Variant($crate::macros::RoutingFx<$action_ty, $data_ty>), )+
         }
-
-        #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-        pub enum RoutingNodeFx {
-            StoreOps { ops: Vec<simdash_state::chat::Operation> }
-        }
-
-        #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-        pub enum RoutingNetworkFx {
-            UnicastData {
-                to: simdash_ids::NodeId,
-                data: RoutingData,
-            },
-            BroadcastData {
-                data: RoutingData,
-            }
-        }
-
-        // #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-        // pub enum RoutingProtocolFx {
-        //     $( $Variant(Option<$fx_ty>), )+
-        // }
 
         impl RoutingState {
             pub fn tick(&mut self) {
@@ -113,7 +113,7 @@ macro_rules! routing_protocols {
 
         impl polestar::Machine for RoutingModel {
             type State  = RoutingState;
-            type Action = RoutingAction;
+            type Action = RoutingDispatch;
             type Fx     = RoutingFx;
             type Error  = anyhow::Error;
 
@@ -124,15 +124,10 @@ macro_rules! routing_protocols {
             ) -> polestar::TransitionResult<Self> {
                 match action {
                     $(
-                        RoutingAction::Protocol(RoutingProtocolAction::$Variant(a)) => {
+                        RoutingDispatch::$Variant(a) => {
                             let (s, fx) = self.$field.transition(state.$field, a)?;
                             state.$field = s;
                             Ok((state, RoutingFx::$Variant(fx)))
-                        },
-                        RoutingAction::ReceiveData { from, data } => {
-                            let (s, fx) = self.$field.transition(state.$field, data)?;
-                            state.$field = s;
-                            Ok((state, RoutingFx::Node(fx)))
                         },
                     )+
                 }
