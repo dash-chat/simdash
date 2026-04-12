@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ProtocolAction<A, D> {
     Protocol(A),
@@ -6,6 +8,9 @@ pub enum ProtocolAction<A, D> {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ProtocolNetworkAction<D> {
-    Receive { from: simdash_ids::NodeId, data: D },
+    Receive {
+        from: simdash_ids::NodeId,
+        data: BTreeSet<D>,
+    },
     Tick,
 }

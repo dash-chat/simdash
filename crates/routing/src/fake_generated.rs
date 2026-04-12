@@ -91,7 +91,10 @@ pub fn routing_flooding_protocol_action(
             ProtocolNetworkAction::Receive { from, data } => {
                 RoutingAction::Network(ProtocolNetworkAction::Receive {
                     from,
-                    data: RoutingDataDispatch::Flooding(data),
+                    data: data
+                        .into_iter()
+                        .map(RoutingDataDispatch::Flooding)
+                        .collect(),
                 })
             }
         },

@@ -6,20 +6,20 @@ use polestar::{Machine, ext::MapExt};
 use rand::seq::IndexedRandom;
 use simdash_action::node::NodeAction;
 use simdash_ids::{NodeId, Operation};
-use simdash_routing::RoutingFx;
-use simdash_routing_common::SendFx;
+use simdash_routing::{RoutingAction, RoutingFx};
+use simdash_routing_common::{ProtocolNetworkAction, SendFx, StorageFx};
 use simdash_state::{network::NetworkState, node::NodeState};
 
 use crate::node::{NodeFx, NodeModel, NodeModelConfig};
 
 pub struct NetworkModel {
-    nodes: HashMap<NodeId, NodeModel>,
+    node: NodeModel,
     pub topology: ChatTopology,
 }
 
 impl NetworkModel {
-    pub fn new(nodes: HashMap<NodeId, NodeModel>, topology: ChatTopology) -> Self {
-        Self { nodes, topology }
+    pub fn new(node: NodeModel, topology: ChatTopology) -> Self {
+        Self { node, topology }
     }
 }
 
@@ -43,12 +43,8 @@ impl polestar::Machine for NetworkModel {
                 }
                 let all_keys = state.graph.node_ids().collect::<Vec<_>>();
                 for node_id in all_keys {
-                    let node_model = self
-                        .nodes
-                        .get(&node_id)
-                        .ok_or_else(|| anyhow::anyhow!("No model for node {:?}", node_id))?;
                     state.graph.update_node(node_id, |node_state| {
-                        node_model.transition(node_state, NodeAction::Tick)
+                        self.node.transition(node_state, NodeAction::Tick)
                     })?;
                 }
                 Ok((state, ()))
@@ -82,12 +78,8 @@ impl polestar::Machine for NetworkModel {
             }
 
             simdash_action::network::NetworkAction::Node(node_id, node_action) => {
-                let node_model = self
-                    .nodes
-                    .get(&node_id)
-                    .ok_or_else(|| anyhow::anyhow!("No model for node {:?}", node_id))?;
                 let fx = match state.graph.update_node(node_id, |node_state| {
-                    let (node_state, node_fx) = node_model.transition(node_state, node_action)?;
+                    let (node_state, node_fx) = self.node.transition(node_state, node_action)?;
                     Ok((node_state, node_fx))
                 }) {
                     Ok(fx) => {
@@ -114,7 +106,43 @@ impl NetworkModel {
         fx: NodeFx,
     ) -> anyhow::Result<()> {
         match fx.routing {
-            RoutingFx::Network(SendFx::BroadcastData { data }) => {}
+            RoutingFx::Network(send) => match send {
+                SendFx::BroadcastData { data } => {
+                    let neighbors = state.neighborhood(node_id).collect::<Vec<_>>();
+                    for neighbor in neighbors {
+                        state.graph.update_node(neighbor, |node_state| {
+                            self.node.transition(
+                                node_state,
+                                NodeAction::Routing(RoutingAction::Network(
+                                    ProtocolNetworkAction::Receive {
+                                        from: node_id,
+                                        data: data.clone(),
+                                    },
+                                )),
+                            )
+                        })?;
+                    }
+                }
+                SendFx::UnicastData { to, data } => {
+                    state.graph.update_node(to, |node_state| {
+                        self.node.transition(
+                            node_state,
+                            NodeAction::Routing(RoutingAction::Network(
+                                ProtocolNetworkAction::Receive {
+                                    from: node_id,
+                                    data,
+                                },
+                            )),
+                        )
+                    })?;
+                }
+            },
+            RoutingFx::Node(StorageFx::StoreOps { ops }) => {
+                todo!()
+            }
+            RoutingFx::Protocol(fx) => {
+                todo!()
+            }
         }
         Ok(())
     }

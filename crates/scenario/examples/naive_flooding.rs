@@ -25,11 +25,7 @@ fn holding_count(state: &NetworkState, ops: impl IntoIterator<Item = OpId>) -> u
 fn main() {
     let initial_state = NetworkState::load_postcard("gen/topology.postcard");
     let model = NetworkModel::new(
-        initial_state
-            .graph
-            .node_ids()
-            .map(|id| (id, NodeModel::new(RoutingModel::standard(3.into()))))
-            .collect(),
+        NodeModel::new(RoutingModel::standard(3.into())),
         ChatTopology::empty(),
     );
 

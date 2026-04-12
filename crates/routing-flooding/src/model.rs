@@ -38,18 +38,20 @@ impl polestar::Machine for FloodingModel {
             }
 
             ProtocolAction::Network(ProtocolNetworkAction::Receive { from: _, data }) => {
-                let mut flooding_op = FloodingOp::from_wire(data);
-                // Mark as recently sent so the node doesn't re-broadcast
-                // the op in the same round it was received.
-                flooding_op.touch();
-                let id = flooding_op.id();
-                let existing = state.ops.insert(id, flooding_op.clone());
-                if existing.is_some() {
-                    anyhow::bail!("Flooding op already exists: op={:?}", id);
+                let mut out = vec![];
+                for op in data {
+                    let mut flooding_op = FloodingOp::from_wire(op);
+                    // Mark as recently sent so the node doesn't re-broadcast
+                    // the op in the same round it was received.
+                    flooding_op.touch();
+                    let id = flooding_op.id();
+                    let existing = state.ops.insert(id, flooding_op.clone());
+                    if existing.is_some() {
+                        anyhow::bail!("Flooding op already exists: op={:?}", id);
+                    }
+                    out.push(flooding_op.data.encrypted);
                 }
-                let fx = ProtocolFx::Node(StorageFx::StoreOps {
-                    ops: vec![flooding_op.data.encrypted],
-                });
+                let fx = ProtocolFx::Node(StorageFx::StoreOps { ops: out });
                 (state, Some(fx))
             }
             ProtocolAction::Protocol(FloodingAction::StoreOp(data)) => {
@@ -201,7 +203,7 @@ mod tests {
                 state,
                 ProtocolAction::Network(ProtocolNetworkAction::Receive {
                     from: NodeId::from(9),
-                    data: data.clone(),
+                    data: btreeset![data.clone()],
                 }),
             )
             .unwrap();

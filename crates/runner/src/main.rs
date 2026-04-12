@@ -3,15 +3,6 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
 
-<<<<<<< HEAD
-use std::{net::SocketAddr, path::PathBuf, sync::Arc};
-
-use axum::{
-    routing::{get, post},
-    Router,
-};
-=======
->>>>>>> origin/router-handler-main
 use clap::Parser;
 
 use simdash_simulation::snapshot::{

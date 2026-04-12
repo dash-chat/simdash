@@ -164,7 +164,11 @@ mod tests {
                 state,
                 NodeAction::Routing(RoutingAction::Network(ProtocolNetworkAction::Receive {
                     from: NodeId::from(9),
-                    data: RoutingDataDispatch::Flooding(FloodingWireData::new(op.clone())),
+                    data: [RoutingDataDispatch::Flooding(FloodingWireData::new(
+                        op.clone(),
+                    ))]
+                    .into_iter()
+                    .collect(),
                 })),
             )
             .unwrap();
