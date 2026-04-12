@@ -31,7 +31,7 @@ impl ChatTopology {
         for (node_id, chat_state) in self.chat_states {
             graph
                 .update_node(node_id, |mut n| {
-                    n.dash = chat_state;
+                    n.chat = chat_state;
                     Ok((n, ()))
                 })
                 .ok();

@@ -18,7 +18,7 @@ fn holding_count(state: &NetworkState, ops: impl IntoIterator<Item = OpId>) -> u
         .graph
         .node_ids()
         .filter_map(|id| state.graph.node_state(id))
-        .filter(|n| ops.iter().any(|op_id| n.dash.op_store.contains_key(&op_id)))
+        .filter(|n| ops.iter().any(|op_id| n.chat.op_store.contains_key(&op_id)))
         .count()
 }
 

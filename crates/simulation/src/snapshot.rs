@@ -57,16 +57,16 @@ impl SimulationSnapshot {
                     .map(NodeId::from)
                     .collect();
 
-                let ops: Vec<Operation> = ns.dash.op_store.values().cloned().collect();
+                let ops: Vec<Operation> = ns.chat.op_store.values().cloned().collect();
 
                 Some(NodeSnapshot {
                     id: node_id,
                     ops_count: ops.len(),
-                    contacts: ns.dash.contacts.iter().copied().collect(),
-                    groups: ns.dash.groups.iter().copied().collect(),
+                    contacts: ns.chat.contacts.iter().copied().collect(),
+                    groups: ns.chat.groups.iter().copied().collect(),
                     neighbors,
-                    storage_capacity: ns.dash.storage_capacity.map(|s| *s),
-                    stored_size: *ns.dash.stored_size(),
+                    storage_capacity: ns.chat.storage_capacity.map(|s| *s),
+                    stored_size: *ns.chat.stored_size(),
                     ops,
                 })
             })
@@ -93,7 +93,7 @@ pub fn collect_all_op_ids(state: &NetworkState) -> HashSet<OpId> {
     let mut all_ops = HashSet::new();
     for node_id in state.graph.node_ids() {
         if let Some(node_state) = state.graph.node_state(node_id) {
-            all_ops.extend(node_state.dash.op_store.keys().copied());
+            all_ops.extend(node_state.chat.op_store.keys().copied());
         }
     }
     all_ops
@@ -119,7 +119,7 @@ pub fn compute_delivery_rate(state: &NetworkState, all_op_ids: &HashSet<OpId>) -
                     state
                         .graph
                         .node_state(*nid)
-                        .map_or(false, |ns| ns.dash.op_store.contains_key(op_id))
+                        .map_or(false, |ns| ns.chat.op_store.contains_key(op_id))
                 })
                 .count()
         })

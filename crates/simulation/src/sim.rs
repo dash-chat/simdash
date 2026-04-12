@@ -22,8 +22,7 @@ pub struct Simulation {
 impl Simulation {
     pub fn new(topology: ChatTopology, seed: u64) -> anyhow::Result<Self> {
         let state = Self::build_initial_state(&topology, seed);
-        let scenario =
-            Self::make_scenario(DEFAULT_BEHAVIOR, &state, &topology)?;
+        let scenario = Self::make_scenario(DEFAULT_BEHAVIOR, &state, &topology)?;
         Ok(Self {
             seed,
             behavior_name: DEFAULT_BEHAVIOR.to_string(),
@@ -108,7 +107,7 @@ impl Simulation {
             if let Some(node_state) = state.graph.node_state(node_id) {
                 snap.insert(
                     *node_id,
-                    node_state.dash.op_store.keys().map(|id| **id).collect(),
+                    node_state.chat.op_store.keys().map(|id| **id).collect(),
                 );
             }
         }

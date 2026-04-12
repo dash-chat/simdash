@@ -58,7 +58,7 @@ impl polestar::Machine for NodeModel {
                 //     _ => {}
                 // }
 
-                state.dash = self.dash.transition_(state.dash, action)?;
+                state.chat = self.dash.transition_(state.chat, action)?;
                 (state, None)
             }
             NodeAction::Routing(action) => {
@@ -107,7 +107,7 @@ mod tests {
         let (state, _) = m
             .transition(state, NodeAction::Chat(ChatAction::StoreOp(op)))
             .unwrap();
-        assert!(state.dash.op_store.contains_key(&op_id));
+        assert!(state.chat.op_store.contains_key(&op_id));
         assert!(!state.routing.flooding.op_ids().contains(&op_id));
     }
 
@@ -120,7 +120,7 @@ mod tests {
         let (state, _) = m
             .transition(state, NodeAction::Chat(ChatAction::AddContact(contact)))
             .unwrap();
-        assert!(state.dash.contacts.contains(&contact));
+        assert!(state.chat.contacts.contains(&contact));
         assert!(state.routing.flooding.op_ids().is_empty());
     }
 
@@ -173,6 +173,6 @@ mod tests {
             )
             .unwrap();
         assert!(state.routing.flooding.op_ids().contains(&op_id));
-        assert!(!state.dash.op_store.contains_key(&op_id));
+        assert!(!state.chat.op_store.contains_key(&op_id));
     }
 }

@@ -6,17 +6,17 @@ use crate::chat::ChatState;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 pub struct NodeState<R = simdash_routing::RoutingState> {
-    pub dash: ChatState,
+    pub chat: ChatState,
     pub routing: R,
 }
 
 impl NodeState<RoutingState> {
     pub fn dash(&self) -> &ChatState {
-        &self.dash
+        &self.chat
     }
 
     pub fn tick(&mut self) {
-        self.dash.tick();
+        self.chat.tick();
         self.routing.tick();
     }
 }

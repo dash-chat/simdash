@@ -118,7 +118,7 @@ fn build_delta_response(
             continue;
         };
 
-        let current_op_ids: HashSet<u32> = node_state.dash.op_store.keys().map(|id| **id).collect();
+        let current_op_ids: HashSet<u32> = node_state.chat.op_store.keys().map(|id| **id).collect();
         let empty = HashSet::new();
         let prev_op_ids = prev_ops.get(&*node_id).unwrap_or(&empty);
 
@@ -126,7 +126,7 @@ fn build_delta_response(
             .difference(prev_op_ids)
             .filter_map(|&id| {
                 node_state
-                    .dash
+                    .chat
                     .op_store
                     .get(&id.into())
                     .map(|op| build_op_info(op))
@@ -157,7 +157,7 @@ fn build_delta_response(
             ops_added,
             ops_removed,
             routing_ops,
-            stored_size: *node_state.dash.stored_size(),
+            stored_size: *node_state.chat.stored_size(),
         });
     }
 
@@ -239,7 +239,7 @@ fn build_node_infos(state: &NetworkState) -> Vec<NodeInfo> {
                 .collect();
 
             let ops: Vec<OpInfo> = node_state
-                .dash
+                .chat
                 .op_store
                 .values()
                 .map(|op| build_op_info(op))
@@ -260,12 +260,12 @@ fn build_node_infos(state: &NetworkState) -> Vec<NodeInfo> {
             Some(NodeInfo {
                 id: *node_id,
                 ops,
-                contacts: node_state.dash.contacts.iter().map(|c| **c).collect(),
-                groups: node_state.dash.groups.iter().copied().collect(),
+                contacts: node_state.chat.contacts.iter().map(|c| **c).collect(),
+                groups: node_state.chat.groups.iter().copied().collect(),
                 routing_ops,
                 neighbors,
-                storage_capacity: node_state.dash.storage_capacity.map(|s| *s),
-                stored_size: *node_state.dash.stored_size(),
+                storage_capacity: node_state.chat.storage_capacity.map(|s| *s),
+                stored_size: *node_state.chat.stored_size(),
             })
         })
         .collect()

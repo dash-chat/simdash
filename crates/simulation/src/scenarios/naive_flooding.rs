@@ -25,7 +25,7 @@ pub fn naive_flooding(
             .graph
             .update_node(node_id, |mut n| {
                 let routing_ops = n
-                    .dash
+                    .chat
                     .op_store
                     .values()
                     .map(|op| (op.id, FloodingOp::from_op(op.clone())))
