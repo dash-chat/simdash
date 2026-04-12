@@ -1,4 +1,5 @@
-use std::collections::BTreeSet;
+use std::collections::HashSet;
+use std::hash::Hash;
 
 use simdash_ids::EncryptedOp;
 
@@ -7,25 +8,25 @@ use simdash_ids::EncryptedOp;
 /// The types are generic so that this type can be used both by the protocol model itself,
 /// using specific Fx and Data types, and also by the higher level network model,
 /// which will use enums of all possible Fx and Data types for all known routing protocols.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum ProtocolFx<Fx, D> {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ProtocolFx<Fx, D: Eq + Hash> {
     Network(SendFx<D>),
     Node(StorageFx),
     Protocol(Fx),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum StorageFx {
     StoreOps { ops: Vec<EncryptedOp> },
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum SendFx<D> {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SendFx<D: Eq + Hash> {
     UnicastData {
         to: simdash_ids::NodeId,
-        data: BTreeSet<D>,
+        data: HashSet<D>,
     },
     BroadcastData {
-        data: BTreeSet<D>,
+        data: HashSet<D>,
     },
 }

@@ -1,15 +1,15 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
 use simdash_ids::{GroupId, NodeId, OpId, Operation, Size};
 
 use simdash_ids::ExtractMetadata;
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq)]
 pub struct ChatState {
-    pub op_store: BTreeMap<OpId, Operation>,
-    pub contacts: BTreeSet<NodeId>,
-    pub groups: BTreeSet<GroupId>,
+    pub op_store: HashMap<OpId, Operation>,
+    pub contacts: HashSet<NodeId>,
+    pub groups: HashSet<GroupId>,
     /// Maximum total payload size this node can store. None means unlimited.
     #[serde(default)]
     pub storage_capacity: Option<Size>,

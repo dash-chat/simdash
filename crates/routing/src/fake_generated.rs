@@ -134,7 +134,7 @@ pub fn routing_flooding_protocol_fx(fx: ProtocolFx<FloodingFx, FloodingWireData>
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub struct RoutingState {
     pub flooding: FloodingState,
 }
@@ -180,7 +180,7 @@ impl polestar::Machine for RoutingModel {
             }
 
             ProtocolAction::Network(ProtocolNetworkAction::Receive { from, data }) => {
-                let flooding_data: std::collections::BTreeSet<FloodingWireData> = data
+                let flooding_data: std::collections::HashSet<FloodingWireData> = data
                     .into_iter()
                     .filter_map(|d| match d {
                         RoutingDataDispatch::Flooding(inner) => Some(inner),

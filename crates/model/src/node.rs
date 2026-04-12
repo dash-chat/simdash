@@ -23,7 +23,7 @@ impl NodeModel {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[must_use]
 pub struct NodeFx {
     pub routing: RoutingFx,

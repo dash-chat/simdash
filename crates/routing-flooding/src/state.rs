@@ -1,11 +1,11 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeSet, HashMap};
 
 use serde::{Deserialize, Serialize};
 use simdash_ids::*;
 
-#[derive(Debug, Default, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FloodingState {
-    pub ops: BTreeMap<OpId, FloodingOp>,
+    pub ops: HashMap<OpId, FloodingOp>,
 }
 
 impl FloodingState {

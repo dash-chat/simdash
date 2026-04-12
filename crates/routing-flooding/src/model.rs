@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::HashSet;
 
 use simdash_ids::Ticks;
 use simdash_routing_common::{
@@ -77,7 +77,7 @@ impl polestar::Machine for FloodingModel {
                         op.touch();
                         op.data.clone()
                     })
-                    .collect::<BTreeSet<_>>();
+                    .collect::<HashSet<_>>();
                 (
                     state,
                     (!broadcasted.is_empty())
@@ -91,7 +91,7 @@ impl polestar::Machine for FloodingModel {
 
 #[cfg(test)]
 mod tests {
-    use maplit::btreeset;
+    use maplit::hashset;
     use polestar::Machine;
     use pretty_assertions::assert_eq;
     use simdash_ids::{NodeId, util::basic_op};
@@ -135,7 +135,7 @@ mod tests {
         assert_eq!(
             fx,
             Some(ProtocolFx::Network(SendFx::BroadcastData {
-                data: btreeset![data],
+                data: hashset![data],
             })),
         );
     }
@@ -186,7 +186,7 @@ mod tests {
         assert_eq!(
             fx,
             Some(ProtocolFx::Network(SendFx::BroadcastData {
-                data: btreeset![data],
+                data: hashset![data],
             })),
         );
     }
@@ -204,7 +204,7 @@ mod tests {
                 state,
                 ProtocolAction::Network(ProtocolNetworkAction::Receive {
                     from: NodeId::from(9),
-                    data: btreeset![data.clone()],
+                    data: hashset![data.clone()],
                 }),
             )
             .unwrap();

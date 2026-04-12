@@ -2,7 +2,7 @@ use simdash_ids::NodeId;
 
 use crate::node::NodeAction;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NetworkAction {
     /// Tick every node
     Tick,
