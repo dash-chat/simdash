@@ -83,7 +83,8 @@ mod tests {
     };
 
     use super::*;
-    use crate::{chat::ChatModel, util::basic_op};
+    use crate::chat::ChatModel;
+    use simdash_state::util::basic_op;
 
     fn model() -> NodeModel<EmptyMachine> {
         NodeModel::new(EmptyMachine::default())

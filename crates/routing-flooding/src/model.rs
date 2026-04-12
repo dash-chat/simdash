@@ -84,7 +84,7 @@ mod tests {
     use polestar::Machine;
     use simdash_ids::NodeId;
 
-    use simdash_model::util::basic_op;
+    use simdash_state::util::basic_op;
 
     use super::*;
 

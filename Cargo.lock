@@ -1412,7 +1412,6 @@ dependencies = [
  "simdash-action",
  "simdash-ids",
  "simdash-model",
- "simdash-routing",
  "simdash-state",
 ]
 
@@ -1486,8 +1485,8 @@ dependencies = [
  "polestar",
  "serde",
  "simdash-action",
+ "simdash-behavior",
  "simdash-ids",
- "simdash-model",
  "simdash-state",
 ]
 
@@ -1510,6 +1509,8 @@ dependencies = [
  "simdash-generator",
  "simdash-ids",
  "simdash-model",
+ "simdash-routing",
+ "simdash-routing-flooding",
  "simdash-scenario",
  "simdash-state",
  "tokio",

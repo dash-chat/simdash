@@ -1,5 +1,6 @@
 mod macros;
 
+use serde::{Deserialize, Serialize};
 // pub use macros::*;
 use simdash_action::{
     chat::ChatAction,
@@ -73,7 +74,7 @@ impl RoutingDataExt for RoutingModel {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
 pub struct RoutingState {
     pub flooding: FloodingState,
 }

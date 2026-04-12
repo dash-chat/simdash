@@ -9,19 +9,22 @@ axum = "0.8"
 clap = { version = "4", features = ["derive"] }
 dash-chat-top-gen = { path = "../dash-chat-top-gen" }
 net-topology = { path = "../net-topology" }
-simdash-generator = { path = "../generator" }
 petgraph = { workspace = true }
 polestar = { workspace = true }
 postcard = { workspace = true }
 serde = { workspace = true }
 serde_json = "1"
-simdash-action = { path = "../action" }
-simdash-behavior = { path = "../behavior" }
-simdash-ids = { path = "../ids" }
-simdash-model = { path = "../model" }
-simdash-scenario = { path = "../scenario" }
-simdash-state = { path = "../state" }
 tokio = { version = "1", features = ["full"] }
 tower-http = { version = "0.6", features = ["cors"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+simdash-action = { path = "../action" }
+simdash-behavior = { path = "../behavior" }
+simdash-generator = { path = "../generator" }
+simdash-ids = { path = "../ids" }
+simdash-model = { path = "../model" }
+simdash-routing = { path = "../routing" }
+simdash-routing-flooding = { path = "../routing-flooding" }
+simdash-scenario = { path = "../scenario" }
+simdash-state = { path = "../state" }

@@ -2,7 +2,7 @@ use dash_chat_top_gen::ChatTopology;
 use polestar::Machine;
 use simdash_action::{chat::ChatAction, network::NetworkAction, node::NodeAction};
 use simdash_behavior::{
-    network::RoundRobinNodeScheduler, node::BasicRoutingBehavior, routing::NaiveFloodingBehavior,
+    network::RoundRobinNodeScheduler, node::NodeBehavior1, routing::NaiveFloodingBehavior,
 };
 use simdash_ids::{NodeId, OpId};
 use simdash_model::{
@@ -58,7 +58,7 @@ fn main() {
     // store ops on nodes
     let initial_state = model.apply_actions_(initial_state, stores).unwrap();
 
-    let behavior = RoundRobinNodeScheduler::new(BasicRoutingBehavior::new(NaiveFloodingBehavior));
+    let behavior = RoundRobinNodeScheduler::new(NodeBehavior1::new(NaiveFloodingBehavior));
     let mut scenario = Scenario::initial(model, initial_state, behavior);
 
     let mut prev_count = 0;

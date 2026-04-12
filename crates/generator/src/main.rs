@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use clap::Parser;
+use simdash_routing::RoutingState;
 
 /// Generate initial simulation state from a JSON config file.
 #[derive(Parser)]

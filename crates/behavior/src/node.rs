@@ -7,18 +7,18 @@ use simdash_state::node::NodeState;
 use crate::Behavior;
 
 #[derive(Default)]
-pub struct BasicRoutingBehavior<B, RM>
+pub struct NodeBehavior1<B, RM>
 where
-    B: Behavior<NodeModel<RM>>,
+    B: Behavior<RM>,
     RM: RoutingDataExt,
 {
     routing_behavior: B,
     _phantom: PhantomData<RM>,
 }
 
-impl<B, RM> BasicRoutingBehavior<B, RM>
+impl<B, RM> NodeBehavior1<B, RM>
 where
-    B: Behavior<NodeModel<RM>>,
+    B: Behavior<RM>,
     RM: RoutingDataExt,
 {
     pub fn new(routing_behavior: B) -> Self {
@@ -29,15 +29,12 @@ where
     }
 }
 
-impl<B, RM> Behavior<NodeModel<RM>> for BasicRoutingBehavior<B, RM>
+impl<B, RM> Behavior<RM> for NodeBehavior1<B, RM>
 where
-    B: Behavior<NodeModel<RM>>,
+    B: Behavior<RM>,
     RM: RoutingDataExt,
 {
-    fn next(
-        &mut self,
-        state: &NodeState<RM::State>,
-    ) -> anyhow::Result<Vec<NodeAction<RM::Action>>> {
+    fn next(&mut self, state: &RM::State) -> anyhow::Result<Vec<RM::Action>> {
         Ok(self
             .routing_behavior
             .next(&state)?

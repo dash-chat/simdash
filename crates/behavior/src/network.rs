@@ -6,6 +6,9 @@ use simdash_state::network::NetworkState;
 
 use crate::Behavior;
 
+/// A behavior working on a network of nodes, which on each step:
+/// - runs the behavior for each node in arbitrary order
+/// - performs a tick action on the network
 pub struct RoundRobinNodeScheduler<B, RM>
 where
     B: Behavior<NodeModel<RM>>,

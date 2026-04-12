@@ -1,5 +1,5 @@
+use crate::chat::{Body, Header, Operation};
 use simdash_ids::{NodeId, OpId, Size};
-use simdash_state::chat::{Body, Header, Operation};
 
 pub fn basic_op(id: impl Into<OpId>) -> Operation {
     Operation {

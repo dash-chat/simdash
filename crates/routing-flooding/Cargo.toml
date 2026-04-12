@@ -5,8 +5,8 @@ edition = "2024"
 
 [dependencies]
 simdash-action = { path = "../action" }
+simdash-behavior = { path = "../behavior" }
 simdash-ids = { path = "../ids" }
-simdash-model = { path = "../model" }
 simdash-state = { path = "../state" }
 
 anyhow = { workspace = true }

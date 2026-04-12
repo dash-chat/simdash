@@ -9,6 +9,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use simdash_ids::NodeId;
+use simdash_routing::RoutingState;
 use simdash_state::network::NetworkState;
 use tokio::sync::Mutex;
 
@@ -31,7 +32,11 @@ pub async fn step_forward(State(sim): State<AppState>) -> Result<Json<SimRespons
     tracing::info!("{:>6}ms", t.elapsed().as_millis());
     let seq = sim.bump_seq();
     Ok(Json(build_delta_response(
-        &sim, prev_seq, seq, &prev_ops, &prev_edges,
+        &sim,
+        prev_seq,
+        seq,
+        &prev_ops,
+        &prev_edges,
     )))
 }
 
@@ -87,7 +92,7 @@ fn build_full_response(sim: &mut Simulation) -> SimResponse {
     })
 }
 
-fn snapshot_edges(state: &NetworkState) -> HashSet<(u32, u32)> {
+fn snapshot_edges(state: &NetworkState<RoutingState>) -> HashSet<(u32, u32)> {
     state
         .graph
         .graph()
@@ -114,8 +119,7 @@ fn build_delta_response(
             continue;
         };
 
-        let current_op_ids: HashSet<u32> =
-            node_state.dash.op_store.keys().map(|id| **id).collect();
+        let current_op_ids: HashSet<u32> = node_state.dash.op_store.keys().map(|id| **id).collect();
         let empty = HashSet::new();
         let prev_op_ids = prev_ops.get(&*node_id).unwrap_or(&empty);
 
@@ -130,10 +134,7 @@ fn build_delta_response(
             })
             .collect();
 
-        let ops_removed: Vec<u32> = prev_op_ids
-            .difference(&current_op_ids)
-            .copied()
-            .collect();
+        let ops_removed: Vec<u32> = prev_op_ids.difference(&current_op_ids).copied().collect();
 
         // Skip nodes with no changes
         if ops_added.is_empty() && ops_removed.is_empty() {
@@ -165,12 +166,18 @@ fn build_delta_response(
 
     let edges_added: Vec<GraphEdge> = current_edges
         .difference(prev_edges)
-        .map(|&(s, t)| GraphEdge { source: s, target: t })
+        .map(|&(s, t)| GraphEdge {
+            source: s,
+            target: t,
+        })
         .collect();
 
     let edges_removed: Vec<GraphEdge> = prev_edges
         .difference(&current_edges)
-        .map(|&(s, t)| GraphEdge { source: s, target: t })
+        .map(|&(s, t)| GraphEdge {
+            source: s,
+            target: t,
+        })
         .collect();
 
     SimResponse::Delta(SimDelta {
@@ -183,7 +190,7 @@ fn build_delta_response(
     })
 }
 
-fn build_graph_structure(state: &NetworkState) -> GraphStructure {
+fn build_graph_structure(state: &NetworkState<RoutingState>) -> GraphStructure {
     let nodes: Vec<GraphNode> = state
         .graph
         .node_ids()
@@ -210,10 +217,14 @@ fn build_graph_structure(state: &NetworkState) -> GraphStructure {
         .map(|(name, ids)| (name.clone(), ids.iter().map(|id| **id).collect()))
         .collect();
 
-    GraphStructure { nodes, edges, subnets }
+    GraphStructure {
+        nodes,
+        edges,
+        subnets,
+    }
 }
 
-fn build_node_infos(state: &NetworkState) -> Vec<NodeInfo> {
+fn build_node_infos(state: &NetworkState<RoutingState>) -> Vec<NodeInfo> {
     let mut node_ids: Vec<NodeId> = state.graph.node_ids().collect();
     node_ids.sort();
 

@@ -2,13 +2,14 @@ pub mod naive_flooding;
 pub mod no_routing;
 
 use simdash_model::network::NetworkModel;
+use simdash_routing::{RoutingModel, RoutingState};
 use simdash_scenario::Scenario;
 
 use self::naive_flooding::NaiveFloodingBehaviorType;
 use self::no_routing::NoRoutingBehaviorType;
 
-pub type NaiveFloodingScenario = Scenario<NetworkModel, NaiveFloodingBehaviorType>;
-pub type NoRoutingScenario = Scenario<NetworkModel, NoRoutingBehaviorType>;
+pub type NaiveFloodingScenario = Scenario<NetworkModel<RoutingModel>, NaiveFloodingBehaviorType>;
+pub type NoRoutingScenario = Scenario<NetworkModel<RoutingModel>, NoRoutingBehaviorType>;
 
 pub enum AnyScenario {
     NaiveFlooding(NaiveFloodingScenario),
@@ -16,7 +17,7 @@ pub enum AnyScenario {
 }
 
 impl AnyScenario {
-    pub fn state(&self) -> Option<&simdash_state::network::NetworkState> {
+    pub fn state(&self) -> Option<&simdash_state::network::NetworkState<RoutingState>> {
         match self {
             AnyScenario::NaiveFlooding(s) => s.state(),
             AnyScenario::NoRouting(s) => s.state(),
