@@ -1,5 +1,4 @@
-use simdash_ids::NodeId;
-use simdash_state::chat::{GroupId, Operation};
+use simdash_ids::{GroupId, NodeId, Operation};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ChatAction {

@@ -4,11 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-simdash-action = { path = "../action" }
 simdash-ids = { path = "../ids" }
-simdash-model = { path = "../model" }
-simdash-state = { path = "../state" }
-
+simdash-routing-common = { path = "../routing-common" }
 simdash-routing-flooding = { path = "../routing-flooding" }
 
 anyhow = { workspace = true }

@@ -88,17 +88,13 @@ impl polestar::Machine for NodeModel {
 mod tests {
     use polestar::Machine;
     use simdash_action::{chat::ChatAction, node::NodeAction, routing::RoutingAction};
-    use simdash_ids::{NodeId, OpId, Size};
-    use simdash_state::{
-        chat::{Body, Header, Operation},
-        node::NodeState,
-    };
+    use simdash_ids::{NodeId, OpId, Size, util::basic_op};
+    use simdash_state::node::NodeState;
 
     use super::*;
     use crate::{
         chat::ChatModel,
         routing::{RoutingModel, flooding::FloodingFx},
-        util::basic_op,
     };
 
     fn model() -> NodeModel {

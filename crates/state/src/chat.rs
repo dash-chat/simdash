@@ -3,7 +3,9 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde::{Deserialize, Serialize};
 use simdash_ids::{GroupId, NodeId, OpId, Operation, Size};
 
-use crate::{ExtractMetadata, routing::flooding::FloodingMetadata};
+use simdash_ids::ExtractMetadata;
+
+use crate::routing::flooding::FloodingMetadata;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq, Hash)]
 pub struct ChatState {

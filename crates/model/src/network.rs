@@ -8,8 +8,8 @@ use simdash_action::{
     node::NodeAction,
     routing::{RoutingAction, flooding::FloodingAction},
 };
-use simdash_ids::NodeId;
-use simdash_state::{chat::Operation, network::NetworkState, node::NodeState};
+use simdash_ids::{NodeId, Operation};
+use simdash_state::{network::NetworkState, node::NodeState};
 
 use crate::{
     node::{NodeFx, NodeModel, NodeModelConfig},

@@ -2,8 +2,6 @@ use std::collections::HashMap;
 
 use simdash_action::routing::RoutingAction;
 
-pub mod flooding;
-
 pub enum RoutingProtocols {
     Flooding,
 }
