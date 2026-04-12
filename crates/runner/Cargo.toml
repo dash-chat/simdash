@@ -19,6 +19,9 @@ simdash-action = { path = "../action" }
 simdash-behavior = { path = "../behavior" }
 simdash-ids = { path = "../ids" }
 simdash-model = { path = "../model" }
+simdash-routing = { path = "../routing" }
+simdash-routing-common = { path = "../routing-common" }
+simdash-routing-flooding = { path = "../routing-flooding" }
 simdash-scenario = { path = "../scenario" }
 simdash-state = { path = "../state" }
 tokio = { version = "1", features = ["full"] }

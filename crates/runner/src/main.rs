@@ -2,7 +2,7 @@ mod api;
 mod scenarios;
 mod sim;
 
-use std::{fs, net::SocketAddr, path::PathBuf, sync::Arc};
+use std::{net::SocketAddr, path::PathBuf, sync::Arc};
 
 use axum::{
     routing::{get, post},

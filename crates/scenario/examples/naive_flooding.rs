@@ -28,7 +28,7 @@ fn main() {
         initial_state
             .graph
             .node_ids()
-            .map(|id| (id, NodeModel::new(RoutingModel::standard())))
+            .map(|id| (id, NodeModel::new(RoutingModel::standard(3.into()))))
             .collect(),
         ChatTopology::empty(),
     );

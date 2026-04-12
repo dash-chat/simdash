@@ -1,19 +1,7 @@
 [workspace]
 resolver = "2"
-# members = ["crates/*"]
-members = [
-  "crates/ids",
-  "crates/routing-common",
-  "crates/routing-flooding",
-  "crates/action",
-  "crates/state",
-  "crates/model",
-  "crates/routing",
-  "crates/behavior",
-  "crates/scenario",
-  #   "crates/runner",
-]
-# default-members = ["crates/runner"]
+members = ["crates/*"]
+default-members = ["crates/runner"]
 
 [workspace.dependencies]
 anyhow = "1"
