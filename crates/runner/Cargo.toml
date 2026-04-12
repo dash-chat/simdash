@@ -3,27 +3,25 @@ name = "simdash-runner"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "simdash-runner"
+path = "src/main.rs"
+
 [dependencies]
 anyhow = { workspace = true }
-axum = "0.8"
 clap = { version = "4", features = ["derive"] }
-dash-chat-top-gen = { path = "../dash-chat-top-gen" }
-net-topology = { path = "../net-topology" }
-simdash-generator = { path = "../generator" }
-petgraph = { workspace = true }
-polestar = { workspace = true }
-postcard = { workspace = true }
-serde = { workspace = true }
+ctrlc = "3"
 serde_json = "1"
-simdash-action = { path = "../action" }
-simdash-behavior = { path = "../behavior" }
-simdash-ids = { path = "../ids" }
-simdash-model = { path = "../model" }
-simdash-routing = { path = "../routing" }
-simdash-routing-common = { path = "../routing-common" }
-simdash-routing-flooding = { path = "../routing-flooding" }
-simdash-scenario = { path = "../scenario" }
-simdash-state = { path = "../state" }
+# simdash-action = { path = "../action" }
+# simdash-behavior = { path = "../behavior" }
+# simdash-ids = { path = "../ids" }
+# simdash-model = { path = "../model" }
+# simdash-routing = { path = "../routing" }
+# simdash-routing-common = { path = "../routing-common" }
+# simdash-routing-flooding = { path = "../routing-flooding" }
+# simdash-scenario = { path = "../scenario" }
+# simdash-state = { path = "../state" }
+simdash-simulation = { path = "../simulation" }
 tokio = { version = "1", features = ["full"] }
 tower-http = { version = "0.6", features = ["cors"] }
 tracing = "0.1"

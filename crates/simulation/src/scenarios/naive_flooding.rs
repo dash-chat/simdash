@@ -5,7 +5,7 @@ use simdash_behavior::routing::BasicRoutingBehavior;
 use simdash_model::network::NetworkModel;
 use simdash_model::node::NodeModel;
 use simdash_routing::{RoutingModel, RoutingState};
-use simdash_routing_flooding::{FloodingOp, FloodingState};
+use simdash_routing_flooding::{FloodingModel, FloodingOp, FloodingState};
 use simdash_scenario::Scenario;
 use simdash_state::network::NetworkState;
 

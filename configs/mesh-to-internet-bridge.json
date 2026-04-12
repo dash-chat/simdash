@@ -26,7 +26,7 @@
           },
           "ordinality": "bidirectional",
           "longevity": 6,
-          "spawn_chance": 0.1
+          "spawn_chance": 0.5
         }
       ]
     },

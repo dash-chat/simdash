@@ -45,7 +45,7 @@
 	</div>
 	<table>
 		<tbody>
-			<tr><td>Ops</td><td>{node.ops.length}</td></tr>
+			<tr><td>Authored ops</td><td>{node.ops.filter(op => op.author === node.id).length}</td></tr>
 			<tr><td>Contacts</td><td>{node.contacts.length}</td></tr>
 			<tr>
 				<td>Groups</td>

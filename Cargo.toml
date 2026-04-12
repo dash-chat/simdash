@@ -25,6 +25,3 @@ simdash-scenario = { path = "crates/scenario" }
 simdash-state = { path = "crates/state" }
 
 polestar = { git = "https://github.com/maackle/polestar-rs.git", branch = "main" }
-
-[patch."https://github.com/maackle/polestar-rs"]
-polestar = { path = "/home/michael/proj/polestar-rs/polestar" }

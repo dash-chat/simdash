@@ -6,6 +6,8 @@ use polestar::{Machine, ext::MapExt};
 use rand::seq::IndexedRandom;
 use simdash_action::node::NodeAction;
 use simdash_ids::{NodeId, Operation};
+use simdash_routing::RoutingFx;
+use simdash_routing_common::SendFx;
 use simdash_state::{network::NetworkState, node::NodeState};
 
 use crate::node::{NodeFx, NodeModel, NodeModelConfig};
@@ -105,6 +107,18 @@ impl polestar::Machine for NetworkModel {
 }
 
 impl NetworkModel {
+    pub fn apply_node_effects(
+        &self,
+        state: &mut NetworkState,
+        node_id: NodeId,
+        fx: NodeFx,
+    ) -> anyhow::Result<()> {
+        match fx.routing {
+            RoutingFx::Network(SendFx::BroadcastData { data }) => {}
+        }
+        Ok(())
+    }
+
     fn unspawned_edge_topos<'a>(
         &'a self,
         existing_ids: &'a BTreeSet<u32>,
