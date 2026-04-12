@@ -10,9 +10,10 @@
 		onback: () => void;
 		onreset: () => void;
 		onbehaviorchange: (behavior: string) => void;
+		onspeedchange: (intervalMs: number) => void;
 	}
 
-	let { step, loading, behavior, availableBehaviors, onforward, onback, onreset, onbehaviorchange }: Props = $props();
+	let { step, loading, behavior, availableBehaviors, onforward, onback, onreset, onbehaviorchange, onspeedchange }: Props = $props();
 
 	let playing = $state(false);
 	let sliderValue = $state(1810);
@@ -47,6 +48,7 @@
 
 	$effect(() => {
 		intervalMs;
+		onspeedchange(intervalMs);
 		if (playing) {
 			startTimer();
 		}

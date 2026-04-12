@@ -12,10 +12,11 @@
 		selectedAuthorId: number | null;
 		highlightedNodeIds: Set<number>;
 		opTrace: OpTraceData | null;
+		tickIntervalMs: number;
 		onselect: (nodeId: number | null) => void;
 	}
 
-	let { snapshot, selectedNodeId, selectedAuthorId, highlightedNodeIds, opTrace, onselect }: Props = $props();
+	let { snapshot, selectedNodeId, selectedAuthorId, highlightedNodeIds, opTrace, tickIntervalMs, onselect }: Props = $props();
 
 	let container: HTMLDivElement;
 	let cy: cytoscape.Core | null = null;
@@ -94,10 +95,10 @@
 		return [...subnetParents, ...nodes, ...edges];
 	}
 
-	const layoutOptions = {
+	let layoutOptions = $derived({
 		name: 'fcose',
 		animate: true,
-		animationDuration: 2000,
+		animationDuration: tickIntervalMs,
 		quality: 'proof',
 		gravity: 1,
 		gravityCompound: 1.5,
@@ -106,7 +107,7 @@
 		idealEdgeLength: () => 40,
 		edgeElasticity: () => 0.1,
 		padding: 10,
-	};
+	});
 
 	function syncGraph(snapshot: SimSnapshot): boolean {
 		if (!cy) return false;

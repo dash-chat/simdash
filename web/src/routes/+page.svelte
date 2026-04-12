@@ -15,6 +15,7 @@
 	let selectedGroupId: number | null = $state(null);
 	let selectedOpId: number | null = $state(null);
 	let error: string | null = $state(null);
+	let tickIntervalMs = $state(200);
 
 	let metrics = $derived(snapshot ? computeMetrics(snapshot) : null);
 	let selectedNode: NodeInfo | null = $derived.by(() => {
@@ -132,11 +133,12 @@
 					onback={handleBack}
 					onreset={handleReset}
 					onbehaviorchange={handleBehaviorChange}
+					onspeedchange={(ms) => (tickIntervalMs = ms)}
 				/>
 			</div>
 		</div>
 		<div class="graph-area">
-			<GraphView {snapshot} {selectedNodeId} {selectedAuthorId} {highlightedNodeIds} {opTrace} onselect={(id) => { selectedNodeId = id; selectedGroupId = null; selectedOpId = null; }} />
+			<GraphView {snapshot} {selectedNodeId} {selectedAuthorId} {highlightedNodeIds} {opTrace} {tickIntervalMs} onselect={(id) => { selectedNodeId = id; selectedGroupId = null; selectedOpId = null; }} />
 		</div>
 		{#if selectedNode}
 			<div class="right-panel">
