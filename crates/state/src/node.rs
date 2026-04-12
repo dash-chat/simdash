@@ -1,10 +1,11 @@
 use derive_more::{Deref, From};
 use serde::{Deserialize, Serialize};
+use simdash_routing::RoutingState;
 
-use crate::{chat::ChatState, routing::RoutingState};
+use crate::chat::ChatState;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize)]
-pub struct NodeState<R = RoutingState> {
+pub struct NodeState<R = simdash_routing::RoutingState> {
     pub dash: ChatState,
     pub routing: R,
 }

@@ -13,3 +13,4 @@ polestar = { workspace = true }
 postcard = { workspace = true }
 
 simdash-ids = { path = "../ids" }
+simdash-routing = { path = "../routing" }

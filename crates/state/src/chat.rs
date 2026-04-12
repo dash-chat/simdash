@@ -5,8 +5,6 @@ use simdash_ids::{GroupId, NodeId, OpId, Operation, Size};
 
 use simdash_ids::ExtractMetadata;
 
-use crate::routing::flooding::FloodingMetadata;
-
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq, Hash)]
 pub struct ChatState {
     pub op_store: BTreeMap<OpId, Operation>,
@@ -120,13 +118,5 @@ mod tests {
         assert!(state.store_op(make_op(1, 100)).is_ok());
         assert!(state.store_op(make_op(1, 100)).is_err());
         assert_eq!(state.op_store.len(), 1);
-    }
-}
-
-impl ExtractMetadata<FloodingMetadata> for Operation {
-    fn extract_metadata(&self) -> FloodingMetadata {
-        FloodingMetadata {
-            size: self.header.payload_size,
-        }
     }
 }

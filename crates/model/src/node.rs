@@ -1,15 +1,9 @@
 use polestar::util::update_replace;
-use simdash_action::{
-    chat::ChatAction,
-    node::NodeAction,
-    routing::{RoutingAction, flooding::FloodingAction},
-};
+use simdash_action::{chat::ChatAction, node::NodeAction};
 use simdash_ids::Ticks;
+use simdash_routing::{RoutingAction, RoutingFx, RoutingModel};
 
-use crate::{
-    chat::ChatModel,
-    routing::{RoutingFx, RoutingModel, flooding::FloodingModel},
-};
+use crate::chat::ChatModel;
 
 pub struct NodeModel {
     pub dash: ChatModel,
@@ -21,14 +15,10 @@ pub struct NodeModelConfig {
 }
 
 impl NodeModel {
-    pub fn new(config: NodeModelConfig) -> Self {
+    pub fn new(routing: RoutingModel) -> Self {
         Self {
             dash: ChatModel,
-            routing: RoutingModel {
-                flooding: FloodingModel {
-                    broadcast_interval: config.broadcast_interval,
-                },
-            },
+            routing,
         }
     }
 }
@@ -54,16 +44,19 @@ impl polestar::Machine for NodeModel {
             NodeAction::Chat(action) => {
                 // Always trigger a StoreOp on the routing state if an op is stored in dash chat.
                 // (idempotent.)
-                match &action {
-                    ChatAction::StoreOp(op) => {
-                        let (routing, fx) = self.routing.transition(
-                            state.routing,
-                            FloodingAction::StoreOp { op: op.clone() }.into(),
-                        )?;
-                        state.routing = routing;
-                    }
-                    _ => {}
-                }
+                //
+                // TODO: should this be part of the generic routing interface or must it be triggered manually in behavior?
+                //
+                // match &action {
+                //     ChatAction::StoreOp(op) => {
+                //         let (routing, fx) = self.routing.transition(
+                //             state.routing,
+                //             FloodingAction::StoreOp { op: op.clone() }.into(),
+                //         )?;
+                //         state.routing = routing;
+                //     }
+                //     _ => {}
+                // }
 
                 state.dash = self.dash.transition_(state.dash, action)?;
                 (state, None)
@@ -71,12 +64,10 @@ impl polestar::Machine for NodeModel {
             NodeAction::Routing(action) => {
                 let (routing, fx) = self.routing.transition(state.routing, action)?;
                 state.routing = routing;
-                (state, Some(NodeFx { routing: fx }))
+                (state, fx.map(|fx| NodeFx { routing: fx }))
             }
             NodeAction::Tick => {
-                let (routing, fx) = self
-                    .routing
-                    .transition(state.routing, FloodingAction::Tick.into())?;
+                let (routing, fx) = self.routing.tick(state.routing)?;
                 state.routing = routing;
                 (state, None)
             }
@@ -87,25 +78,28 @@ impl polestar::Machine for NodeModel {
 #[cfg(test)]
 mod tests {
     use polestar::Machine;
-    use simdash_action::{chat::ChatAction, node::NodeAction, routing::RoutingAction};
+    use pretty_assertions::assert_eq;
+    use simdash_action::{chat::ChatAction, node::NodeAction};
     use simdash_ids::{NodeId, OpId, Size, util::basic_op};
+    use simdash_routing::{RoutingDataDispatch, RoutingFxDispatch, RoutingModel};
+    use simdash_routing_common::{ProtocolAction, ProtocolFx, ProtocolNetworkAction, SendFx};
+    use simdash_routing_flooding::{FloodingAction, FloodingFx, FloodingModel, FloodingWireData};
     use simdash_state::node::NodeState;
 
     use super::*;
-    use crate::{
-        chat::ChatModel,
-        routing::{RoutingModel, flooding::FloodingFx},
-    };
+    use crate::chat::ChatModel;
 
     fn model() -> NodeModel {
-        NodeModel::new(NodeModelConfig {
-            broadcast_interval: 3.into(),
+        NodeModel::new(RoutingModel {
+            flooding: FloodingModel {
+                broadcast_interval: 3.into(),
+            },
         })
     }
 
-    /// ChatAction::StoreOp should populate both dash.op_store and routing.ops.
+    /// Routing used to be synced when ops were stored. Not anymore, for now.
     #[test]
-    fn store_op_syncs_to_routing() {
+    fn store_op_does_not_sync_to_routing() {
         let m = model();
         let state = NodeState::default();
         let op = basic_op(1);
@@ -114,7 +108,7 @@ mod tests {
             .transition(state, NodeAction::Chat(ChatAction::StoreOp(op)))
             .unwrap();
         assert!(state.dash.op_store.contains_key(&op_id));
-        assert!(state.routing.flooding.ops.contains_key(&op_id));
+        assert!(!state.routing.flooding.op_ids().contains(&op_id));
     }
 
     /// Other ChatActions (e.g. AddContact) should not touch routing state.
@@ -127,7 +121,7 @@ mod tests {
             .transition(state, NodeAction::Chat(ChatAction::AddContact(contact)))
             .unwrap();
         assert!(state.dash.contacts.contains(&contact));
-        assert!(state.routing.flooding.ops.is_empty());
+        assert!(state.routing.flooding.op_ids().is_empty());
     }
 
     /// After StoreOp via Chat, TriggerBroadcast via Routing should include that op.
@@ -136,21 +130,25 @@ mod tests {
         let m = model();
         let state = NodeState::default();
         let op = basic_op(1);
-        let op_id = op.id;
-        let (state, _) = m
-            .transition(state, NodeAction::Chat(ChatAction::StoreOp(op)))
-            .unwrap();
+        let data = FloodingWireData::new(op.clone());
+        let store_chat = NodeAction::Chat(ChatAction::StoreOp(op));
+        let store_routing = NodeAction::Routing(simdash_routing::routing_flooding_action(
+            FloodingAction::StoreOp(data.clone()),
+        ));
+        let (state, _) = m.transitions(state, [store_chat, store_routing]).unwrap();
         let (_, fx) = m
             .transition(
                 state,
-                NodeAction::Routing(FloodingAction::TriggerBroadcast.into()),
+                NodeAction::Routing(simdash_routing::routing_flooding_action(
+                    FloodingAction::TriggerBroadcast,
+                )),
             )
             .unwrap();
         assert_eq!(
             fx.unwrap().routing,
-            RoutingFx::Flooding(Some(FloodingFx::BroadcastOps(
-                [op_id].into_iter().collect()
-            )))
+            RoutingFx::Network(SendFx::BroadcastData {
+                data: [RoutingDataDispatch::Flooding(data)].into_iter().collect(),
+            })
         );
     }
 
@@ -164,16 +162,13 @@ mod tests {
         let (state, fx) = m
             .transition(
                 state,
-                NodeAction::Routing(
-                    FloodingAction::ReceiveOp {
-                        from: NodeId::from(9),
-                        op: op.clone(),
-                    }
-                    .into(),
-                ),
+                NodeAction::Routing(RoutingAction::Network(ProtocolNetworkAction::Receive {
+                    from: NodeId::from(9),
+                    data: RoutingDataDispatch::Flooding(FloodingWireData::new(op.clone())),
+                })),
             )
             .unwrap();
-        assert!(state.routing.flooding.ops.contains_key(&op_id));
+        assert!(state.routing.flooding.op_ids().contains(&op_id));
         assert!(!state.dash.op_store.contains_key(&op_id));
     }
 }

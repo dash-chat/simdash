@@ -4,6 +4,7 @@ use petgraph::graph::{Graph as PetGraph, NodeIndex};
 use polestar::ext::MapExt;
 use serde::{Deserialize, Serialize};
 use simdash_ids::NodeId;
+use simdash_routing::RoutingState;
 
 use crate::node::NodeState;
 
@@ -29,7 +30,7 @@ impl EdgeState {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Graph<R = crate::routing::RoutingState, E = EdgeState> {
+pub struct Graph<R = RoutingState, E = EdgeState> {
     graph: PetGraph<(), E>,
     pub nodes: HashMap<NodeId, NodeState<R>>,
     #[serde(skip, default)]

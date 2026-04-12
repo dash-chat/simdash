@@ -2,7 +2,7 @@ use simdash_routing_common::ProtocolAction;
 
 use crate::FloodingWireData;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum FloodingAction {
     StoreOp(FloodingWireData),
     TriggerBroadcast,

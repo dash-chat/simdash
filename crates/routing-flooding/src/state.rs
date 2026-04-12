@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use serde::{Deserialize, Serialize};
 use simdash_ids::*;
@@ -11,6 +11,10 @@ pub struct FloodingState {
 impl FloodingState {
     pub fn tick(&mut self) {
         self.ops.values_mut().for_each(|op| op.tick());
+    }
+
+    pub fn op_ids(&self) -> BTreeSet<OpId> {
+        self.ops.keys().copied().collect()
     }
 }
 

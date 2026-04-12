@@ -4,17 +4,11 @@ use dash_chat_top_gen::ChatTopology;
 use net_topology::net_topology::Ordinality;
 use polestar::{Machine, ext::MapExt};
 use rand::seq::IndexedRandom;
-use simdash_action::{
-    node::NodeAction,
-    routing::{RoutingAction, flooding::FloodingAction},
-};
+use simdash_action::node::NodeAction;
 use simdash_ids::{NodeId, Operation};
 use simdash_state::{network::NetworkState, node::NodeState};
 
-use crate::{
-    node::{NodeFx, NodeModel, NodeModelConfig},
-    routing::{RoutingFx, flooding::FloodingFx},
-};
+use crate::node::{NodeFx, NodeModel, NodeModelConfig};
 
 pub struct NetworkModel {
     nodes: HashMap<NodeId, NodeModel>,
@@ -96,7 +90,8 @@ impl polestar::Machine for NetworkModel {
                 }) {
                     Ok(fx) => {
                         if let Some(fx) = fx {
-                            self.apply_node_effects(&mut state, node_id, fx)?;
+                            todo!("apply node effects");
+                            // self.apply_node_effects(&mut state, node_id, fx)?;
                         }
                     }
                     Err(e) => {
@@ -121,86 +116,86 @@ impl NetworkModel {
             .filter(|e| e.spawn_chance.is_some() && !existing_ids.contains(&e.id))
     }
 
-    pub fn send_op(
-        &self,
-        state: &mut NetworkState,
-        from: NodeId,
-        to: NodeId,
-        op: Operation,
-    ) -> anyhow::Result<()> {
-        let node_model = self
-            .nodes
-            .get(&to)
-            .ok_or_else(|| anyhow::anyhow!("No model for node {:?}", to))?;
-        let fx = state.graph.update_node(to, |mut n| {
-            let (new, fx) = node_model
-                .routing
-                .transition(n.routing, FloodingAction::ReceiveOp { from, op }.into())?;
-            n.routing = new;
-            Ok((n, fx))
-        })?;
-        self.apply_routing_effects(state, to, fx)?;
-        Ok(())
-    }
+    // pub fn send_op(
+    //     &self,
+    //     state: &mut NetworkState,
+    //     from: NodeId,
+    //     to: NodeId,
+    //     op: Operation,
+    // ) -> anyhow::Result<()> {
+    //     let node_model = self
+    //         .nodes
+    //         .get(&to)
+    //         .ok_or_else(|| anyhow::anyhow!("No model for node {:?}", to))?;
+    //     let fx = state.graph.update_node(to, |mut n| {
+    //         let (new, fx) = node_model
+    //             .routing
+    //             .transition(n.routing, FloodingAction::ReceiveOp { from, op }.into())?;
+    //         n.routing = new;
+    //         Ok((n, fx))
+    //     })?;
+    //     self.apply_routing_effects(state, to, fx)?;
+    //     Ok(())
+    // }
 
-    pub fn apply_node_effects(
-        &self,
-        state: &mut NetworkState,
-        node_id: NodeId,
-        fx: NodeFx,
-    ) -> anyhow::Result<()> {
-        self.apply_routing_effects(state, node_id, fx.routing)
-    }
+    // pub fn apply_node_effects(
+    //     &self,
+    //     state: &mut NetworkState,
+    //     node_id: NodeId,
+    //     fx: NodeFx,
+    // ) -> anyhow::Result<()> {
+    //     self.apply_routing_effects(state, node_id, fx.routing)
+    // }
 
-    pub fn apply_routing_effects(
-        &self,
-        state: &mut NetworkState,
-        node_id: NodeId,
-        fx: RoutingFx,
-    ) -> anyhow::Result<()> {
-        match fx {
-            RoutingFx::Flooding(Some(FloodingFx::BroadcastOps(broadcast_ops))) => {
-                let ops = broadcast_ops
-                    .iter()
-                    .map(|op_id| {
-                        state
-                            .graph
-                            .node_state(node_id)
-                            .ok_or(anyhow::anyhow!("Node not found: {:?}", node_id))?
-                            .dash
-                            .op_store
-                            .get(op_id)
-                            .cloned()
-                            .ok_or(anyhow::anyhow!("Op not found: {:?}", op_id))
-                    })
-                    .collect::<anyhow::Result<Vec<_>>>()?;
+    // pub fn apply_routing_effects(
+    //     &self,
+    //     state: &mut NetworkState,
+    //     node_id: NodeId,
+    //     fx: RoutingFx,
+    // ) -> anyhow::Result<()> {
+    //     match fx {
+    //         RoutingFx::Flooding(Some(FloodingFx::BroadcastOps(broadcast_ops))) => {
+    //             let ops = broadcast_ops
+    //                 .iter()
+    //                 .map(|op_id| {
+    //                     state
+    //                         .graph
+    //                         .node_state(node_id)
+    //                         .ok_or(anyhow::anyhow!("Node not found: {:?}", node_id))?
+    //                         .dash
+    //                         .op_store
+    //                         .get(op_id)
+    //                         .cloned()
+    //                         .ok_or(anyhow::anyhow!("Op not found: {:?}", op_id))
+    //                 })
+    //                 .collect::<anyhow::Result<Vec<_>>>()?;
 
-                let neighbors = state.neighborhood(node_id).collect::<Vec<_>>();
-                for neighbor in neighbors {
-                    for op in ops.iter() {
-                        if let Err(err) = self.send_op(state, node_id, neighbor, op.clone()) {
-                            tracing::debug!("Failed to send op to neighbor: {:?}", err);
-                        }
-                    }
-                }
-            }
-            RoutingFx::Flooding(Some(FloodingFx::StoreOp(op))) => {
-                let op_id = op.id;
-                let stored = state.graph.update_node(node_id, |mut node_state| {
-                    node_state.dash.store_op(op)?;
-                    Ok((node_state, ()))
-                });
-                if stored.is_err() {
-                    // Chat rejected the op (e.g. capacity exceeded);
-                    // remove it from routing state so it won't be broadcast.
-                    state.graph.update_node(node_id, |mut node_state| {
-                        node_state.routing.flooding.ops.remove(&op_id);
-                        Ok((node_state, ()))
-                    })?;
-                }
-            }
-            RoutingFx::Flooding(None) => {}
-        }
-        Ok(())
-    }
+    //             let neighbors = state.neighborhood(node_id).collect::<Vec<_>>();
+    //             for neighbor in neighbors {
+    //                 for op in ops.iter() {
+    //                     if let Err(err) = self.send_op(state, node_id, neighbor, op.clone()) {
+    //                         tracing::debug!("Failed to send op to neighbor: {:?}", err);
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //         RoutingFx::Flooding(Some(FloodingFx::StoreOp(op))) => {
+    //             let op_id = op.id;
+    //             let stored = state.graph.update_node(node_id, |mut node_state| {
+    //                 node_state.dash.store_op(op)?;
+    //                 Ok((node_state, ()))
+    //             });
+    //             if stored.is_err() {
+    //                 // Chat rejected the op (e.g. capacity exceeded);
+    //                 // remove it from routing state so it won't be broadcast.
+    //                 state.graph.update_node(node_id, |mut node_state| {
+    //                     node_state.routing.flooding.ops.remove(&op_id);
+    //                     Ok((node_state, ()))
+    //                 })?;
+    //             }
+    //         }
+    //         RoutingFx::Flooding(None) => {}
+    //     }
+    //     Ok(())
+    // }
 }

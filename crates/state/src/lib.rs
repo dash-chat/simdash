@@ -6,6 +6,5 @@ pub mod chat;
 pub mod graph;
 pub mod network;
 pub mod node;
-pub mod routing;
 
 pub use graph::*;

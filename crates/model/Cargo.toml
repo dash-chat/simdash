@@ -10,6 +10,8 @@ net-topology = { path = "../net-topology" }
 simdash-action = { path = "../action" }
 simdash-ids = { path = "../ids" }
 simdash-state = { path = "../state" }
+simdash-routing = { path = "../routing" }
+simdash-routing-common = { path = "../routing-common" }
 
 anyhow = { workspace = true }
 polestar = { workspace = true }
@@ -18,3 +20,6 @@ tracing = { workspace = true }
 
 [dev-dependencies]
 net-topology = { path = "../net-topology" }
+pretty_assertions = { workspace = true }
+
+simdash-routing-flooding = { path = "../routing-flooding" }
