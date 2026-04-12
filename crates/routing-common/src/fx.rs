@@ -1,7 +1,9 @@
-use simdash_ids::Operation;
+use std::collections::BTreeSet;
+
+use simdash_ids::EncryptedOp;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum RoutingFx<Fx, D> {
+pub enum ProtocolFx<Fx, D> {
     Network(SendFx<D>),
     Node(StorageFx),
     Protocol(Fx),
@@ -9,11 +11,16 @@ pub enum RoutingFx<Fx, D> {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum StorageFx {
-    StoreOps { ops: Vec<Operation> },
+    StoreOps { ops: Vec<EncryptedOp> },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum SendFx<D> {
-    UnicastData { to: simdash_ids::NodeId, data: D },
-    BroadcastData { data: D },
+    UnicastData {
+        to: simdash_ids::NodeId,
+        data: BTreeSet<D>,
+    },
+    BroadcastData {
+        data: BTreeSet<D>,
+    },
 }

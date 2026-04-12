@@ -9,5 +9,6 @@ simdash-routing-common = { path = "../routing-common" }
 simdash-routing-flooding = { path = "../routing-flooding" }
 
 anyhow = { workspace = true }
+maplit = { workspace = true }
 polestar = { workspace = true }
 serde = { workspace = true }

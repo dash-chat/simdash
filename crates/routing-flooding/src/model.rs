@@ -1,19 +1,19 @@
 use std::collections::BTreeSet;
 
-use simdash_ids::{EncryptedOp, OpId, Ticks};
-use simdash_routing_common::{ProtocolAction, ProtocolNetworkAction};
+use simdash_ids::Ticks;
+use simdash_routing_common::{
+    ProtocolAction, ProtocolFx, ProtocolNetworkAction, SendFx, StorageFx,
+};
 
 use crate::{
+    FloodingWireData,
     action::FloodingAction,
     state::{FloodingOp, FloodingState},
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[must_use]
-pub enum FloodingFx {
-    BroadcastOps(BTreeSet<OpId>),
-    StoreOp(EncryptedOp),
-}
+pub enum FloodingFx {}
 
 pub struct FloodingModel {
     /// Don't broadcast an op twice within this interval.
@@ -22,8 +22,8 @@ pub struct FloodingModel {
 
 impl polestar::Machine for FloodingModel {
     type State = FloodingState;
-    type Action = ProtocolAction<FloodingAction, FloodingOp>;
-    type Fx = Option<FloodingFx>;
+    type Action = ProtocolAction<FloodingAction, FloodingWireData>;
+    type Fx = Option<ProtocolFx<FloodingFx, FloodingWireData>>;
     type Error = anyhow::Error;
 
     fn transition(
@@ -37,23 +37,26 @@ impl polestar::Machine for FloodingModel {
                 (state, None)
             }
 
-            ProtocolAction::Network(ProtocolNetworkAction::Receive { from, data }) => {
-                let mut flooding_op = data;
+            ProtocolAction::Network(ProtocolNetworkAction::Receive { from: _, data }) => {
+                let mut flooding_op = FloodingOp::from_wire(data);
                 // Mark as recently sent so the node doesn't re-broadcast
                 // the op in the same round it was received.
                 flooding_op.touch();
-                let id = flooding_op.id;
+                let id = flooding_op.id();
                 let existing = state.ops.insert(id, flooding_op.clone());
                 if existing.is_some() {
                     anyhow::bail!("Flooding op already exists: op={:?}", id);
                 }
-                let fx = FloodingFx::StoreOp(flooding_op.encrypted);
+                let fx = ProtocolFx::Node(StorageFx::StoreOps {
+                    ops: vec![flooding_op.data.encrypted],
+                });
                 (state, Some(fx))
             }
-            ProtocolAction::Protocol(FloodingAction::StoreOp(op)) => {
-                let existing = state.ops.insert(op.id, op.clone());
+            ProtocolAction::Protocol(FloodingAction::StoreOp(data)) => {
+                let op = FloodingOp::from_wire(data);
+                let existing = state.ops.insert(op.id(), op.clone());
                 if existing.is_some() {
-                    anyhow::bail!("Flooding op already exists: op={:?}", op.id);
+                    anyhow::bail!("Flooding op already exists: op={:?}", op.id());
                 }
                 (state, None)
             }
@@ -62,16 +65,21 @@ impl polestar::Machine for FloodingModel {
                     .ops
                     .values_mut()
                     .filter(|op| {
-                        op.since_last_send
+                        op.state
+                            .since_last_send
                             .map(|t| t >= self.broadcast_interval)
                             .unwrap_or(true)
                     })
                     .map(|op| {
                         op.touch();
-                        op.id
+                        op.data.clone()
                     })
-                    .collect();
-                (state, Some(FloodingFx::BroadcastOps(broadcasted)))
+                    .collect::<BTreeSet<_>>();
+                (
+                    state,
+                    (!broadcasted.is_empty())
+                        .then(|| ProtocolFx::Network(SendFx::BroadcastData { data: broadcasted })),
+                )
             }
         };
         Ok((state, fx))
@@ -80,7 +88,9 @@ impl polestar::Machine for FloodingModel {
 
 #[cfg(test)]
 mod tests {
+    use maplit::btreeset;
     use polestar::Machine;
+    use pretty_assertions::assert_eq;
     use simdash_ids::{NodeId, util::basic_op};
     use simdash_routing_common::ProtocolNetworkAction;
 
@@ -98,11 +108,11 @@ mod tests {
         let m = model();
         let state = FloodingState::default();
         let op = basic_op(1);
-        let op = FloodingOp::new(op.clone());
+        let data = FloodingWireData::new(op.clone());
         let (state, _) = m
-            .transition(state, FloodingAction::StoreOp(op.clone()).into())
+            .transition(state, FloodingAction::StoreOp(data.clone()).into())
             .unwrap();
-        let result = m.transition(state, FloodingAction::StoreOp(op).into());
+        let result = m.transition(state, FloodingAction::StoreOp(data).into());
         assert!(result.is_err());
     }
 
@@ -112,16 +122,18 @@ mod tests {
         let m = model();
         let state = FloodingState::default();
         let op = basic_op(1);
-        let op_id = op.id;
+        let data = FloodingWireData::new(op);
         let (state, _) = m
-            .transition(state, FloodingAction::StoreOp(FloodingOp::new(op)).into())
+            .transition(state, FloodingAction::StoreOp(data.clone()).into())
             .unwrap();
         let (_, fx) = m
             .transition(state, FloodingAction::TriggerBroadcast.into())
             .unwrap();
         assert_eq!(
             fx,
-            Some(FloodingFx::BroadcastOps([op_id].into_iter().collect()))
+            Some(ProtocolFx::Network(SendFx::BroadcastData {
+                data: btreeset![data],
+            })),
         );
     }
 
@@ -132,7 +144,10 @@ mod tests {
         let state = FloodingState::default();
         let op = basic_op(1);
         let (state, _) = m
-            .transition(state, FloodingAction::StoreOp(FloodingOp::new(op)).into())
+            .transition(
+                state,
+                FloodingAction::StoreOp(FloodingWireData::new(op)).into(),
+            )
             .unwrap();
         let (state, _) = m
             .transition(state, FloodingAction::TriggerBroadcast.into())
@@ -140,7 +155,7 @@ mod tests {
         let (_, fx) = m
             .transition(state, FloodingAction::TriggerBroadcast.into())
             .unwrap();
-        assert_eq!(fx, Some(FloodingFx::BroadcastOps(BTreeSet::new())));
+        assert_eq!(fx, None);
     }
 
     /// After broadcast_interval ticks, an op is eligible for re-broadcast.
@@ -149,12 +164,12 @@ mod tests {
         let m = model();
         let state = FloodingState::default();
         let op = basic_op(1);
-        let op_id = op.id;
+        let data = FloodingWireData::new(op);
         let (state, _) = m
             .transitions(
                 state,
                 [
-                    FloodingAction::StoreOp(FloodingOp::new(op)).into(),
+                    FloodingAction::StoreOp(data.clone()).into(),
                     FloodingAction::TriggerBroadcast.into(),
                     ProtocolAction::Network(ProtocolNetworkAction::Tick),
                     ProtocolAction::Network(ProtocolNetworkAction::Tick),
@@ -167,7 +182,9 @@ mod tests {
             .unwrap();
         assert_eq!(
             fx,
-            Some(FloodingFx::BroadcastOps([op_id].into_iter().collect()))
+            Some(ProtocolFx::Network(SendFx::BroadcastData {
+                data: btreeset![data],
+            })),
         );
     }
 
@@ -178,16 +195,22 @@ mod tests {
         let state = FloodingState::default();
         let op = basic_op(42);
         let op_id = op.id;
+        let data = FloodingWireData::new(op.clone());
         let (state, fx) = m
             .transition(
                 state,
                 ProtocolAction::Network(ProtocolNetworkAction::Receive {
                     from: NodeId::from(9),
-                    data: FloodingOp::new(op.clone()),
+                    data: data.clone(),
                 }),
             )
             .unwrap();
-        assert_eq!(fx, Some(FloodingFx::StoreOp(op.into())));
+        assert_eq!(
+            fx,
+            Some(ProtocolFx::Node(StorageFx::StoreOps {
+                ops: vec![data.encrypted]
+            }))
+        );
         assert!(state.ops.contains_key(&op_id));
     }
 }

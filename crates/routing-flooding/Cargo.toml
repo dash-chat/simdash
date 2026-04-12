@@ -8,5 +8,9 @@ simdash-ids = { path = "../ids" }
 simdash-routing-common = { workspace = true }
 
 anyhow = { workspace = true }
+maplit = { workspace = true }
 polestar = { workspace = true }
 serde = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }
