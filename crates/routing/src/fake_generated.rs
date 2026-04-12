@@ -179,16 +179,27 @@ impl polestar::Machine for RoutingModel {
                 Ok((state, None))
             }
 
-            ProtocolAction::Network(ProtocolNetworkAction::Receive { from, data }) => match data {
-                RoutingDataDispatch::Flooding(data) => {
+            ProtocolAction::Network(ProtocolNetworkAction::Receive { from, data }) => {
+                let flooding_data: std::collections::BTreeSet<FloodingWireData> = data
+                    .into_iter()
+                    .filter_map(|d| match d {
+                        RoutingDataDispatch::Flooding(inner) => Some(inner),
+                    })
+                    .collect();
+                if !flooding_data.is_empty() {
                     let (new, fx) = self.flooding.transition(
                         state.flooding,
-                        ProtocolAction::Network(ProtocolNetworkAction::Receive { from, data }),
+                        ProtocolAction::Network(ProtocolNetworkAction::Receive {
+                            from,
+                            data: flooding_data,
+                        }),
                     )?;
                     state.flooding = new;
                     Ok((state, fx.map(|fx| routing_flooding_protocol_fx(fx))))
+                } else {
+                    Ok((state, None))
                 }
-            },
+            }
 
             ProtocolAction::Protocol(action) => match action {
                 RoutingActionDispatch::Flooding(a) => {
