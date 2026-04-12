@@ -1,8 +1,8 @@
-// mod fake_generated;
 mod macros;
 
-use simdash_ids::Ticks;
-use simdash_routing_common::{ProtocolAction, ProtocolFx};
+use polestar::Machine;
+use simdash_ids::{Tickable, Ticks};
+use simdash_routing_common::{ProtocolAction, ProtocolFx, ProtocolNetworkAction, SendFx};
 
 pub use simdash_routing_flooding as flooding;
 pub use simdash_routing_noop as noop;
@@ -34,16 +34,15 @@ pub fn lift_action<A, D: Eq + std::hash::Hash>(
     wrap_action: impl Fn(A) -> AnyRoutingAction,
 ) -> RoutingAction {
     match action {
-        ProtocolAction::Network(simdash_routing_common::ProtocolNetworkAction::Tick) => {
-            RoutingAction::Network(simdash_routing_common::ProtocolNetworkAction::Tick)
+        ProtocolAction::Network(ProtocolNetworkAction::Tick) => {
+            RoutingAction::Network(ProtocolNetworkAction::Tick)
         }
-        ProtocolAction::Network(simdash_routing_common::ProtocolNetworkAction::Receive {
-            from,
-            data,
-        }) => RoutingAction::Network(simdash_routing_common::ProtocolNetworkAction::Receive {
-            from,
-            data: data.into_iter().map(wrap_data).collect(),
-        }),
+        ProtocolAction::Network(ProtocolNetworkAction::Receive { from, data }) => {
+            RoutingAction::Network(ProtocolNetworkAction::Receive {
+                from,
+                data: data.into_iter().map(wrap_data).collect(),
+            })
+        }
         ProtocolAction::Protocol(a) => RoutingAction::Protocol(wrap_action(a)),
     }
 }
@@ -55,13 +54,13 @@ pub fn lift_fx<F, D: Eq + std::hash::Hash>(
     wrap_fx: impl Fn(F) -> AnyRoutingFx,
 ) -> RoutingFx {
     match fx {
-        ProtocolFx::Network(simdash_routing_common::SendFx::BroadcastData { data }) => {
-            RoutingFx::Network(simdash_routing_common::SendFx::BroadcastData {
+        ProtocolFx::Network(SendFx::BroadcastData { data }) => {
+            RoutingFx::Network(SendFx::BroadcastData {
                 data: data.into_iter().map(wrap_data).collect(),
             })
         }
-        ProtocolFx::Network(simdash_routing_common::SendFx::UnicastData { to, data }) => {
-            RoutingFx::Network(simdash_routing_common::SendFx::UnicastData {
+        ProtocolFx::Network(SendFx::UnicastData { to, data }) => {
+            RoutingFx::Network(SendFx::UnicastData {
                 to,
                 data: data.into_iter().map(wrap_data).collect(),
             })
