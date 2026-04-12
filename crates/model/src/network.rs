@@ -4,7 +4,7 @@ use dash_chat_top_gen::ChatTopology;
 use net_topology::net_topology::Ordinality;
 use polestar::{Machine, ext::MapExt};
 use rand::seq::IndexedRandom;
-use simdash_action::node::NodeAction;
+use simdash_action::{chat::ChatAction, node::NodeAction};
 use simdash_ids::{NodeId, Operation};
 use simdash_routing::{RoutingAction, RoutingFx};
 use simdash_routing_common::{ProtocolNetworkAction, SendFx, StorageFx};
@@ -109,7 +109,7 @@ impl NetworkModel {
                 SendFx::BroadcastData { data } => {
                     let neighbors = state.neighborhood(node_id).collect::<Vec<_>>();
                     for neighbor in neighbors {
-                        state.graph.update_node(neighbor, |node_state| {
+                        let fx = state.graph.update_node(neighbor, |node_state| {
                             self.node.transition(
                                 node_state,
                                 NodeAction::Routing(RoutingAction::Network(
@@ -120,10 +120,14 @@ impl NetworkModel {
                                 )),
                             )
                         })?;
+
+                        if let Some(fx) = fx {
+                            self.apply_node_effects(state, neighbor, fx)?;
+                        }
                     }
                 }
                 SendFx::UnicastData { to, data } => {
-                    state.graph.update_node(to, |node_state| {
+                    let fx = state.graph.update_node(to, |node_state| {
                         self.node.transition(
                             node_state,
                             NodeAction::Routing(RoutingAction::Network(
@@ -134,13 +138,30 @@ impl NetworkModel {
                             )),
                         )
                     })?;
+                    if let Some(fx) = fx {
+                        self.apply_node_effects(state, to, fx)?;
+                    }
                 }
             },
             RoutingFx::Node(StorageFx::StoreOps { ops }) => {
-                todo!()
+                let fx = state.graph.update_node(node_id, |node_state| {
+                    let actions = ops
+                        .into_iter()
+                        .map(|op| NodeAction::Chat(ChatAction::StoreOp(op.decrypt())));
+                    self.node.transitions(node_state, actions)
+                })?;
+                for fx in fx {
+                    // TODO: smell
+                    if let Some(fx) = fx {
+                        self.apply_node_effects(state, node_id, fx)?;
+                    }
+                }
             }
             RoutingFx::Protocol(fx) => {
-                todo!()
+                tracing::warn!(
+                    "Unhandled protocol effect (need to create NetworkFx to propagate higher up): {:?}",
+                    fx
+                );
             }
         }
         Ok(())
