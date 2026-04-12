@@ -5,7 +5,7 @@ use simdash_ids::*;
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct FloodingState {
-    pub(crate) ops: BTreeMap<OpId, FloodingOp>,
+    pub ops: BTreeMap<OpId, FloodingOp>,
 }
 
 impl FloodingState {
@@ -52,7 +52,7 @@ impl FloodingWireData {
 
 /// The state of an op tracked by the flooding protocol.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
-pub(crate) struct FloodingOpState {
+pub struct FloodingOpState {
     pub since_last_send: Option<Ticks>,
 }
 
@@ -68,7 +68,7 @@ impl FloodingOpState {
 
 /// The combination of a [`FloodingWireData`] and its [`FloodingOpState`].
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
-pub(crate) struct FloodingOp {
+pub struct FloodingOp {
     pub data: FloodingWireData,
     pub state: FloodingOpState,
 }

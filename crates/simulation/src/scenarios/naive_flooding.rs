@@ -1,16 +1,16 @@
 use dash_chat_top_gen::ChatTopology;
-use simdash_behavior::{
-    network::RoundRobinNodeScheduler, node::BasicRoutingBehavior, routing::NaiveFloodingBehavior,
-};
+use simdash_behavior::network::RoundRobinNodeScheduler;
+use simdash_behavior::node::BasicNodeBehavior;
+use simdash_behavior::routing::BasicRoutingBehavior;
 use simdash_model::network::NetworkModel;
 use simdash_model::node::{NodeModel, NodeModelConfig};
+use simdash_routing::{RoutingModel, RoutingState};
+use simdash_routing_flooding::{FloodingModel, FloodingOp, FloodingState, NaiveFloodingBehavior};
 use simdash_scenario::Scenario;
 use simdash_state::network::NetworkState;
-use simdash_state::routing::flooding::{FloodingOp, FloodingState};
-use simdash_state::routing::RoutingState;
 
 pub type NaiveFloodingBehaviorType =
-    RoundRobinNodeScheduler<BasicRoutingBehavior<NaiveFloodingBehavior>>;
+    RoundRobinNodeScheduler<BasicNodeBehavior<BasicRoutingBehavior>>;
 
 pub fn naive_flooding(
     mut initial_state: NetworkState,
@@ -28,7 +28,7 @@ pub fn naive_flooding(
                     .dash
                     .op_store
                     .values()
-                    .map(|op| (op.id, FloodingOp::new(op)))
+                    .map(|op| (op.id, FloodingOp::from_op(op.clone())))
                     .collect();
                 n.routing = RoutingState {
                     flooding: FloodingState { ops: routing_ops },
@@ -45,14 +45,16 @@ pub fn naive_flooding(
             .map(|id| {
                 (
                     id,
-                    NodeModel::new(NodeModelConfig {
-                        broadcast_interval: broadcast_interval.into(),
+                    NodeModel::new(RoutingModel {
+                        flooding: FloodingModel {
+                            broadcast_interval: broadcast_interval.into(),
+                        },
                     }),
                 )
             })
             .collect(),
         topology,
     );
-    let behavior = RoundRobinNodeScheduler::new(BasicRoutingBehavior::new(NaiveFloodingBehavior));
+    let behavior = RoundRobinNodeScheduler::new(BasicNodeBehavior::new(BasicRoutingBehavior));
     Scenario::initial(model, initial_state, behavior)
 }

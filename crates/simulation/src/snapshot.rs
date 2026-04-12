@@ -3,8 +3,7 @@ use std::path::Path;
 
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
-use simdash_ids::{NodeId, OpId};
-use simdash_state::chat::Operation;
+use simdash_ids::{NodeId, OpId, Operation};
 use simdash_state::network::NetworkState;
 
 use crate::sim::Simulation;
@@ -156,9 +155,8 @@ pub fn setup_from_json(json: serde_json::Value) -> anyhow::Result<SimSetup> {
         let prev: SimulationSnapshot =
             serde_json::from_value(json).context("Failed to parse simulation snapshot")?;
 
-        let (dash_topology, seed) =
-            simdash_generator::generate_topology_from_config(&prev.config)
-                .context("Failed to regenerate topology from saved config")?;
+        let (dash_topology, seed) = simdash_generator::generate_topology_from_config(&prev.config)
+            .context("Failed to regenerate topology from saved config")?;
 
         println!(
             "Resuming from tick {} ({} nodes, {} edges)",
@@ -179,9 +177,8 @@ pub fn setup_from_json(json: serde_json::Value) -> anyhow::Result<SimSetup> {
         })
     } else {
         // This is a config — start fresh
-        let (dash_topology, seed) =
-            simdash_generator::generate_topology_from_config(&json)
-                .context("Failed to generate topology from config")?;
+        let (dash_topology, seed) = simdash_generator::generate_topology_from_config(&json)
+            .context("Failed to generate topology from config")?;
 
         println!(
             "Generated network topology: {} nodes, {} edges",

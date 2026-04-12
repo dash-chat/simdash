@@ -1,19 +1,19 @@
 [workspace]
 resolver = "2"
-# members = ["crates/*"]
-members = [
-  "crates/ids",
-  "crates/routing-common",
-  "crates/routing-flooding",
-  "crates/action",
-  "crates/state",
-  "crates/model",
-  "crates/routing",
-  "crates/behavior",
-  "crates/scenario",
-  #   "crates/runner",
-]
-# default-members = ["crates/runner"]
+members = ["crates/*"]
+# members = [
+#   "crates/ids",
+#   "crates/routing-common",
+#   "crates/routing-flooding",
+#   "crates/action",
+#   "crates/state",
+#   "crates/model",
+#   "crates/routing",
+#   "crates/behavior",
+#   "crates/scenario",
+#   #   "crates/runner",
+# ]
+default-members = ["crates/runner"]
 
 [workspace.dependencies]
 anyhow = "1"
@@ -37,6 +37,3 @@ simdash-scenario = { path = "crates/scenario" }
 simdash-state = { path = "crates/state" }
 
 polestar = { git = "https://github.com/maackle/polestar-rs.git", branch = "main" }
-
-[patch."https://github.com/maackle/polestar-rs"]
-polestar = { path = "/home/michael/proj/polestar-rs/polestar" }

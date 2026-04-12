@@ -8,7 +8,7 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
-use simdash_ids::NodeId;
+use simdash_ids::{Body, NodeId, Operation};
 use simdash_state::network::NetworkState;
 use tokio::sync::Mutex;
 
@@ -31,7 +31,11 @@ pub async fn step_forward(State(sim): State<AppState>) -> Result<Json<SimRespons
     tracing::info!("{:>6}ms", t.elapsed().as_millis());
     let seq = sim.bump_seq();
     Ok(Json(build_delta_response(
-        &sim, prev_seq, seq, &prev_ops, &prev_edges,
+        &sim,
+        prev_seq,
+        seq,
+        &prev_ops,
+        &prev_edges,
     )))
 }
 
@@ -114,8 +118,7 @@ fn build_delta_response(
             continue;
         };
 
-        let current_op_ids: HashSet<u32> =
-            node_state.dash.op_store.keys().map(|id| **id).collect();
+        let current_op_ids: HashSet<u32> = node_state.dash.op_store.keys().map(|id| **id).collect();
         let empty = HashSet::new();
         let prev_op_ids = prev_ops.get(&*node_id).unwrap_or(&empty);
 
@@ -130,10 +133,7 @@ fn build_delta_response(
             })
             .collect();
 
-        let ops_removed: Vec<u32> = prev_op_ids
-            .difference(&current_op_ids)
-            .copied()
-            .collect();
+        let ops_removed: Vec<u32> = prev_op_ids.difference(&current_op_ids).copied().collect();
 
         // Skip nodes with no changes
         if ops_added.is_empty() && ops_removed.is_empty() {
@@ -146,9 +146,9 @@ fn build_delta_response(
             .ops
             .values()
             .map(|op| RoutingOpInfo {
-                id: *op.id,
-                size: *op.metadata.size,
-                since_last_send: op.since_last_send.map(|t| *t),
+                id: *op.data.id,
+                size: *op.data.metadata.size,
+                since_last_send: op.state.since_last_send.map(|t| *t),
             })
             .collect();
 
@@ -165,12 +165,18 @@ fn build_delta_response(
 
     let edges_added: Vec<GraphEdge> = current_edges
         .difference(prev_edges)
-        .map(|&(s, t)| GraphEdge { source: s, target: t })
+        .map(|&(s, t)| GraphEdge {
+            source: s,
+            target: t,
+        })
         .collect();
 
     let edges_removed: Vec<GraphEdge> = prev_edges
         .difference(&current_edges)
-        .map(|&(s, t)| GraphEdge { source: s, target: t })
+        .map(|&(s, t)| GraphEdge {
+            source: s,
+            target: t,
+        })
         .collect();
 
     SimResponse::Delta(SimDelta {
@@ -210,7 +216,11 @@ fn build_graph_structure(state: &NetworkState) -> GraphStructure {
         .map(|(name, ids)| (name.clone(), ids.iter().map(|id| **id).collect()))
         .collect();
 
-    GraphStructure { nodes, edges, subnets }
+    GraphStructure {
+        nodes,
+        edges,
+        subnets,
+    }
 }
 
 fn build_node_infos(state: &NetworkState) -> Vec<NodeInfo> {
@@ -241,9 +251,9 @@ fn build_node_infos(state: &NetworkState) -> Vec<NodeInfo> {
                 .ops
                 .values()
                 .map(|op| RoutingOpInfo {
-                    id: *op.id,
-                    size: *op.metadata.size,
-                    since_last_send: op.since_last_send.map(|t| *t),
+                    id: *op.data.id,
+                    size: *op.data.metadata.size,
+                    since_last_send: op.state.since_last_send.map(|t| *t),
                 })
                 .collect();
 
@@ -261,16 +271,16 @@ fn build_node_infos(state: &NetworkState) -> Vec<NodeInfo> {
         .collect()
 }
 
-fn build_op_info(op: &simdash_state::chat::Operation) -> OpInfo {
+fn build_op_info(op: &Operation) -> OpInfo {
     OpInfo {
         id: *op.id,
         author: *op.header.author,
         payload_size: *op.header.payload_size,
         body: match &op.body {
-            simdash_state::chat::Body::GroupMessage { group_id } => OpBody::GroupMessage {
+            Body::GroupMessage { group_id } => OpBody::GroupMessage {
                 group_id: *group_id,
             },
-            simdash_state::chat::Body::DirectMessage { recipient } => OpBody::DirectMessage {
+            Body::DirectMessage { recipient } => OpBody::DirectMessage {
                 recipient: **recipient,
             },
         },
