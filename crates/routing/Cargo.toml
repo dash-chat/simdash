@@ -11,5 +11,6 @@ simdash-state = { path = "../state" }
 
 simdash-routing-flooding = { path = "../routing-flooding" }
 
+anyhow = { workspace = true }
 polestar = { workspace = true }
 serde = { workspace = true }

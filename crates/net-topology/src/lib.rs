@@ -107,7 +107,7 @@ mod tests {
         ]"#;
 
         let generator = TopologyGenerator::from_json(json).unwrap();
-        let graph = generator.generate(0).into_graph(0);
+        let graph = generator.generate(0).into_graph::<()>(0);
 
         assert_eq!(graph.graph().node_count(), 2);
         assert_eq!(graph.graph().edge_count(), 2);

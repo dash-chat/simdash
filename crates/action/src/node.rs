@@ -1,8 +1,10 @@
+use derive_more::From;
+
 use crate::chat::ChatAction;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum NodeAction<RA> {
+pub enum NodeAction<RoutingAction> {
     Chat(ChatAction),
-    Routing(RA),
+    Routing(RoutingAction),
     Tick,
 }

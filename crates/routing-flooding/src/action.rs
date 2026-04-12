@@ -1,10 +1,7 @@
-use simdash_ids::{NodeId, OpId};
-use simdash_state::{chat::Operation, routing::flooding::FloodingOp};
+use simdash_state::chat::Operation;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum FloodingAction {
     StoreOp { op: Operation },
-    ReceiveOp { from: NodeId, op: Operation },
     TriggerBroadcast,
-    Tick,
 }

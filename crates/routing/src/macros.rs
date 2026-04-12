@@ -1,8 +1,8 @@
-/// Generates `RoutingModel`, `RoutingState`, `RoutingDispatch`, `RoutingFx`,
+/// Generates `RoutingModel`, `RoutingState`, `RoutingActionDispatch`, `RoutingFx`,
 /// and their `polestar::Machine` impl, dispatching across all listed protocols.
 ///
 /// Each protocol is active simultaneously — `RoutingState` is a struct with one
-/// field per protocol, and `RoutingDispatch`/`RoutingFx` are enums that name which
+/// field per protocol, and `RoutingActionDispatch`/`RoutingFx` are enums that name which
 /// protocol produced or receives the action/effect.
 ///
 /// # Requirements
@@ -16,7 +16,7 @@
 ///
 /// Additionally, each protocol provides a Data type which is used to model
 /// datagrams flowing through the network.
-/// The `RoutingDispatch::ReceiveData` models incoming data,
+/// The `RoutingActionDispatch::ReceiveData` models incoming data,
 /// and the `RoutingFx::UnicastData` and `RoutingFx::BroadcastData` model outgoing data.
 ///
 /// # Example
@@ -33,40 +33,9 @@
 /// }
 /// ```
 ///
-/// Expands to structs `RoutingModel`, `RoutingState`, enum `RoutingDispatch`,
+/// Expands to structs `RoutingModel`, `RoutingState`, enum `RoutingActionDispatch`,
 /// enum `RoutingFx`, method `RoutingState::tick()`, and a `polestar::Machine`
 /// impl on `RoutingModel` that dispatches across all listed protocols.
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum RoutingAction<Action, D> {
-    Network(NetworkRoutingAction<D>),
-    Protocol(Action),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum NetworkRoutingAction<D> {
-    ReceiveData { from: simdash_ids::NodeId, data: D },
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum RoutingFx<Fx, D> {
-    Network(NetworkRoutingFx<D>),
-    Node(NodeRoutingFx),
-    Protocol(Fx),
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum NodeRoutingFx {
-    StoreOps {
-        ops: Vec<simdash_state::chat::Operation>,
-    },
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum NetworkRoutingFx<D> {
-    UnicastData { to: simdash_ids::NodeId, data: D },
-    BroadcastData { data: D },
-}
 
 #[macro_export]
 macro_rules! routing_protocols {
@@ -81,8 +50,13 @@ macro_rules! routing_protocols {
             }
         ),+ $(,)?
     ) => {
+
         pub struct RoutingModel {
             $( pub $field: $model_ty, )+
+        }
+
+        impl RoutingDataExt for RoutingModel {
+            type Data = RoutingDataDispatch;
         }
 
         #[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
@@ -91,18 +65,18 @@ macro_rules! routing_protocols {
         }
 
         #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-        pub enum RoutingData {
+        pub enum RoutingDataDispatch {
             $( $Variant($data_ty), )+
         }
 
         #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-        pub enum RoutingDispatch {
-            $( $Variant($crate::macros::RoutingAction<$action_ty, $data_ty>), )+
+        pub enum RoutingActionDispatch {
+            $( $Variant($action_ty), )+
         }
 
         #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-        pub enum RoutingFx {
-            $( $Variant($crate::macros::RoutingFx<$action_ty, $data_ty>), )+
+        pub enum RoutingFxDispatch {
+            $( $Variant($fx_ty), )+
         }
 
         impl RoutingState {
@@ -113,8 +87,8 @@ macro_rules! routing_protocols {
 
         impl polestar::Machine for RoutingModel {
             type State  = RoutingState;
-            type Action = RoutingDispatch;
-            type Fx     = RoutingFx;
+            type Action = simdash_action::routing::RoutingAction<RoutingActionDispatch, RoutingDataDispatch>;
+            type Fx     = simdash_action::routing::RoutingFx<RoutingFxDispatch, RoutingDataDispatch>;
             type Error  = anyhow::Error;
 
             fn transition(
@@ -124,14 +98,24 @@ macro_rules! routing_protocols {
             ) -> polestar::TransitionResult<Self> {
                 match action {
                     $(
-                        RoutingDispatch::$Variant(a) => {
+                        simdash_action::routing::RoutingAction::$Variant(a) => {
                             let (s, fx) = self.$field.transition(state.$field, a)?;
                             state.$field = s;
-                            Ok((state, RoutingFx::$Variant(fx)))
+                            Ok((state, RoutingFxDispatch::$Variant(fx)))
                         },
                     )+
                 }
             }
         }
+
+        pub fn fx_to_action(fx: RoutingFxDispatch) -> RoutingActionDispatch {
+            match fx {
+                $( RoutingFxDispatch::$Variant(fx) => {
+                    RoutingActionDispatch::$Variant($action_ty::from(fx))
+                },
+                )+
+            }
+        }
+
     };
 }

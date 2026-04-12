@@ -7,22 +7,27 @@ use dash_chat_top_gen::ChatTopology;
 use net_topology::net_topology::Ordinality;
 use polestar::{Machine, ext::MapExt};
 use rand::seq::IndexedRandom;
-use simdash_action::node::NodeAction;
+use simdash_action::{
+    node::NodeAction,
+    routing::{NetworkRoutingFx, RoutingAction},
+};
 use simdash_ids::NodeId;
 use simdash_state::{chat::Operation, network::NetworkState, node::NodeState};
 
 use crate::node::{NodeFx, NodeModel, NodeModelConfig};
 
 pub struct NetworkModel<RM> {
-    nodes: HashMap<NodeId, NodeModel>,
+    node: NodeModel<RM>,
+
+    #[deprecated = "please clean this up to a minimal set of easily understandable config"]
     pub topology: ChatTopology,
     phantom: PhantomData<RM>,
 }
 
 impl<RM> NetworkModel<RM> {
-    pub fn new(nodes: HashMap<NodeId, NodeModel<RM>>, topology: ChatTopology) -> Self {
+    pub fn new(node: NodeModel<RM>, topology: ChatTopology) -> Self {
         Self {
-            nodes,
+            node,
             topology,
             phantom: PhantomData,
         }
@@ -31,7 +36,7 @@ impl<RM> NetworkModel<RM> {
 
 impl<RM> polestar::Machine for NetworkModel<RM>
 where
-    RM: polestar::Machine<Error = anyhow::Error>,
+    RM: polestar::Machine<Error = anyhow::Error> + simdash_action::routing::RoutingDataExt,
 {
     type State = simdash_state::network::NetworkState<RM::State>;
     type Action = simdash_action::network::NetworkAction<RM::Action>;
@@ -52,12 +57,8 @@ where
                 }
                 let all_keys = state.graph.node_ids().collect::<Vec<_>>();
                 for node_id in all_keys {
-                    let node_model = self
-                        .nodes
-                        .get(&node_id)
-                        .ok_or_else(|| anyhow::anyhow!("No model for node {:?}", node_id))?;
                     state.graph.update_node(node_id, |node_state| {
-                        node_model.transition(node_state, NodeAction::Tick)
+                        self.node.transition(node_state, NodeAction::Tick)
                     })?;
                 }
                 Ok((state, ()))
@@ -91,23 +92,23 @@ where
             }
 
             simdash_action::network::NetworkAction::Node(node_id, node_action) => {
-                let node_model = self
-                    .nodes
-                    .get(&node_id)
-                    .ok_or_else(|| anyhow::anyhow!("No model for node {:?}", node_id))?;
                 let fx = match state.graph.update_node(node_id, |node_state| {
-                    let (node_state, node_fx) = node_model.transition(node_state, node_action)?;
-                    Ok((node_state, node_fx))
+                    self.node.transition(node_state, node_action)
                 }) {
-                    Ok(fx) => {
-                        if let Some(fx) = fx {
-                            self.apply_node_effects(&mut state, node_id, fx)?;
-                        }
-                    }
+                    Ok(fx) => fx,
                     Err(e) => {
                         tracing::error!("Failed to transition node {node_id:?}: {e:?}");
+                        None
                     }
                 };
+
+                if let Some(fx) = fx {
+                    let actions = RM::fx_to_network_actions(fx.routing, node_id, &state);
+                    let (new_state, fxs) = self.transitions(state, actions)?;
+                    assert!(fxs.is_empty());
+                    state = new_state;
+                }
+
                 Ok((state, ()))
             }
         }
@@ -116,7 +117,7 @@ where
 
 impl<RM> NetworkModel<RM>
 where
-    RM: polestar::Machine<Error = anyhow::Error>,
+    RM: polestar::Machine<Error = anyhow::Error> + simdash_action::routing::RoutingDataExt,
 {
     fn unspawned_edge_topos<'a>(
         &'a self,
@@ -128,80 +129,54 @@ where
             .iter()
             .filter(|e| e.spawn_chance.is_some() && !existing_ids.contains(&e.id))
     }
+}
 
-    pub fn send_op(
+// TODO: get this code back in the game
+
+/*
+
+    pub fn apply_node_effect(
+        &self,
+        state: &mut NetworkState<RM::State>,
+        node_id: NodeId,
+        fx: NodeFx<RM::Fx>,
+    ) -> anyhow::Result<()> {
+        self.apply_routing_effect(state, node_id, fx.routing)
+    }
+
+    // TODO: consider applying effects in the behavior, and in particular
+    //       collecting all effects from all actions in a tick and applying them at once,
+    //       instead of immediately recusively applying them here.
+    pub fn apply_routing_effect<D>(
         &self,
         state: &mut NetworkState<RM::State>,
         from: NodeId,
-        to: NodeId,
-        op: Operation,
-    ) -> anyhow::Result<()> {
-        let node_model = self
-            .nodes
-            .get(&to)
-            .ok_or_else(|| anyhow::anyhow!("No model for node {:?}", to))?;
-        let fx = state.graph.update_node(to, |mut n| {
-            let (new, fx) = node_model
-                .routing
-                .transition(n.routing, FloodingAction::ReceiveOp { from, op }.into())?;
-            n.routing = new;
-            Ok((n, fx))
-        })?;
-        self.apply_routing_effects(state, to, fx)?;
-        Ok(())
-    }
-
-    pub fn apply_node_effects(
-        &self,
-        state: &mut NetworkState<RM::State>,
-        node_id: NodeId,
-        fx: NodeFx,
-    ) -> anyhow::Result<()> {
-        self.apply_routing_effects(state, node_id, fx.routing)
-    }
-
-    pub fn apply_routing_effects(
-        &self,
-        state: &mut NetworkState<RM::State>,
-        node_id: NodeId,
-        fx: RoutingFx,
+        fx: NetworkRoutingFx<D>,
     ) -> anyhow::Result<()> {
         match fx {
-            RoutingFx::Flooding(Some(FloodingFx::BroadcastOps(broadcast_ops))) => {
-                let ops = broadcast_ops
-                    .iter()
-                    .map(|op_id| {
-                        state
-                            .graph
-                            .node_state(node_id)
-                            .ok_or(anyhow::anyhow!("Node not found: {:?}", node_id))?
-                            .dash
-                            .op_store
-                            .get(op_id)
-                            .cloned()
-                            .ok_or(anyhow::anyhow!("Op not found: {:?}", op_id))
-                    })
-                    .collect::<anyhow::Result<Vec<_>>>()?;
-
-                let neighbors = state.neighborhood(node_id).collect::<Vec<_>>();
+            NetworkRoutingFx::BroadcastData { data } => {
+                let neighbors = state.neighborhood(from).collect::<Vec<_>>();
                 for neighbor in neighbors {
-                    for op in ops.iter() {
-                        if let Err(err) = self.send_op(state, node_id, neighbor, op.clone()) {
-                            tracing::debug!("Failed to send op to neighbor: {:?}", err);
-                        }
-                    }
+                    state.graph.update_node(neighbor, |mut node_state| {
+                        self.node.transition(
+                            node_state,
+                            NodeAction::Routing(RoutingAction::Network(
+                                NetworkRoutingAction::ReceiveData { from, data },
+                            )),
+                        )
+                    })?;
                 }
             }
             RoutingFx::Flooding(Some(FloodingFx::StoreOp(op))) => {
                 let op_id = op.id;
-                let stored = state.graph.update_node(node_id, |mut node_state| {
+                let stored = state.graph.update_node(from, |mut node_state| {
                     node_state.dash.store_op(op)?;
                     Ok((node_state, ()))
                 });
                 if stored.is_err() {
                     // Chat rejected the op (e.g. capacity exceeded);
                     // remove it from routing state so it won't be broadcast.
-                    state.graph.update_node(node_id, |mut node_state| {
+                    state.graph.update_node(from, |mut node_state| {
                         node_state.routing.flooding.ops.remove(&op_id);
                         Ok((node_state, ()))
                     })?;
@@ -211,4 +186,5 @@ where
         }
         Ok(())
     }
-}
+
+*/

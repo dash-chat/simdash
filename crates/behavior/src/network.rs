@@ -1,21 +1,42 @@
-use simdash_action::network::NetworkAction;
+use std::marker::PhantomData;
+
+use simdash_action::{network::NetworkAction, routing::RoutingDataExt};
 use simdash_model::{network::NetworkModel, node::NodeModel};
 use simdash_state::network::NetworkState;
 
 use crate::Behavior;
 
-pub struct RoundRobinNodeScheduler<B: Behavior<NodeModel>> {
+pub struct RoundRobinNodeScheduler<B, RM>
+where
+    B: Behavior<NodeModel<RM>>,
+    RM: RoutingDataExt,
+{
     node_behavior: B,
+    _phantom: PhantomData<RM>,
 }
 
-impl<B: Behavior<NodeModel>> RoundRobinNodeScheduler<B> {
+impl<B, RM> RoundRobinNodeScheduler<B, RM>
+where
+    B: Behavior<NodeModel<RM>>,
+    RM: RoutingDataExt,
+{
     pub fn new(node_behavior: B) -> Self {
-        Self { node_behavior }
+        Self {
+            node_behavior,
+            _phantom: PhantomData,
+        }
     }
 }
 
-impl<B: Behavior<NodeModel>> Behavior<NetworkModel> for RoundRobinNodeScheduler<B> {
-    fn next(&mut self, state: &NetworkState) -> anyhow::Result<Vec<NetworkAction>> {
+impl<B, RM> Behavior<NetworkModel<RM>> for RoundRobinNodeScheduler<B, RM>
+where
+    B: Behavior<NodeModel<RM>>,
+    RM: RoutingDataExt,
+{
+    fn next(
+        &mut self,
+        state: &NetworkState<RM::State>,
+    ) -> anyhow::Result<Vec<NetworkAction<RM::Action>>> {
         Ok(state
             .graph
             .nodes

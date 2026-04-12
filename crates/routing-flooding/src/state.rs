@@ -10,9 +10,8 @@ pub struct FloodingState {
     pub ops: BTreeMap<OpId, FloodingOp>,
 }
 
-impl FloodingState {
-    /// Tick doesn't happen as an independent action. All nodes get ticked at once.
-    pub fn tick(&mut self) {
+impl simdash_state::TickableState for FloodingState {
+    fn tick(&mut self) {
         self.ops.values_mut().for_each(|mut op| {
             op.tick();
         });

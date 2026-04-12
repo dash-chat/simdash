@@ -1,13 +1,13 @@
 use std::collections::BTreeSet;
 
-use simdash_action::routing::flooding::FloodingAction;
+use simdash_action::routing::RoutingAction;
 use simdash_ids::{OpId, Ticks};
-use simdash_state::{chat::Operation, routing::flooding::FloodingOp};
+use simdash_state::{TickableState, chat::Operation};
 
-pub struct FloodingModel {
-    /// Don't broadcast an op twice within this interval.
-    pub broadcast_interval: Ticks,
-}
+use crate::{
+    action::FloodingAction,
+    state::{FloodingOp, FloodingState},
+};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 #[must_use]
@@ -16,9 +16,14 @@ pub enum FloodingFx {
     StoreOp(Operation),
 }
 
+pub struct FloodingModel {
+    /// Don't broadcast an op twice within this interval.
+    pub broadcast_interval: Ticks,
+}
+
 impl polestar::Machine for FloodingModel {
-    type State = simdash_state::routing::flooding::FloodingState;
-    type Action = simdash_action::routing::flooding::FloodingAction;
+    type State = FloodingState;
+    type Action = RoutingAction<FloodingAction, FloodingOp>;
     type Fx = Option<FloodingFx>;
     type Error = anyhow::Error;
 
@@ -28,25 +33,32 @@ impl polestar::Machine for FloodingModel {
         action: Self::Action,
     ) -> polestar::TransitionResult<Self> {
         let (state, fx) = match action {
-            FloodingAction::StoreOp { op } => {
+            RoutingAction::Tick => {
+                state.tick();
+                (state, None)
+            }
+
+            RoutingAction::Receive { from, data } => {
+                let mut flooding_op = data;
+                // Mark as recently sent so the node doesn't re-broadcast
+                // the op in the same round it was received.
+                flooding_op.touch();
+                let id = flooding_op.id;
+                let existing = state.ops.insert(id, flooding_op.clone());
+                if existing.is_some() {
+                    anyhow::bail!("Flooding op already exists: op={:?}", id);
+                }
+                let fx = todo!();
+                (state, Some(fx))
+            }
+            RoutingAction::Protocol(FloodingAction::StoreOp { op }) => {
                 let existing = state.ops.insert(op.id, FloodingOp::new(&op));
                 if existing.is_some() {
                     anyhow::bail!("Flooding op already exists: op={:?}", op.id);
                 }
                 (state, None)
             }
-            FloodingAction::ReceiveOp { from: _, op } => {
-                let mut flooding_op = FloodingOp::new(&op);
-                // Mark as recently sent so the node doesn't re-broadcast
-                // the op in the same round it was received.
-                flooding_op.touch();
-                let existing = state.ops.insert(op.id, flooding_op);
-                if existing.is_some() {
-                    anyhow::bail!("Flooding op already exists: op={:?}", op.id);
-                }
-                (state, Some(FloodingFx::StoreOp(op)))
-            }
-            FloodingAction::TriggerBroadcast => {
+            RoutingAction::Protocol(FloodingAction::TriggerBroadcast) => {
                 let broadcasted = state
                     .ops
                     .values_mut()
@@ -62,10 +74,6 @@ impl polestar::Machine for FloodingModel {
                     .collect();
                 (state, Some(FloodingFx::BroadcastOps(broadcasted)))
             }
-            FloodingAction::Tick => {
-                state.tick();
-                (state, None)
-            }
         };
         Ok((state, fx))
     }
@@ -74,11 +82,7 @@ impl polestar::Machine for FloodingModel {
 #[cfg(test)]
 mod tests {
     use polestar::Machine;
-    use simdash_ids::{NodeId, OpId, Size};
-    use simdash_state::{
-        chat::{Body, Header, Operation},
-        routing::flooding::FloodingState,
-    };
+    use simdash_ids::NodeId;
 
     use simdash_model::util::basic_op;
 
@@ -97,9 +101,9 @@ mod tests {
         let state = FloodingState::default();
         let op = basic_op(1);
         let (state, _) = m
-            .transition(state, FloodingAction::StoreOp { op: op.clone() })
+            .transition(state, FloodingAction::StoreOp { op: op.clone() }.into())
             .unwrap();
-        let result = m.transition(state, FloodingAction::StoreOp { op });
+        let result = m.transition(state, FloodingAction::StoreOp { op }.into());
         assert!(result.is_err());
     }
 
@@ -110,9 +114,11 @@ mod tests {
         let state = FloodingState::default();
         let op = basic_op(1);
         let op_id = op.id;
-        let (state, _) = m.transition(state, FloodingAction::StoreOp { op }).unwrap();
+        let (state, _) = m
+            .transition(state, FloodingAction::StoreOp { op }.into())
+            .unwrap();
         let (_, fx) = m
-            .transition(state, FloodingAction::TriggerBroadcast)
+            .transition(state, FloodingAction::TriggerBroadcast.into())
             .unwrap();
         assert_eq!(
             fx,
@@ -127,12 +133,14 @@ mod tests {
         let state = FloodingState::default();
         let op = basic_op(1);
         let op_id = op.id;
-        let (state, _) = m.transition(state, FloodingAction::StoreOp { op }).unwrap();
         let (state, _) = m
-            .transition(state, FloodingAction::TriggerBroadcast)
+            .transition(state, FloodingAction::StoreOp { op }.into())
+            .unwrap();
+        let (state, _) = m
+            .transition(state, FloodingAction::TriggerBroadcast.into())
             .unwrap();
         let (_, fx) = m
-            .transition(state, FloodingAction::TriggerBroadcast)
+            .transition(state, FloodingAction::TriggerBroadcast.into())
             .unwrap();
         assert_eq!(fx, Some(FloodingFx::BroadcastOps(BTreeSet::new())));
     }
@@ -144,15 +152,17 @@ mod tests {
         let state = FloodingState::default();
         let op = basic_op(1);
         let op_id = op.id;
-        let (mut state, _) = m.transition(state, FloodingAction::StoreOp { op }).unwrap();
         let (mut state, _) = m
-            .transition(state, FloodingAction::TriggerBroadcast)
+            .transition(state, FloodingAction::StoreOp { op }.into())
+            .unwrap();
+        let (mut state, _) = m
+            .transition(state, FloodingAction::TriggerBroadcast.into())
             .unwrap();
         for _ in 0..3 {
             state.tick();
         }
         let (_, fx) = m
-            .transition(state, FloodingAction::TriggerBroadcast)
+            .transition(state, FloodingAction::TriggerBroadcast.into())
             .unwrap();
         assert_eq!(
             fx,
@@ -170,10 +180,11 @@ mod tests {
         let (state, fx) = m
             .transition(
                 state,
-                FloodingAction::ReceiveOp {
+                RoutingAction::Receive {
                     from: NodeId::from(9),
-                    op: op.clone(),
-                },
+                    data: FloodingOp::new(&op),
+                }
+                .into(),
             )
             .unwrap();
         assert_eq!(fx, Some(FloodingFx::StoreOp(op)));
