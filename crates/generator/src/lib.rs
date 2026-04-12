@@ -29,13 +29,12 @@ pub fn generate_topology_from_config(config: &serde_json::Value) -> Result<(Chat
     let generator = TopologyGenerator::from_json(&net_top_json)?;
     let topology = generator.generate(seed);
 
-    let dash_topology: ChatTopology = if let Some(dash_chat_value) = config.get("dash-chat-top") {
-        let dash_chat_json = serde_json::to_string(dash_chat_value)?;
-        let chat_gen = ChatStateGenerator::from_json(&dash_chat_json)?;
-        chat_gen.generate(seed, topology)
-    } else {
-        ChatTopology::from_net_topology(topology)
-    };
+    let dash_chat_value = config
+        .get("dash-chat-top")
+        .context("config must have a 'dash-chat-top' key")?;
+    let dash_chat_json = serde_json::to_string(dash_chat_value)?;
+    let chat_gen = ChatStateGenerator::from_json(&dash_chat_json)?;
+    let dash_topology = chat_gen.generate(seed, topology);
 
     Ok((dash_topology, seed))
 }
