@@ -1039,6 +1039,7 @@ dependencies = [
  "simdash-ids",
  "simdash-model",
  "simdash-routing",
+ "simdash-routing-flooding",
  "simdash-state",
 ]
 
@@ -1112,6 +1113,23 @@ dependencies = [
  "serde",
  "simdash-ids",
  "simdash-routing-common",
+]
+
+[[package]]
+name = "simdash-scenario"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "dash-chat-top-gen",
+ "derive_more 2.1.1",
+ "polestar",
+ "simdash-action",
+ "simdash-behavior",
+ "simdash-ids",
+ "simdash-model",
+ "simdash-routing",
+ "simdash-routing-flooding",
+ "simdash-state",
 ]
 
 [[package]]

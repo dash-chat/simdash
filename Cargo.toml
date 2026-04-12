@@ -10,10 +10,8 @@ members = [
   "crates/model",
   "crates/routing",
   "crates/behavior",
-  #   "crates/routing-common",
-  #   "crates/routing-flooding",
+  "crates/scenario",
   #   "crates/runner",
-  #   "crates/scenario",
 ]
 # default-members = ["crates/runner"]
 

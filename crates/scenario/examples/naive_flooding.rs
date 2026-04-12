@@ -2,14 +2,11 @@ use dash_chat_top_gen::ChatTopology;
 use polestar::Machine;
 use simdash_action::{chat::ChatAction, network::NetworkAction, node::NodeAction};
 use simdash_behavior::{
-    network::RoundRobinNodeScheduler, node::BasicRoutingBehavior, routing::NaiveFloodingBehavior,
+    network::RoundRobinNodeScheduler, node::BasicNodeBehavior, routing::BasicRoutingBehavior,
 };
 use simdash_ids::{NodeId, OpId};
-use simdash_model::{
-    network::NetworkModel,
-    node::{NodeModel, NodeModelConfig},
-    util::basic_op,
-};
+use simdash_model::{network::NetworkModel, node::NodeModel};
+use simdash_routing::RoutingModel;
 use simdash_scenario::Scenario;
 use simdash_state::network::NetworkState;
 
@@ -31,19 +28,12 @@ fn main() {
         initial_state
             .graph
             .node_ids()
-            .map(|id| {
-                (
-                    id,
-                    NodeModel::new(NodeModelConfig {
-                        broadcast_interval: 3.into(),
-                    }),
-                )
-            })
+            .map(|id| (id, NodeModel::new(RoutingModel::standard())))
             .collect(),
         ChatTopology::empty(),
     );
 
-    let ops = (0..5).map(|i| basic_op(i as u32));
+    let ops = (0..5).map(|i| simdash_ids::util::basic_op(i as u32));
     let stores = ops
         .clone()
         .enumerate()
@@ -58,7 +48,7 @@ fn main() {
     // store ops on nodes
     let initial_state = model.apply_actions_(initial_state, stores).unwrap();
 
-    let behavior = RoundRobinNodeScheduler::new(BasicRoutingBehavior::new(NaiveFloodingBehavior));
+    let behavior = RoundRobinNodeScheduler::new(BasicNodeBehavior::new(BasicRoutingBehavior));
     let mut scenario = Scenario::initial(model, initial_state, behavior);
 
     let mut prev_count = 0;

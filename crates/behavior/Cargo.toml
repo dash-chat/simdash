@@ -12,4 +12,5 @@ simdash-action = { path = "../action" }
 simdash-ids = { path = "../ids" }
 simdash-model = { path = "../model" }
 simdash-routing = { path = "../routing" }
+simdash-routing-flooding = { path = "../routing-flooding" }
 simdash-state = { path = "../state" }

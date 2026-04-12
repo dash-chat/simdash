@@ -81,7 +81,33 @@ pub fn routing_flooding_action(action: FloodingAction) -> RoutingAction {
     RoutingAction::Protocol(RoutingActionDispatch::Flooding(action))
 }
 
-pub fn routing_flooding_fx(fx: ProtocolFx<FloodingFx, FloodingWireData>) -> RoutingFx {
+/// Lift a protocol-specific action into a routing action with inner enums.
+pub fn routing_flooding_protocol_action(
+    action: ProtocolAction<FloodingAction, FloodingWireData>,
+) -> RoutingAction {
+    match action {
+        ProtocolAction::Network(action) => match action {
+            ProtocolNetworkAction::Tick => RoutingAction::Network(ProtocolNetworkAction::Tick),
+            ProtocolNetworkAction::Receive { from, data } => {
+                RoutingAction::Network(ProtocolNetworkAction::Receive {
+                    from,
+                    data: RoutingDataDispatch::Flooding(data),
+                })
+            }
+        },
+        ProtocolAction::Protocol(action) => match action {
+            FloodingAction::StoreOp(data) => RoutingAction::Protocol(
+                RoutingActionDispatch::Flooding(FloodingAction::StoreOp(data)),
+            ),
+            FloodingAction::TriggerBroadcast => RoutingAction::Protocol(
+                RoutingActionDispatch::Flooding(FloodingAction::TriggerBroadcast),
+            ),
+        },
+    }
+}
+
+/// Lift a protocol-specific effect into a routing effect with inner enums.
+pub fn routing_flooding_protocol_fx(fx: ProtocolFx<FloodingFx, FloodingWireData>) -> RoutingFx {
     match fx {
         ProtocolFx::Network(fx) => match fx {
             SendFx::BroadcastData { data } => RoutingFx::Network(SendFx::BroadcastData {
@@ -157,7 +183,7 @@ impl polestar::Machine for RoutingModel {
                         ProtocolAction::Network(ProtocolNetworkAction::Receive { from, data }),
                     )?;
                     state.flooding = new;
-                    Ok((state, fx.map(|fx| routing_flooding_fx(fx))))
+                    Ok((state, fx.map(|fx| routing_flooding_protocol_fx(fx))))
                 }
             },
 
@@ -167,7 +193,7 @@ impl polestar::Machine for RoutingModel {
                         .flooding
                         .transition(state.flooding, ProtocolAction::Protocol(a))?;
                     state.flooding = new;
-                    Ok((state, fx.map(|fx| routing_flooding_fx(fx))))
+                    Ok((state, fx.map(|fx| routing_flooding_protocol_fx(fx))))
                 }
             },
         }
