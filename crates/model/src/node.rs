@@ -1,7 +1,7 @@
 use polestar::util::update_replace;
 use simdash_action::{chat::ChatAction, node::NodeAction};
 use simdash_ids::Ticks;
-use simdash_routing::{RoutingAction, RoutingFx, RoutingModel};
+use simdash_routing::{AnyRoutingAction, RoutingAction, RoutingFx, RoutingModel};
 
 use crate::chat::ChatModel;
 
@@ -128,16 +128,16 @@ mod tests {
         let op = basic_op(1);
         let data = FloodingWireData::new(op.clone());
         let store_chat = NodeAction::Chat(ChatAction::StoreOp(op));
-        let store_routing = NodeAction::Routing(simdash_routing::routing_flooding_action(
+        let store_routing = NodeAction::Routing(RoutingAction::Protocol(AnyRoutingAction::Flooding(
             FloodingAction::StoreOp(data.clone()),
-        ));
+        )));
         let (state, _) = m.transitions(state, [store_chat, store_routing]).unwrap();
         let (_, fx) = m
             .transition(
                 state,
-                NodeAction::Routing(simdash_routing::routing_flooding_action(
+                NodeAction::Routing(RoutingAction::Protocol(AnyRoutingAction::Flooding(
                     FloodingAction::TriggerBroadcast,
-                )),
+                ))),
             )
             .unwrap();
         assert_eq!(

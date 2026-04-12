@@ -10,7 +10,6 @@ simdash-routing-flooding = { workspace = true }
 simdash-routing-noop = { workspace = true }
 
 anyhow = { workspace = true }
-paste = { workspace = true }
 maplit = { workspace = true }
 polestar = { workspace = true }
 serde = { workspace = true }

@@ -1,6 +1,6 @@
 use simdash_ids::Behavior;
 use simdash_routing::{
-    RoutingAction, RoutingModel, RoutingState, routing_flooding_protocol_action,
+    AnyRoutingAction, AnyRoutingData, RoutingAction, RoutingModel, RoutingState,
 };
 
 /// A no-op routing behavior that never triggers any routing actions.
@@ -20,7 +20,13 @@ impl Behavior<RoutingModel> for BasicRoutingBehavior {
         let mut b = simdash_routing::flooding::NaiveFloodingBehavior;
         Ok(b.next(&state.flooding)?
             .into_iter()
-            .map(routing_flooding_protocol_action)
+            .map(|a| {
+                simdash_routing::lift_action(
+                    a,
+                    AnyRoutingData::Flooding,
+                    AnyRoutingAction::Flooding,
+                )
+            })
             .collect())
     }
 }
