@@ -4,14 +4,24 @@ mod macros;
 use simdash_ids::Ticks;
 use simdash_routing_common::{ProtocolAction, ProtocolFx};
 
+pub use simdash_routing_flooding as flooding;
+pub use simdash_routing_noop as noop;
+
 crate::routing_protocols! {
-    flooding => {
-        model:  simdash_routing_flooding::FloodingModel,
-        state:  simdash_routing_flooding::FloodingState,
-        action: simdash_routing_flooding::FloodingAction,
-        fx:     simdash_routing_flooding::FloodingFx,
-        data:   simdash_routing_flooding::FloodingWireData,
+    Flooding / flooding => {
+        model:  flooding::FloodingModel,
+        state:  flooding::FloodingState,
+        action: flooding::FloodingAction,
+        fx:     flooding::FloodingFx,
+        data:   flooding::FloodingWireData,
     },
+    Noop / noop => {
+        model:  noop::NoopModel,
+        state:  noop::NoopState,
+        action: noop::NoopAction,
+        fx:     noop::NoopFx,
+        data:   noop::WireData,
+    }
 }
 
 pub type RoutingAction = ProtocolAction<AnyRoutingAction, AnyRoutingData>;
@@ -21,6 +31,7 @@ impl RoutingModel {
     pub fn standard(broadcast_interval: Ticks) -> Self {
         Self {
             flooding: simdash_routing_flooding::FloodingModel { broadcast_interval },
+            noop: simdash_routing_noop::NoopModel,
         }
     }
 }

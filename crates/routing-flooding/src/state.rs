@@ -8,11 +8,13 @@ pub struct FloodingState {
     pub ops: HashMap<OpId, FloodingOp>,
 }
 
-impl FloodingState {
-    pub fn tick(&mut self) {
+impl Tickable for FloodingState {
+    fn tick(&mut self) {
         self.ops.values_mut().for_each(|op| op.tick());
     }
+}
 
+impl FloodingState {
     pub fn op_ids(&self) -> BTreeSet<OpId> {
         self.ops.keys().copied().collect()
     }

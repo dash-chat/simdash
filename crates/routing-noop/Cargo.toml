@@ -1,0 +1,17 @@
+[package]
+name = "simdash-routing-noop"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+simdash-ids = { path = "../ids" }
+simdash-routing-common = { workspace = true }
+
+anyhow = { workspace = true }
+maplit = { workspace = true }
+polestar = { workspace = true }
+serde = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }

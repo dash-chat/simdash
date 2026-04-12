@@ -43,31 +43,6 @@
 
 #[macro_export]
 macro_rules! routing_protocols {
-    (
-        $(
-            $field:ident => {
-                model:  $model_ty:ty,
-                state:  $state_ty:ty,
-                action: $action_ty:ty,
-                fx:     $fx_ty:ty,
-                data:   $data_ty:ty,
-            }
-        ),+ $(,)?
-    ) => {
-        ::paste::paste! {
-            routing_protocols! {
-                $(
-                    [ <$field:camel> ] / $field => {
-                        model:  $model_ty,
-                        state:  $state_ty,
-                        action: $action_ty,
-                        fx:     $fx_ty,
-                        data:   $data_ty,
-                    }
-                )+
-            }
-        }
-    };
 
     (
         $(
@@ -118,9 +93,9 @@ macro_rules! routing_protocols {
             $( $Variant($fx_ty), )+
         }
 
-        impl RoutingState {
-            pub fn tick(&mut self) {
-                $( self.$field.tick(); )+
+        impl simdash_ids::Tickable for RoutingState {
+            fn tick(&mut self) {
+                $( simdash_ids::Tickable::tick(&mut self.$field); )+
             }
         }
 
@@ -139,7 +114,7 @@ macro_rules! routing_protocols {
                     simdash_routing_common::ProtocolAction::Network(
                         simdash_routing_common::ProtocolNetworkAction::Tick,
                     ) => {
-                        state.tick();
+                        simdash_ids::Tickable::tick(&mut state);
                         Ok((state, None))
                     }
 
@@ -314,4 +289,31 @@ macro_rules! routing_protocols {
             }
         )+
     };
+
+    // (
+    //     $(
+    //         $field:ident => {
+    //             model:  $model_ty:ty,
+    //             state:  $state_ty:ty,
+    //             action: $action_ty:ty,
+    //             fx:     $fx_ty:ty,
+    //             data:   $data_ty:ty,
+    //         }
+    //     ),+ $(,)?
+    // ) => {
+    //     ::paste::paste! {
+    //         routing_protocols! {
+    //             $(
+    //                 [< $field:camel >] / [< $field:snake >] => {
+    //                     model:  $model_ty,
+    //                     state:  $state_ty,
+    //                     action: $action_ty,
+    //                     fx:     $fx_ty,
+    //                     data:   $data_ty,
+    //                 }
+    //             )+
+    //         }
+    //     }
+    // };
+
 }

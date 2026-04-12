@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use simdash_ids::Ticks;
+use simdash_ids::{Tickable, Ticks};
 use simdash_routing_common::{
     ProtocolAction, ProtocolFx, ProtocolNetworkAction, SendFx, StorageFx,
 };

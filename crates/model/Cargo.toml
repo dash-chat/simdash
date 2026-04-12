@@ -21,5 +21,3 @@ tracing = { workspace = true }
 [dev-dependencies]
 net-topology = { path = "../net-topology" }
 pretty_assertions = { workspace = true }
-
-simdash-routing-flooding = { path = "../routing-flooding" }

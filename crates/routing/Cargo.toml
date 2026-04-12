@@ -4,9 +4,10 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-simdash-ids = { path = "../ids" }
-simdash-routing-common = { path = "../routing-common" }
-simdash-routing-flooding = { path = "../routing-flooding" }
+simdash-ids = { workspace = true }
+simdash-routing-common = { workspace = true }
+simdash-routing-flooding = { workspace = true }
+simdash-routing-noop = { workspace = true }
 
 anyhow = { workspace = true }
 paste = { workspace = true }

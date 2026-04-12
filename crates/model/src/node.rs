@@ -81,20 +81,16 @@ mod tests {
     use pretty_assertions::assert_eq;
     use simdash_action::{chat::ChatAction, node::NodeAction};
     use simdash_ids::{NodeId, OpId, Size, util::basic_op};
+    use simdash_routing::flooding::{FloodingAction, FloodingFx, FloodingModel, FloodingWireData};
     use simdash_routing::{AnyRoutingData, AnyRoutingFx, RoutingModel};
     use simdash_routing_common::{ProtocolAction, ProtocolFx, ProtocolNetworkAction, SendFx};
-    use simdash_routing_flooding::{FloodingAction, FloodingFx, FloodingModel, FloodingWireData};
     use simdash_state::node::NodeState;
 
     use super::*;
     use crate::chat::ChatModel;
 
     fn model() -> NodeModel {
-        NodeModel::new(RoutingModel {
-            flooding: FloodingModel {
-                broadcast_interval: 3.into(),
-            },
-        })
+        NodeModel::new(RoutingModel::standard(3.into()))
     }
 
     /// Routing used to be synced when ops were stored. Not anymore, for now.

@@ -65,3 +65,7 @@ impl From<petgraph::graph::NodeIndex> for NodeId {
 pub trait ExtractMetadata<T> {
     fn extract_metadata(&self) -> T;
 }
+
+pub trait Tickable {
+    fn tick(&mut self);
+}

@@ -1500,7 +1500,6 @@ dependencies = [
  "simdash-ids",
  "simdash-model",
  "simdash-routing",
- "simdash-routing-flooding",
  "simdash-state",
 ]
 
@@ -1551,7 +1550,6 @@ dependencies = [
  "simdash-ids",
  "simdash-routing",
  "simdash-routing-common",
- "simdash-routing-flooding",
  "simdash-state",
  "tracing",
 ]
@@ -1568,6 +1566,7 @@ dependencies = [
  "simdash-ids",
  "simdash-routing-common",
  "simdash-routing-flooding",
+ "simdash-routing-noop",
 ]
 
 [[package]]
@@ -1579,6 +1578,20 @@ dependencies = [
 
 [[package]]
 name = "simdash-routing-flooding"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "maplit",
+ "polestar",
+ "pretty_assertions",
+ "serde",
+ "simdash-ids",
+ "simdash-routing-common",
+ "tracing",
+]
+
+[[package]]
+name = "simdash-routing-noop"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -1619,7 +1632,6 @@ dependencies = [
  "simdash-ids",
  "simdash-model",
  "simdash-routing",
- "simdash-routing-flooding",
  "simdash-state",
 ]
 
@@ -1659,7 +1671,6 @@ dependencies = [
  "simdash-ids",
  "simdash-model",
  "simdash-routing",
- "simdash-routing-flooding",
  "simdash-scenario",
  "simdash-state",
  "tracing",

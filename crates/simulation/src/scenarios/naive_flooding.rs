@@ -4,8 +4,8 @@ use simdash_behavior::node::BasicNodeBehavior;
 use simdash_behavior::routing::BasicRoutingBehavior;
 use simdash_model::network::NetworkModel;
 use simdash_model::node::NodeModel;
-use simdash_routing::{RoutingModel, RoutingState};
-use simdash_routing_flooding::{FloodingOp, FloodingState};
+use simdash_routing::flooding::{FloodingOp, FloodingState};
+use simdash_routing::{noop::NoopState, RoutingModel, RoutingState};
 use simdash_scenario::Scenario;
 use simdash_state::network::NetworkState;
 
@@ -32,6 +32,7 @@ pub fn naive_flooding(
                     .collect();
                 n.routing = RoutingState {
                     flooding: FloodingState { ops: routing_ops },
+                    noop: NoopState::default(),
                 };
                 Ok((n, ()))
             })

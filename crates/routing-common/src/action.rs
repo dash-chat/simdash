@@ -6,6 +6,12 @@ pub enum ProtocolAction<A, D: Eq + Hash> {
     Network(ProtocolNetworkAction<D>),
 }
 
+impl<A, D: Eq + Hash> From<A> for ProtocolAction<A, D> {
+    fn from(action: A) -> Self {
+        ProtocolAction::Protocol(action)
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ProtocolNetworkAction<D: Eq + Hash> {
     Receive {

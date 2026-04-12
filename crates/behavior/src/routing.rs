@@ -17,7 +17,7 @@ pub struct BasicRoutingBehavior;
 
 impl Behavior<RoutingModel> for BasicRoutingBehavior {
     fn next(&mut self, state: &RoutingState) -> anyhow::Result<Vec<RoutingAction>> {
-        let mut b = simdash_routing_flooding::NaiveFloodingBehavior;
+        let mut b = simdash_routing::flooding::NaiveFloodingBehavior;
         Ok(b.next(&state.flooding)?
             .into_iter()
             .map(routing_flooding_protocol_action)
