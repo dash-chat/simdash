@@ -1,9 +1,9 @@
 use std::collections::HashSet;
 
-use simdash_types::{Tickable, Ticks};
 use simdash_routing_common::{
     ProtocolAction, ProtocolFx, ProtocolNetworkAction, SendFx, StorageFx,
 };
+use simdash_types::{Tickable, Ticks};
 
 use crate::{
     FloodingWireData,
@@ -43,7 +43,7 @@ impl polestar::Machine for FloodingModel {
                     let mut flooding_op = FloodingOp::from_wire(op);
                     let id = flooding_op.id();
                     if state.ops.contains_key(&id) {
-                        tracing::warn!("Flooding op already exists: op={:?}", id);
+                        // Op already exists, just drop it.
                         continue;
                     }
                     // Mark as recently sent so the node doesn't re-broadcast
@@ -59,7 +59,7 @@ impl polestar::Machine for FloodingModel {
                 let op = FloodingOp::from_wire(data);
                 let existing = state.ops.insert(op.id(), op.clone());
                 if existing.is_some() {
-                    anyhow::bail!("Flooding op already exists: op={:?}", op.id());
+                    anyhow::bail!("Flooding op already exists: op_id={:?}", op.id());
                 }
                 (state, None)
             }
@@ -94,8 +94,8 @@ mod tests {
     use maplit::hashset;
     use polestar::Machine;
     use pretty_assertions::assert_eq;
-    use simdash_types::{NodeId, util::basic_op};
     use simdash_routing_common::ProtocolNetworkAction;
+    use simdash_types::{NodeId, util::basic_op};
 
     use super::*;
 

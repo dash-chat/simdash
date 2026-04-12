@@ -28,7 +28,7 @@ impl ChatState {
 
     pub fn store_op(&mut self, op: Operation) -> anyhow::Result<()> {
         if self.op_store.contains_key(&op.id) {
-            anyhow::bail!("Op already exists: {:?}", op.id);
+            anyhow::bail!("Chat op already exists: op_id={:?}", op.id);
         }
         if let Some(capacity) = self.storage_capacity {
             let new_size = *self.stored_size() + *op.header.payload_size;
