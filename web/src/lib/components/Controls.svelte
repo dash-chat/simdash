@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 
 	interface Props {
 		step: number;
@@ -52,6 +52,18 @@
 		if (playing) {
 			startTimer();
 		}
+	});
+
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.code === 'Space' && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement)) {
+			e.preventDefault();
+			playing ? stop() : play();
+		}
+	}
+
+	onMount(() => {
+		window.addEventListener('keydown', handleKeydown);
+		return () => window.removeEventListener('keydown', handleKeydown);
 	});
 
 	onDestroy(() => stopTimer());
