@@ -1,7 +1,19 @@
 [workspace]
 resolver = "2"
-members = ["crates/*"]
-default-members = ["crates/runner"]
+# members = ["crates/*"]
+members = [
+  "crates/ids",
+  "crates/routing-common",
+  "crates/routing-flooding",
+  #   "crates/model",
+  #   "crates/routing",
+  #   "crates/routing-common",
+  #   "crates/routing-flooding",
+  #   "crates/runner",
+  #   "crates/scenario",
+  #   "crates/state",
+]
+# default-members = ["crates/runner"]
 
 [workspace.dependencies]
 anyhow = "1"
@@ -11,7 +23,18 @@ petgraph = { version = "0.8", features = ["serde-1"] }
 postcard = { version = "1", features = ["use-std"] }
 tracing = "0.1"
 
+simdash-ids = { path = "crates/ids" }
+simdash-action = { path = "crates/action" }
+simdash-behavior = { path = "crates/behavior" }
+simdash-model = { path = "crates/model" }
+simdash-routing = { path = "crates/routing" }
+simdash-routing-common = { path = "crates/routing-common" }
+simdash-routing-flooding = { path = "crates/routing-flooding" }
+simdash-runner = { path = "crates/runner" }
+simdash-scenario = { path = "crates/scenario" }
+simdash-state = { path = "crates/state" }
+
 polestar = { git = "https://github.com/maackle/polestar-rs.git", branch = "main" }
 
-# [patch."https://github.com/maackle/polestar-rs"]
-# polestar = { path = "/home/michael/proj/polestar-rs/polestar" }
+[patch."https://github.com/maackle/polestar-rs"]
+polestar = { path = "/home/michael/proj/polestar-rs/polestar" }

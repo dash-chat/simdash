@@ -2,7 +2,7 @@ use simdash_action::node::NodeAction;
 use simdash_model::{node::NodeModel, routing::RoutingModel};
 use simdash_state::node::NodeState;
 
-use crate::Behavior;
+use simdash_ids::Behavior;
 
 #[derive(Default)]
 pub struct BasicRoutingBehavior<B: Behavior<RoutingModel>> {

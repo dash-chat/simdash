@@ -1,30 +1,9 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use serde::{Deserialize, Serialize};
-use simdash_ids::{NodeId, OpId, Size};
+use simdash_ids::{GroupId, NodeId, OpId, Operation, Size};
 
 use crate::{ExtractMetadata, routing::flooding::FloodingMetadata};
-
-pub type GroupId = u64;
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Body {
-    GroupMessage { group_id: GroupId },
-    DirectMessage { recipient: NodeId },
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Header {
-    pub author: NodeId,
-    pub payload_size: Size,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Operation {
-    pub id: OpId,
-    pub header: Header,
-    pub body: Body,
-}
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq, Hash)]
 pub struct ChatState {
@@ -69,6 +48,8 @@ impl ChatState {
 
 #[cfg(test)]
 mod tests {
+    use simdash_ids::{Body, Header};
+
     use super::*;
 
     fn make_op(id: u32, size: u64) -> Operation {

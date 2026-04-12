@@ -1,0 +1,12 @@
+[package]
+name = "simdash-routing-flooding"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+simdash-ids = { path = "../ids" }
+simdash-routing-common = { workspace = true }
+
+anyhow = { workspace = true }
+polestar = { workspace = true }
+serde = { workspace = true }

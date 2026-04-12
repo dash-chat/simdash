@@ -7,3 +7,5 @@ edition = "2024"
 derive_more = { workspace = true }
 petgraph = { workspace = true }
 serde = { workspace = true }
+polestar = { workspace = true }
+anyhow = { workspace = true }

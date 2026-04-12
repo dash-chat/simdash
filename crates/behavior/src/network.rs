@@ -2,7 +2,7 @@ use simdash_action::network::NetworkAction;
 use simdash_model::{network::NetworkModel, node::NodeModel};
 use simdash_state::network::NetworkState;
 
-use crate::Behavior;
+use simdash_ids::Behavior;
 
 pub struct RoundRobinNodeScheduler<B: Behavior<NodeModel>> {
     node_behavior: B,

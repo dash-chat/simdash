@@ -1,5 +1,14 @@
+mod behavior;
+mod operation;
+pub use behavior::*;
+pub use operation::*;
+
+pub mod util;
+
 use derive_more::{Deref, From};
 use serde::{Deserialize, Serialize};
+
+pub type GroupId = u64;
 
 #[derive(
     Serialize, Deserialize, PartialOrd, Ord, Debug, Clone, Copy, PartialEq, Eq, Hash, From, Deref,
@@ -51,4 +60,8 @@ impl From<petgraph::graph::NodeIndex> for NodeId {
     fn from(index: petgraph::graph::NodeIndex) -> NodeId {
         NodeId::from(index.index() as u32)
     }
+}
+
+pub trait ExtractMetadata<T> {
+    fn extract_metadata(&self) -> T;
 }

@@ -2,7 +2,7 @@ use simdash_action::routing::{RoutingAction, flooding::FloodingAction};
 use simdash_model::routing::RoutingModel;
 use simdash_state::routing::RoutingState;
 
-use crate::Behavior;
+use simdash_ids::Behavior;
 
 pub struct NaiveFloodingBehavior;
 

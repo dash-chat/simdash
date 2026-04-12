@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde::{Deserialize, Serialize};
 use simdash_ids::*;
 
-use crate::{ExtractMetadata, chat::Operation};
+use crate::ExtractMetadata;
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct FloodingState {

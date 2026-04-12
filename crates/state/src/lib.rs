@@ -9,7 +9,3 @@ pub mod node;
 pub mod routing;
 
 pub use graph::*;
-
-pub trait ExtractMetadata<T> {
-    fn extract_metadata(&self) -> T;
-}
