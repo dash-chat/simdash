@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use simdash_ids::{Tickable, Ticks};
+use simdash_types::{Tickable, Ticks};
 use simdash_routing_common::{
     ProtocolAction, ProtocolFx, ProtocolNetworkAction, SendFx, StorageFx,
 };
@@ -94,7 +94,7 @@ mod tests {
     use maplit::hashset;
     use polestar::Machine;
     use pretty_assertions::assert_eq;
-    use simdash_ids::{NodeId, util::basic_op};
+    use simdash_types::{NodeId, util::basic_op};
     use simdash_routing_common::ProtocolNetworkAction;
 
     use super::*;

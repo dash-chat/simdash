@@ -1,9 +1,9 @@
 use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
-use simdash_ids::{GroupId, NodeId, OpId, Operation, Size};
+use simdash_types::{GroupId, NodeId, OpId, Operation, Size};
 
-use simdash_ids::ExtractMetadata;
+use simdash_types::ExtractMetadata;
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq)]
 pub struct ChatState {
@@ -48,7 +48,7 @@ impl ChatState {
 
 #[cfg(test)]
 mod tests {
-    use simdash_ids::{Body, Header};
+    use simdash_types::{Body, Header};
 
     use super::*;
 

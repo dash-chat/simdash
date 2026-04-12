@@ -1,5 +1,5 @@
 use polestar::Machine;
-use simdash_ids::Behavior;
+use simdash_types::Behavior;
 
 /// A Scenario takes an initial model State and a Behavior,
 /// and uses the Behavior to produce Actions to perform state transitions.

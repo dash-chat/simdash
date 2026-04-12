@@ -1,6 +1,6 @@
 use polestar::util::update_replace;
 use simdash_action::{chat::ChatAction, node::NodeAction};
-use simdash_ids::Ticks;
+use simdash_types::Ticks;
 use simdash_routing::{AnyRoutingAction, RoutingAction, RoutingFx, RoutingModel};
 
 use crate::chat::ChatModel;
@@ -80,7 +80,7 @@ mod tests {
     use polestar::Machine;
     use pretty_assertions::assert_eq;
     use simdash_action::{chat::ChatAction, node::NodeAction};
-    use simdash_ids::{NodeId, OpId, Size, util::basic_op};
+    use simdash_types::{NodeId, OpId, Size, util::basic_op};
     use simdash_routing::flooding::{FloodingAction, FloodingFx, FloodingModel, FloodingWireData};
     use simdash_routing::{AnyRoutingData, AnyRoutingFx, RoutingModel};
     use simdash_routing_common::{ProtocolAction, ProtocolFx, ProtocolNetworkAction, SendFx};

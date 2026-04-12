@@ -1,7 +1,7 @@
 mod macros;
 
 use polestar::Machine;
-use simdash_ids::{Tickable, Ticks};
+use simdash_types::{Tickable, Ticks};
 use simdash_routing_common::{ProtocolAction, ProtocolFx, ProtocolNetworkAction, SendFx};
 
 pub use simdash_routing_flooding as flooding;

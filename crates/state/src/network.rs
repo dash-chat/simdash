@@ -2,7 +2,7 @@ use std::path::Path;
 
 use rand::{SeedableRng, rngs::StdRng};
 use serde::{Deserialize, Serialize};
-use simdash_ids::NodeId;
+use simdash_types::NodeId;
 
 use crate::{Graph, node::NodeState};
 

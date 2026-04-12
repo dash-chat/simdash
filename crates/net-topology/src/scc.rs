@@ -1,7 +1,7 @@
 use itertools::Itertools;
 
 use rand::seq::IndexedRandom;
-use simdash_ids::NodeId;
+use simdash_types::NodeId;
 use simdash_state::{EdgeState, Graph, node::NodeState};
 
 pub fn strongly_connected_graph<R: Clone>(

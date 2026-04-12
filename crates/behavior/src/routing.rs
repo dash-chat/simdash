@@ -1,4 +1,4 @@
-use simdash_ids::Behavior;
+use simdash_types::Behavior;
 use simdash_routing::{
     AnyRoutingAction, AnyRoutingData, RoutingAction, RoutingModel, RoutingState,
 };

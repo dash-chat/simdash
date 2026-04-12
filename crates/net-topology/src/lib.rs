@@ -1,7 +1,7 @@
 //! Network topology generation utilities.
 
 use serde::Deserialize;
-use simdash_ids::NodeId;
+use simdash_types::NodeId;
 
 pub mod link;
 pub mod net_topology;

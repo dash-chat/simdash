@@ -5,10 +5,10 @@ use net_topology::net_topology::Ordinality;
 use polestar::{Machine, ext::MapExt};
 use rand::seq::IndexedRandom;
 use simdash_action::{chat::ChatAction, node::NodeAction};
-use simdash_ids::{NodeId, Operation};
 use simdash_routing::{RoutingAction, RoutingFx};
 use simdash_routing_common::{ProtocolNetworkAction, SendFx, StorageFx};
 use simdash_state::{network::NetworkState, node::NodeState};
+use simdash_types::{NodeId, Operation};
 
 use crate::node::{NodeFx, NodeModel, NodeModelConfig};
 

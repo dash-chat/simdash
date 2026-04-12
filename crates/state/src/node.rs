@@ -1,6 +1,6 @@
 use derive_more::{Deref, From};
 use serde::{Deserialize, Serialize};
-use simdash_ids::Tickable;
+use simdash_types::Tickable;
 use simdash_routing::RoutingState;
 
 use crate::chat::ChatState;

@@ -8,8 +8,8 @@ anyhow = { workspace = true }
 derive_more = { workspace = true }
 polestar = { workspace = true }
 
-simdash-action = { path = "../action" }
-simdash-ids = { path = "../ids" }
-simdash-model = { path = "../model" }
-simdash-routing = { path = "../routing" }
-simdash-state = { path = "../state" }
+simdash-action = { workspace = true }
+simdash-types = { workspace = true }
+simdash-model = { workspace = true }
+simdash-routing = { workspace = true }
+simdash-state = { workspace = true }

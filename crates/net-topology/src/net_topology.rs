@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use serde::Deserialize;
-use simdash_ids::NodeId;
+use simdash_types::NodeId;
 use simdash_state::{EdgeState, Graph};
 
 /// How link destinations are chosen.

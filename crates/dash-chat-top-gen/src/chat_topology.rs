@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use net_topology::NetTopology;
-use simdash_ids::NodeId;
+use simdash_types::NodeId;
 use simdash_state::{chat::ChatState, graph::Graph};
 
 /// Intermediate representation of a network topology with dash-chat state added.

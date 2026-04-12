@@ -1,5 +1,5 @@
 use serde::Deserialize;
-use simdash_ids::NodeId;
+use simdash_types::NodeId;
 
 use crate::{ApplyRule, BuildState, Rule, net_topology::NodeTopology};
 

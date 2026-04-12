@@ -8,9 +8,9 @@ use rand::prelude::*;
 use serde::Deserialize;
 use serde::Serialize;
 use simdash_distribution::Distribution;
-use simdash_ids::{Body, GroupId, Header, Operation};
-use simdash_ids::{NodeId, OpId, Size};
 use simdash_state::chat::ChatState;
+use simdash_types::{Body, GroupId, Header, Operation};
+use simdash_types::{NodeId, OpId, Size};
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize)]
 #[serde(untagged)]

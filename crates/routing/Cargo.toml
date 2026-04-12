@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-simdash-ids = { workspace = true }
+simdash-types = { workspace = true }
 simdash-routing-common = { workspace = true }
 simdash-routing-flooding = { workspace = true }
 simdash-routing-noop = { workspace = true }

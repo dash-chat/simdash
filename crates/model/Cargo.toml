@@ -5,13 +5,13 @@ edition = "2024"
 
 [dependencies]
 
-dash-chat-top-gen = { path = "../dash-chat-top-gen" }
-net-topology = { path = "../net-topology" }
-simdash-action = { path = "../action" }
-simdash-ids = { path = "../ids" }
-simdash-state = { path = "../state" }
-simdash-routing = { path = "../routing" }
-simdash-routing-common = { path = "../routing-common" }
+dash-chat-top-gen = { workspace = true }
+net-topology = { workspace = true }
+simdash-action = { workspace = true }
+simdash-types = { workspace = true }
+simdash-state = { workspace = true }
+simdash-routing = { workspace = true }
+simdash-routing-common = { workspace = true }
 
 anyhow = { workspace = true }
 polestar = { workspace = true }
@@ -19,5 +19,5 @@ rand = "0.9"
 tracing = { workspace = true }
 
 [dev-dependencies]
-net-topology = { path = "../net-topology" }
+net-topology = { workspace = true }
 pretty_assertions = { workspace = true }

@@ -3,7 +3,7 @@ use simdash_model::node::NodeModel;
 use simdash_routing::RoutingModel;
 use simdash_state::node::NodeState;
 
-use simdash_ids::Behavior;
+use simdash_types::Behavior;
 
 #[derive(Default)]
 pub struct BasicNodeBehavior<B: Behavior<RoutingModel>> {

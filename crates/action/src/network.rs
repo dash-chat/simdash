@@ -1,4 +1,4 @@
-use simdash_ids::NodeId;
+use simdash_types::NodeId;
 
 use crate::node::NodeAction;
 

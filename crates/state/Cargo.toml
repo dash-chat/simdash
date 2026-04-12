@@ -12,5 +12,5 @@ petgraph = { workspace = true }
 polestar = { workspace = true }
 postcard = { workspace = true }
 
-simdash-ids = { path = "../ids" }
-simdash-routing = { path = "../routing" }
+simdash-types = { workspace = true }
+simdash-routing = { workspace = true }

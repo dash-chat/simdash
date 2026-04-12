@@ -7,6 +7,6 @@ edition = "2024"
 derive_more = { workspace = true }
 serde = { workspace = true }
 
-simdash-ids = { path = "../ids" }
-simdash-routing = { path = "../routing" }
-simdash-state = { path = "../state" }
+simdash-types = { workspace = true }
+simdash-routing = { workspace = true }
+simdash-state = { workspace = true }

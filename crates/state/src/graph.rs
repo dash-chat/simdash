@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use petgraph::graph::{Graph as PetGraph, NodeIndex};
 use polestar::ext::MapExt;
 use serde::{Deserialize, Serialize};
-use simdash_ids::NodeId;
+use simdash_types::NodeId;
 use simdash_routing::RoutingState;
 
 use crate::node::NodeState;

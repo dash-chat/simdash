@@ -15,7 +15,7 @@ impl<A, D: Eq + Hash> From<A> for ProtocolAction<A, D> {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ProtocolNetworkAction<D: Eq + Hash> {
     Receive {
-        from: simdash_ids::NodeId,
+        from: simdash_types::NodeId,
         data: HashSet<D>,
     },
     Tick,

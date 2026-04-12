@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 use std::hash::Hash;
 
-use simdash_ids::EncryptedOp;
+use simdash_types::EncryptedOp;
 
 /// Effect type used by a routing protocol's model.
 ///
@@ -23,7 +23,7 @@ pub enum StorageFx {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SendFx<D: Eq + Hash> {
     UnicastData {
-        to: simdash_ids::NodeId,
+        to: simdash_types::NodeId,
         data: HashSet<D>,
     },
     BroadcastData {

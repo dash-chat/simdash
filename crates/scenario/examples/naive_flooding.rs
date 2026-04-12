@@ -4,7 +4,7 @@ use simdash_action::{chat::ChatAction, network::NetworkAction, node::NodeAction}
 use simdash_behavior::{
     network::RoundRobinNodeScheduler, node::BasicNodeBehavior, routing::BasicRoutingBehavior,
 };
-use simdash_ids::{NodeId, OpId};
+use simdash_types::{NodeId, OpId};
 use simdash_model::{network::NetworkModel, node::NodeModel};
 use simdash_routing::RoutingModel;
 use simdash_scenario::Scenario;
@@ -29,7 +29,7 @@ fn main() {
         ChatTopology::empty(),
     );
 
-    let ops = (0..5).map(|i| simdash_ids::util::basic_op(i as u32));
+    let ops = (0..5).map(|i| simdash_types::util::basic_op(i as u32));
     let stores = ops
         .clone()
         .enumerate()
