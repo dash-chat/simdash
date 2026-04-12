@@ -12,13 +12,6 @@ pub struct ChatTopology {
 }
 
 impl ChatTopology {
-    pub fn from_net_topology(net: NetTopology) -> Self {
-        Self {
-            net,
-            chat_states: BTreeMap::new(),
-        }
-    }
-
     pub fn empty() -> Self {
         Self {
             net: NetTopology::new(),
