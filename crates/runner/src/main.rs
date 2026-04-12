@@ -2,7 +2,7 @@ mod api;
 mod scenarios;
 mod sim;
 
-use std::{fs, net::SocketAddr, path::PathBuf, sync::Arc};
+use std::{net::SocketAddr, path::PathBuf, sync::Arc};
 
 use axum::{
     routing::{get, post},
@@ -25,9 +25,6 @@ struct Cli {
     /// Port to listen on
     #[arg(short, long, default_value = "3000")]
     port: u16,
-
-    #[arg(long = "no-serve")]
-    no_serve: bool,
 }
 
 #[tokio::main]
@@ -44,10 +41,6 @@ async fn main() {
         dash_topology.net.nodes.len(),
         dash_topology.net.edges.len(),
     );
-
-    if cli.no_serve {
-        return;
-    }
 
     let sim = Simulation::new(dash_topology, seed)
         .unwrap_or_else(|e| panic!("Failed to create simulation: {e}"));
