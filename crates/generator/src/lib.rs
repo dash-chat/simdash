@@ -14,6 +14,11 @@ pub fn generate_topology(config_path: &Path) -> Result<(ChatTopology, u64)> {
     let config: serde_json::Value =
         serde_json::from_str(&contents).context("Failed to parse config as JSON")?;
 
+    generate_topology_from_config(&config)
+}
+
+/// Generates the chat topology from an already-parsed JSON config value.
+pub fn generate_topology_from_config(config: &serde_json::Value) -> Result<(ChatTopology, u64)> {
     let seed = config.get("seed").and_then(|v| v.as_u64()).unwrap_or(0);
 
     let net_top_value = config

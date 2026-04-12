@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = ["crates/*"]
-default-members = ["crates/server-runner"]
+default-members = ["crates/runner"]
 
 [workspace.dependencies]
 anyhow = "1"

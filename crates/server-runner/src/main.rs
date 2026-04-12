@@ -11,14 +11,14 @@ use tokio::sync::Mutex;
 use tower_http::cors::CorsLayer;
 
 use crate::api::AppState;
-use simdash_simulation::sim::Simulation;
+use simdash_simulation::snapshot::setup_from_input;
 
 /// simdash simulation server
 #[derive(Parser)]
 struct Cli {
-    /// Path to the JSON config file
+    /// Path to a JSON config file or a previous simulation snapshot to resume
     #[arg(default_value = "config.json")]
-    config: PathBuf,
+    input: PathBuf,
 
     /// Port to listen on
     #[arg(short, long, default_value = "3000")]
@@ -31,18 +31,10 @@ async fn main() {
 
     let cli = Cli::parse();
 
-    let (dash_topology, seed) = simdash_generator::generate_topology(&cli.config)
-        .unwrap_or_else(|e| panic!("Failed to generate topology: {e}"));
+    let setup = setup_from_input(&cli.input)
+        .unwrap_or_else(|e| panic!("Failed to set up simulation: {e}"));
 
-    println!(
-        "Generated network topology: {} nodes, {} edges",
-        dash_topology.net.nodes.len(),
-        dash_topology.net.edges.len(),
-    );
-
-    let sim = Simulation::new(dash_topology, seed)
-        .unwrap_or_else(|e| panic!("Failed to create simulation: {e}"));
-    let state: AppState = Arc::new(Mutex::new(sim));
+    let state: AppState = Arc::new(Mutex::new(setup.sim));
 
     let app = Router::new()
         .route("/api/state", get(api::get_state))
