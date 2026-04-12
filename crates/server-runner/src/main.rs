@@ -1,6 +1,4 @@
 mod api;
-mod scenarios;
-mod sim;
 
 use std::{net::SocketAddr, path::PathBuf, sync::Arc};
 
@@ -13,7 +11,7 @@ use tokio::sync::Mutex;
 use tower_http::cors::CorsLayer;
 
 use crate::api::AppState;
-use crate::sim::Simulation;
+use simdash_simulation::sim::Simulation;
 
 /// simdash simulation server
 #[derive(Parser)]

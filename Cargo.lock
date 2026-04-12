@@ -1455,12 +1455,44 @@ dependencies = [
 ]
 
 [[package]]
-name = "simdash-runner"
+name = "simdash-scenario"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "dash-chat-top-gen",
+ "derive_more 2.1.1",
+ "polestar",
+ "simdash-action",
+ "simdash-behavior",
+ "simdash-ids",
+ "simdash-model",
+ "simdash-state",
+]
+
+[[package]]
+name = "simdash-server-runner"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
  "clap",
+ "serde",
+ "serde_json",
+ "simdash-generator",
+ "simdash-ids",
+ "simdash-simulation",
+ "simdash-state",
+ "tokio",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "simdash-simulation"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
  "dash-chat-top-gen",
  "net-topology",
  "petgraph 0.8.3",
@@ -1475,25 +1507,7 @@ dependencies = [
  "simdash-model",
  "simdash-scenario",
  "simdash-state",
- "tokio",
- "tower-http",
  "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "simdash-scenario"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "dash-chat-top-gen",
- "derive_more 2.1.1",
- "polestar",
- "simdash-action",
- "simdash-behavior",
- "simdash-ids",
- "simdash-model",
- "simdash-state",
 ]
 
 [[package]]

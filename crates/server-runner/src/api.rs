@@ -12,7 +12,7 @@ use simdash_ids::NodeId;
 use simdash_state::network::NetworkState;
 use tokio::sync::Mutex;
 
-use crate::sim::{OpSnapshot, Simulation};
+use simdash_simulation::sim::{OpSnapshot, Simulation};
 
 pub type AppState = Arc<Mutex<Simulation>>;
 
