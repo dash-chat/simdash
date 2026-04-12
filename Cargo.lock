@@ -1581,6 +1581,7 @@ dependencies = [
  "serde",
  "simdash-ids",
  "simdash-routing-common",
+ "tracing",
 ]
 
 [[package]]

@@ -41,14 +41,15 @@ impl polestar::Machine for FloodingModel {
                 let mut out = vec![];
                 for op in data {
                     let mut flooding_op = FloodingOp::from_wire(op);
+                    let id = flooding_op.id();
+                    if state.ops.contains_key(&id) {
+                        tracing::warn!("Flooding op already exists: op={:?}", id);
+                        continue;
+                    }
                     // Mark as recently sent so the node doesn't re-broadcast
                     // the op in the same round it was received.
                     flooding_op.touch();
-                    let id = flooding_op.id();
-                    let existing = state.ops.insert(id, flooding_op.clone());
-                    if existing.is_some() {
-                        anyhow::bail!("Flooding op already exists: op={:?}", id);
-                    }
+                    state.ops.insert(id, flooding_op.clone());
                     out.push(flooding_op.data.encrypted);
                 }
                 let fx = ProtocolFx::Node(StorageFx::StoreOps { ops: out });

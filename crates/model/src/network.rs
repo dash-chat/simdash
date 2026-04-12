@@ -84,8 +84,7 @@ impl polestar::Machine for NetworkModel {
                 }) {
                     Ok(fx) => {
                         if let Some(fx) = fx {
-                            todo!("apply node effects");
-                            // self.apply_node_effects(&mut state, node_id, fx)?;
+                            self.apply_node_effects(&mut state, node_id, fx)?;
                         }
                     }
                     Err(e) => {
