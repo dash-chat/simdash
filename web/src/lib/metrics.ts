@@ -14,7 +14,6 @@ export interface NetworkMetrics {
 	total_nodes: number;
 	total_edges: number;
 	unique_op_ids: number;
-	convergence_pct: number;
 	avg_ops_per_node: number;
 	min_ops_per_node: number;
 	max_ops_per_node: number;
@@ -41,10 +40,6 @@ export function computeMetrics(snapshot: SimSnapshot): NetworkMetrics {
 	const avg_ops_per_node = total_nodes > 0 ? opCounts.reduce((a, b) => a + b, 0) / total_nodes : 0;
 	const min_ops_per_node = total_nodes > 0 ? Math.min(...opCounts) : 0;
 	const max_ops_per_node = total_nodes > 0 ? Math.max(...opCounts) : 0;
-
-	// Convergence: % of nodes that hold ALL known ops
-	const converged = nodes.filter((n) => n.ops.length >= unique_op_ids).length;
-	const convergence_pct = total_nodes > 0 ? (converged / total_nodes) * 100 : 0;
 
 	// Build lookup structures for delivery computation
 	const nodeOpsSet = new Map<number, Set<number>>();
@@ -114,7 +109,6 @@ export function computeMetrics(snapshot: SimSnapshot): NetworkMetrics {
 		total_nodes,
 		total_edges,
 		unique_op_ids,
-		convergence_pct,
 		avg_ops_per_node,
 		min_ops_per_node,
 		max_ops_per_node,

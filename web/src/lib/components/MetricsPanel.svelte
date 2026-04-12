@@ -28,7 +28,6 @@
 			<tr><td>Nodes</td><td>{metrics.total_nodes}</td></tr>
 			<tr><td>Edges</td><td>{metrics.total_edges}</td></tr>
 			<tr><td>Unique ops</td><td>{metrics.unique_op_ids}</td></tr>
-			<tr><td>Convergence</td><td>{metrics.convergence_pct.toFixed(1)}%</td></tr>
 			<tr><td>Avg ops/node</td><td>{metrics.avg_ops_per_node.toFixed(1)}</td></tr>
 			<tr><td>Min ops/node</td><td>{metrics.min_ops_per_node}</td></tr>
 			<tr><td>Max ops/node</td><td>{metrics.max_ops_per_node}</td></tr>
