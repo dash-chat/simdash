@@ -78,7 +78,7 @@ impl RoutingModel {
 // }
 
 pub fn routing_flooding_action(action: FloodingAction) -> RoutingAction {
-    RoutingAction::Protocol(RoutingActionDispatch::Flooding(action))
+    RoutingAction::Protocol(AnyRoutingAction::Flooding(action))
 }
 
 /// Lift a protocol-specific action into a routing action with inner enums.
@@ -91,19 +91,16 @@ pub fn routing_flooding_protocol_action(
             ProtocolNetworkAction::Receive { from, data } => {
                 RoutingAction::Network(ProtocolNetworkAction::Receive {
                     from,
-                    data: data
-                        .into_iter()
-                        .map(RoutingDataDispatch::Flooding)
-                        .collect(),
+                    data: data.into_iter().map(AnyRoutingData::Flooding).collect(),
                 })
             }
         },
         ProtocolAction::Protocol(action) => match action {
-            FloodingAction::StoreOp(data) => RoutingAction::Protocol(
-                RoutingActionDispatch::Flooding(FloodingAction::StoreOp(data)),
-            ),
+            FloodingAction::StoreOp(data) => {
+                RoutingAction::Protocol(AnyRoutingAction::Flooding(FloodingAction::StoreOp(data)))
+            }
             FloodingAction::TriggerBroadcast => RoutingAction::Protocol(
-                RoutingActionDispatch::Flooding(FloodingAction::TriggerBroadcast),
+                AnyRoutingAction::Flooding(FloodingAction::TriggerBroadcast),
             ),
         },
     }
@@ -116,21 +113,21 @@ pub fn routing_flooding_protocol_fx(fx: ProtocolFx<FloodingFx, FloodingWireData>
             SendFx::BroadcastData { data } => RoutingFx::Network(SendFx::BroadcastData {
                 data: data
                     .into_iter()
-                    .map(|data| RoutingDataDispatch::Flooding(data))
+                    .map(|data| AnyRoutingData::Flooding(data))
                     .collect(),
             }),
             SendFx::UnicastData { to, data } => RoutingFx::Network(SendFx::UnicastData {
                 to,
                 data: data
                     .into_iter()
-                    .map(|data| RoutingDataDispatch::Flooding(data))
+                    .map(|data| AnyRoutingData::Flooding(data))
                     .collect(),
             }),
         },
         ProtocolFx::Node(fx) => match fx {
             StorageFx::StoreOps { ops } => RoutingFx::Node(StorageFx::StoreOps { ops }),
         },
-        ProtocolFx::Protocol(fx) => RoutingFx::Protocol(RoutingFxDispatch::Flooding(fx)),
+        ProtocolFx::Protocol(fx) => RoutingFx::Protocol(AnyRoutingFx::Flooding(fx)),
     }
 }
 
@@ -140,17 +137,17 @@ pub struct RoutingState {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum RoutingDataDispatch {
+pub enum AnyRoutingData {
     Flooding(FloodingWireData),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum RoutingActionDispatch {
+pub enum AnyRoutingAction {
     Flooding(FloodingAction),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum RoutingFxDispatch {
+pub enum AnyRoutingFx {
     Flooding(FloodingFx),
 }
 
@@ -164,8 +161,8 @@ impl RoutingState {
 
 impl polestar::Machine for RoutingModel {
     type State = RoutingState;
-    type Action = ProtocolAction<RoutingActionDispatch, RoutingDataDispatch>;
-    type Fx = Option<ProtocolFx<RoutingFxDispatch, RoutingDataDispatch>>;
+    type Action = ProtocolAction<AnyRoutingAction, AnyRoutingData>;
+    type Fx = Option<ProtocolFx<AnyRoutingFx, AnyRoutingData>>;
     type Error = anyhow::Error;
 
     fn transition(
@@ -183,7 +180,7 @@ impl polestar::Machine for RoutingModel {
                 let flooding_data: std::collections::HashSet<FloodingWireData> = data
                     .into_iter()
                     .filter_map(|d| match d {
-                        RoutingDataDispatch::Flooding(inner) => Some(inner),
+                        AnyRoutingData::Flooding(inner) => Some(inner),
                     })
                     .collect();
                 if !flooding_data.is_empty() {
@@ -202,7 +199,7 @@ impl polestar::Machine for RoutingModel {
             }
 
             ProtocolAction::Protocol(action) => match action {
-                RoutingActionDispatch::Flooding(a) => {
+                AnyRoutingAction::Flooding(a) => {
                     let (new, fx) = self
                         .flooding
                         .transition(state.flooding, ProtocolAction::Protocol(a))?;

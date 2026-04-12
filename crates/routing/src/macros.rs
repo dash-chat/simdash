@@ -1,8 +1,8 @@
-/// Generates `RoutingModel`, `RoutingState`, `RoutingActionDispatch`, `RoutingFx`,
+/// Generates `RoutingModel`, `RoutingState`, `AnyRoutingAction`, `RoutingFx`,
 /// and their `polestar::Machine` impl, dispatching across all listed protocols.
 ///
 /// Each protocol is active simultaneously — `RoutingState` is a struct with one
-/// field per protocol, and `RoutingActionDispatch`/`RoutingFx` are enums that name which
+/// field per protocol, and `AnyRoutingAction`/`RoutingFx` are enums that name which
 /// protocol produced or receives the action/effect.
 ///
 /// # Requirements
@@ -16,7 +16,7 @@
 ///
 /// Additionally, each protocol provides a Data type which is used to model
 /// datagrams flowing through the network.
-/// The `RoutingActionDispatch::ReceiveData` models incoming data,
+/// The `AnyRoutingAction::ReceiveData` models incoming data,
 /// and the `RoutingFx::UnicastData` and `RoutingFx::BroadcastData` model outgoing data.
 ///
 /// # Example
@@ -33,7 +33,7 @@
 /// }
 /// ```
 ///
-/// Expands to structs `RoutingModel`, `RoutingState`, enum `RoutingActionDispatch`,
+/// Expands to structs `RoutingModel`, `RoutingState`, enum `AnyRoutingAction`,
 /// enum `RoutingFx`, method `RoutingState::tick()`, and a `polestar::Machine`
 /// impl on `RoutingModel` that dispatches across all listed protocols.
 
@@ -56,7 +56,7 @@ macro_rules! routing_protocols {
         }
 
         impl RoutingDataExt for RoutingModel {
-            type Data = RoutingDataDispatch;
+            type Data = AnyRoutingData;
         }
 
         #[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
@@ -65,17 +65,17 @@ macro_rules! routing_protocols {
         }
 
         #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-        pub enum RoutingDataDispatch {
+        pub enum AnyRoutingData {
             $( $Variant($data_ty), )+
         }
 
         #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-        pub enum RoutingActionDispatch {
+        pub enum AnyRoutingAction {
             $( $Variant($action_ty), )+
         }
 
         #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-        pub enum RoutingFxDispatch {
+        pub enum AnyRoutingFx {
             $( $Variant($fx_ty), )+
         }
 
@@ -87,8 +87,8 @@ macro_rules! routing_protocols {
 
         impl polestar::Machine for RoutingModel {
             type State  = RoutingState;
-            type Action = simdash_action::routing::RoutingAction<RoutingActionDispatch, RoutingDataDispatch>;
-            type Fx     = simdash_action::routing::RoutingFx<RoutingFxDispatch, RoutingDataDispatch>;
+            type Action = simdash_action::routing::RoutingAction<AnyRoutingAction, AnyRoutingData>;
+            type Fx     = simdash_action::routing::RoutingFx<AnyRoutingFx, AnyRoutingData>;
             type Error  = anyhow::Error;
 
             fn transition(
@@ -101,17 +101,17 @@ macro_rules! routing_protocols {
                         simdash_action::routing::RoutingAction::$Variant(a) => {
                             let (s, fx) = self.$field.transition(state.$field, a)?;
                             state.$field = s;
-                            Ok((state, RoutingFxDispatch::$Variant(fx)))
+                            Ok((state, AnyRoutingFx::$Variant(fx)))
                         },
                     )+
                 }
             }
         }
 
-        pub fn fx_to_action(fx: RoutingFxDispatch) -> RoutingActionDispatch {
+        pub fn fx_to_action(fx: AnyRoutingFx) -> AnyRoutingAction {
             match fx {
-                $( RoutingFxDispatch::$Variant(fx) => {
-                    RoutingActionDispatch::$Variant($action_ty::from(fx))
+                $( AnyRoutingFx::$Variant(fx) => {
+                    AnyRoutingAction::$Variant($action_ty::from(fx))
                 },
                 )+
             }

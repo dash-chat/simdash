@@ -81,7 +81,7 @@ mod tests {
     use pretty_assertions::assert_eq;
     use simdash_action::{chat::ChatAction, node::NodeAction};
     use simdash_ids::{NodeId, OpId, Size, util::basic_op};
-    use simdash_routing::{RoutingDataDispatch, RoutingFxDispatch, RoutingModel};
+    use simdash_routing::{AnyRoutingData, AnyRoutingFx, RoutingModel};
     use simdash_routing_common::{ProtocolAction, ProtocolFx, ProtocolNetworkAction, SendFx};
     use simdash_routing_flooding::{FloodingAction, FloodingFx, FloodingModel, FloodingWireData};
     use simdash_state::node::NodeState;
@@ -147,7 +147,7 @@ mod tests {
         assert_eq!(
             fx.unwrap().routing,
             RoutingFx::Network(SendFx::BroadcastData {
-                data: [RoutingDataDispatch::Flooding(data)].into_iter().collect(),
+                data: [AnyRoutingData::Flooding(data)].into_iter().collect(),
             })
         );
     }
@@ -164,11 +164,9 @@ mod tests {
                 state,
                 NodeAction::Routing(RoutingAction::Network(ProtocolNetworkAction::Receive {
                     from: NodeId::from(9),
-                    data: [RoutingDataDispatch::Flooding(FloodingWireData::new(
-                        op.clone(),
-                    ))]
-                    .into_iter()
-                    .collect(),
+                    data: [AnyRoutingData::Flooding(FloodingWireData::new(op.clone()))]
+                        .into_iter()
+                        .collect(),
                 })),
             )
             .unwrap();
