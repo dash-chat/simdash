@@ -1029,6 +1029,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "simdash-behavior"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "derive_more 2.1.1",
+ "polestar",
+ "simdash-action",
+ "simdash-ids",
+ "simdash-model",
+ "simdash-routing",
+ "simdash-state",
+]
+
+[[package]]
 name = "simdash-distribution"
 version = "0.1.0"
 dependencies = [

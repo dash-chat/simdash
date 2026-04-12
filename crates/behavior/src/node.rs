@@ -1,5 +1,6 @@
 use simdash_action::node::NodeAction;
-use simdash_model::{node::NodeModel, routing::RoutingModel};
+use simdash_model::node::NodeModel;
+use simdash_routing::RoutingModel;
 use simdash_state::node::NodeState;
 
 use simdash_ids::Behavior;
