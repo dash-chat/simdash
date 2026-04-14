@@ -3,8 +3,6 @@ use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 use simdash_types::{GroupId, NodeId, OpId, Operation, Size};
 
-use simdash_types::ExtractMetadata;
-
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq)]
 pub struct ChatState {
     pub op_store: HashMap<OpId, Operation>,

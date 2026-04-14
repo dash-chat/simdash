@@ -1,7 +1,6 @@
-use polestar::util::update_replace;
-use simdash_action::{chat::ChatAction, node::NodeAction};
+use simdash_action::node::NodeAction;
+use simdash_routing::{RoutingFx, RoutingModel};
 use simdash_types::Ticks;
-use simdash_routing::{AnyRoutingAction, RoutingAction, RoutingFx, RoutingModel};
 
 use crate::chat::ChatModel;
 
@@ -69,7 +68,7 @@ impl polestar::Machine for NodeModel {
             NodeAction::Tick => {
                 let (routing, fx) = self.routing.tick(state.routing)?;
                 state.routing = routing;
-                (state, None)
+                (state, fx.map(|fx| NodeFx { routing: fx }))
             }
         })
     }
@@ -80,14 +79,13 @@ mod tests {
     use polestar::Machine;
     use pretty_assertions::assert_eq;
     use simdash_action::{chat::ChatAction, node::NodeAction};
-    use simdash_types::{NodeId, OpId, Size, util::basic_op};
-    use simdash_routing::flooding::{FloodingAction, FloodingFx, FloodingModel, FloodingWireData};
-    use simdash_routing::{AnyRoutingData, AnyRoutingFx, RoutingModel};
-    use simdash_routing_common::{ProtocolAction, ProtocolFx, ProtocolNetworkAction, SendFx};
+    use simdash_routing::flooding::{FloodingAction, FloodingWireData};
+    use simdash_routing::{AnyRoutingAction, AnyRoutingData, RoutingAction, RoutingModel};
+    use simdash_routing_common::{ProtocolNetworkAction, SendFx};
     use simdash_state::node::NodeState;
+    use simdash_types::{NodeId, util::basic_op};
 
     use super::*;
-    use crate::chat::ChatModel;
 
     fn model() -> NodeModel {
         NodeModel::new(RoutingModel::standard(3.into()))
@@ -128,9 +126,9 @@ mod tests {
         let op = basic_op(1);
         let data = FloodingWireData::new(op.clone());
         let store_chat = NodeAction::Chat(ChatAction::StoreOp(op));
-        let store_routing = NodeAction::Routing(RoutingAction::Protocol(AnyRoutingAction::Flooding(
-            FloodingAction::StoreOp(data.clone()),
-        )));
+        let store_routing = NodeAction::Routing(RoutingAction::Protocol(
+            AnyRoutingAction::Flooding(FloodingAction::StoreOp(data.clone())),
+        ));
         let (state, _) = m.transitions(state, [store_chat, store_routing]).unwrap();
         let (_, fx) = m
             .transition(
@@ -155,7 +153,7 @@ mod tests {
         let state = NodeState::default();
         let op = basic_op(42);
         let op_id = op.id;
-        let (state, fx) = m
+        let (state, _) = m
             .transition(
                 state,
                 NodeAction::Routing(RoutingAction::Network(ProtocolNetworkAction::Receive {

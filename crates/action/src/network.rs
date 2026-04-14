@@ -8,5 +8,6 @@ pub enum NetworkAction {
     Tick,
     /// Evolve the network topology
     EvolveTopology,
+    /// Dispatch a NodeAction to a particular node
     Node(NodeId, NodeAction),
 }

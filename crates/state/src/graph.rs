@@ -1,10 +1,10 @@
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{HashMap, HashSet};
 
-use petgraph::graph::{Graph as PetGraph, NodeIndex};
+use petgraph::graph::Graph as PetGraph;
 use polestar::ext::MapExt;
 use serde::{Deserialize, Serialize};
-use simdash_types::NodeId;
 use simdash_routing::RoutingState;
+use simdash_types::NodeId;
 
 use crate::node::NodeState;
 
@@ -63,11 +63,11 @@ impl<R: Clone, E> Graph<R, E> {
     pub fn node_ids(&self) -> impl Iterator<Item = NodeId> + '_ {
         let ids = self.nodes.keys().copied();
         debug_assert_eq!(
-            ids.clone().collect::<BTreeSet<_>>(),
+            ids.clone().collect::<HashSet<_>>(),
             self.graph
                 .node_indices()
                 .map(|i| NodeId::from(i))
-                .collect::<BTreeSet<_>>()
+                .collect::<HashSet<_>>()
         );
         ids
     }
@@ -136,8 +136,8 @@ impl<R: Clone, E> Graph<R, E> {
             .graph
             .node_indices()
             .map(|i| NodeId::from(i))
-            .collect::<BTreeSet<_>>();
-        let ids = self.nodes.keys().copied().collect::<BTreeSet<_>>();
+            .collect::<HashSet<_>>();
+        let ids = self.nodes.keys().copied().collect::<HashSet<_>>();
         assert_eq!(
             indices, ids,
             "graph integrity check failed: node id mismatch"

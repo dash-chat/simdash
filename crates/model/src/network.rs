@@ -1,16 +1,15 @@
-use std::collections::{BTreeSet, HashMap};
+use std::collections::HashSet;
 
 use dash_chat_top_gen::ChatTopology;
-use net_topology::net_topology::Ordinality;
-use polestar::{Machine, ext::MapExt};
+use polestar::Machine;
 use rand::seq::IndexedRandom;
 use simdash_action::{chat::ChatAction, node::NodeAction};
 use simdash_routing::{RoutingAction, RoutingFx};
 use simdash_routing_common::{ProtocolNetworkAction, SendFx, StorageFx};
-use simdash_state::{network::NetworkState, node::NodeState};
-use simdash_types::{NodeId, Operation};
+use simdash_state::network::NetworkState;
+use simdash_types::NodeId;
 
-use crate::node::{NodeFx, NodeModel, NodeModelConfig};
+use crate::node::{NodeFx, NodeModel};
 
 pub struct NetworkModel {
     node: NodeModel,
@@ -56,7 +55,7 @@ impl polestar::Machine for NetworkModel {
                     .graph_mut()
                     .retain_edges(|g, idx| g[idx].remaining_ticks != Some(0));
 
-                let existing_ids: BTreeSet<u32> = state
+                let existing_ids: HashSet<u32> = state
                     .graph
                     .graph()
                     .edge_weights()
@@ -78,7 +77,7 @@ impl polestar::Machine for NetworkModel {
             }
 
             simdash_action::network::NetworkAction::Node(node_id, node_action) => {
-                let fx = match state.graph.update_node(node_id, |node_state| {
+                let () = match state.graph.update_node(node_id, |node_state| {
                     let (node_state, node_fx) = self.node.transition(node_state, node_action)?;
                     Ok((node_state, node_fx))
                 }) {
@@ -169,7 +168,7 @@ impl NetworkModel {
 
     fn unspawned_edge_topos<'a>(
         &'a self,
-        existing_ids: &'a BTreeSet<u32>,
+        existing_ids: &'a HashSet<u32>,
     ) -> impl Iterator<Item = &'a net_topology::net_topology::EdgeTopology> {
         self.topology
             .net

@@ -4,7 +4,7 @@ use rand::{SeedableRng, rngs::StdRng};
 use serde::{Deserialize, Serialize};
 use simdash_types::NodeId;
 
-use crate::{Graph, node::NodeState};
+use crate::Graph;
 
 /// Seeded RNG for topology evolution operations.
 /// Stores seed + call count so the full state is serializable.

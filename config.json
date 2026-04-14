@@ -6,7 +6,7 @@
     {
       "element": "node",
       "subnet": "mesh",
-      "number": 10,
+      "number": 100,
       "rules": [
         {
           "element": "link",
@@ -20,7 +20,7 @@
             "subnet": "mesh"
           },
           "ordinality": "bidirectional",
-          "longevity": 6,
+          "longevity": 5,
           "spawn_chance": 0.1
         }
       ]

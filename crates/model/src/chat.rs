@@ -1,4 +1,3 @@
-use anyhow::bail;
 use simdash_action::chat::ChatAction;
 use simdash_state::chat::ChatState;
 
