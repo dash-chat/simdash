@@ -28,4 +28,4 @@ impl NoopMetadata {
 
 /// The data sent over the wire between nodes using the flooding protocol.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
-pub struct WireData;
+pub struct NoopWireData;

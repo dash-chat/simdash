@@ -11,8 +11,8 @@
 /// Each protocol's state type must have a `.tick()` method.
 /// Each protocol's model type must implement `polestar::Machine` with:
 /// - `State  = {state type}`
-/// - `Action = ProtocolAction<{action type}, {data type}>`
-/// - `Fx     = Option<ProtocolFx<{fx type}, {data type}>>`
+/// - `Action = RoutingAction<{action type}, {data type}>`
+/// - `Fx     = Option<RoutingFx<{fx type}, {data type}>>`
 /// - `Error  = anyhow::Error`
 ///
 /// The Data type models datagrams flowing through the network.
@@ -64,7 +64,7 @@ macro_rules! routing_protocols {
         impl RoutingModel {
             /// Advance the routing model by one tick
             pub fn tick(&self, state: RoutingState) -> polestar::TransitionResult<Self> {
-                self.transition(state, ProtocolAction::Network(ProtocolNetworkAction::Tick))
+                self.transition(state, RoutingAction::Network(ProtocolNetworkAction::Tick))
             }
         }
 
@@ -113,8 +113,8 @@ macro_rules! routing_protocols {
 
         impl Machine for RoutingModel {
             type State  = RoutingState;
-            type Action = ProtocolAction<AnyRoutingAction, AnyRoutingData>;
-            type Fx     = Option<ProtocolFx<AnyRoutingFx, AnyRoutingData>>;
+            type Action = RoutingAction<AnyRoutingAction, AnyRoutingData>;
+            type Fx     = Option<RoutingFx<AnyRoutingFx, AnyRoutingData>>;
             type Error  = anyhow::Error;
 
             fn transition(
@@ -123,12 +123,12 @@ macro_rules! routing_protocols {
                 action: Self::Action,
             ) -> polestar::TransitionResult<Self> {
                 match action {
-                    ProtocolAction::Network(ProtocolNetworkAction::Tick) => {
+                    RoutingAction::Network(ProtocolNetworkAction::Tick) => {
                         Tickable::tick(&mut state);
                         Ok((state, None))
                     }
 
-                    ProtocolAction::Network(ProtocolNetworkAction::Receive { from, data }) => {
+                    RoutingAction::Network(ProtocolNetworkAction::Receive { from, data }) => {
                         let mut result_fx = None;
                         $(
                             let protocol_data: std::collections::HashSet<$data_ty> = data
@@ -142,7 +142,7 @@ macro_rules! routing_protocols {
                             if !protocol_data.is_empty() {
                                 let (new, fx) = self.$field.transition(
                                     state.$field,
-                                    ProtocolAction::Network(ProtocolNetworkAction::Receive {
+                                    RoutingAction::Network(ProtocolNetworkAction::Receive {
                                         from,
                                         data: protocol_data,
                                     }),
@@ -156,12 +156,12 @@ macro_rules! routing_protocols {
                         Ok((state, result_fx))
                     }
 
-                    ProtocolAction::Protocol(action) => match action {
+                    RoutingAction::Protocol(action) => match action {
                         $(
                             AnyRoutingAction::$Variant(a) => {
                                 let (new, fx) = self.$field.transition(
                                     state.$field,
-                                    ProtocolAction::Protocol(a),
+                                    RoutingAction::Protocol(a),
                                 )?;
                                 state.$field = new;
                                 Ok((state, fx.map(|fx| {

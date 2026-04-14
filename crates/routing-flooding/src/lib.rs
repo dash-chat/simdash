@@ -13,3 +13,10 @@ pub use behavior::*;
 pub use fx::*;
 pub use model::*;
 pub use state::*;
+
+use simdash_routing_common::{RoutingAction, RoutingFx};
+
+/// The action type for the Flooding protocol (including network-level actions)
+pub type ProtocolAction = RoutingAction<FloodingAction, FloodingWireData>;
+/// The effect type for the Flooding protocol (including network- and node-level effects)
+pub type ProtocolFx = RoutingFx<FloodingFx, FloodingWireData>;

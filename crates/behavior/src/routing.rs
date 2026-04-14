@@ -1,5 +1,5 @@
 use simdash_routing::{
-    AnyRoutingAction, AnyRoutingData, RoutingAction, RoutingModel, RoutingState,
+    AnyRoutingAction, AnyRoutingData, RoutingActionDispatch, RoutingModel, RoutingState,
 };
 use simdash_types::Behavior;
 
@@ -8,7 +8,7 @@ use simdash_types::Behavior;
 pub struct NoOpRoutingBehavior;
 
 impl Behavior<RoutingModel> for NoOpRoutingBehavior {
-    fn next(&mut self, _: &RoutingState) -> anyhow::Result<Vec<RoutingAction>> {
+    fn next(&mut self, _: &RoutingState) -> anyhow::Result<Vec<RoutingActionDispatch>> {
         Ok(vec![])
     }
 }
@@ -17,7 +17,7 @@ impl Behavior<RoutingModel> for NoOpRoutingBehavior {
 pub struct BasicRoutingBehavior;
 
 impl Behavior<RoutingModel> for BasicRoutingBehavior {
-    fn next(&mut self, state: &RoutingState) -> anyhow::Result<Vec<RoutingAction>> {
+    fn next(&mut self, state: &RoutingState) -> anyhow::Result<Vec<RoutingActionDispatch>> {
         let mut b = simdash_routing::flooding::EagerFloodingBehavior;
         Ok(b.next(&state.flooding)?
             .into_iter()

@@ -9,7 +9,7 @@ use simdash_types::EncryptedOp;
 /// using specific Fx and Data types, and also by the higher level network model,
 /// which will use enums of all possible Fx and Data types for all known routing protocols.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum ProtocolFx<Fx, D: Eq + Hash> {
+pub enum RoutingFx<Fx, D: Eq + Hash> {
     /// An effect to take place at the Network level (send data)
     Network(SendFx<D>),
     /// An effect to take place at the Node level (modify Chat state)

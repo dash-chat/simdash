@@ -1,10 +1,10 @@
-use simdash_routing::RoutingAction;
+use simdash_routing::RoutingActionDispatch;
 
 use crate::chat::ChatAction;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NodeAction {
     Chat(ChatAction),
-    Routing(RoutingAction),
+    Routing(RoutingActionDispatch),
     Tick,
 }

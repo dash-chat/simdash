@@ -8,7 +8,7 @@ use dash_chat_top_gen::ChatTopology;
 use polestar::Machine;
 use rand::seq::IndexedRandom;
 use simdash_action::{chat::ChatAction, node::NodeAction};
-use simdash_routing::{RoutingAction, RoutingFx};
+use simdash_routing::{RoutingActionDispatch, RoutingFxDispatch};
 use simdash_routing_common::{ProtocolNetworkAction, SendFx, StorageFx};
 use simdash_state::network::NetworkState;
 use simdash_types::NodeId;
@@ -116,14 +116,14 @@ impl NetworkModel {
         fx: NodeFx,
     ) -> anyhow::Result<()> {
         match fx.routing {
-            RoutingFx::Network(send) => match send {
+            RoutingFxDispatch::Network(send) => match send {
                 SendFx::BroadcastData { data } => {
                     let neighbors = state.neighborhood(node_id).collect::<Vec<_>>();
                     for neighbor in neighbors {
                         let fx = state.graph.update_node(neighbor, |node_state| {
                             self.node.transition(
                                 node_state,
-                                NodeAction::Routing(RoutingAction::Network(
+                                NodeAction::Routing(RoutingActionDispatch::Network(
                                     ProtocolNetworkAction::Receive {
                                         from: node_id,
                                         data: data.clone(),
@@ -141,7 +141,7 @@ impl NetworkModel {
                     let fx = state.graph.update_node(to, |node_state| {
                         self.node.transition(
                             node_state,
-                            NodeAction::Routing(RoutingAction::Network(
+                            NodeAction::Routing(RoutingActionDispatch::Network(
                                 ProtocolNetworkAction::Receive {
                                     from: node_id,
                                     data,
@@ -156,7 +156,7 @@ impl NetworkModel {
             },
 
             // TODO: this could also be handled at the Node level, or by the Simulator.
-            RoutingFx::Node(StorageFx::StoreOps { ops }) => {
+            RoutingFxDispatch::Node(StorageFx::StoreOps { ops }) => {
                 let fx = state.graph.update_node(node_id, |node_state| {
                     let actions = ops.into_iter().map(|op| {
                         NodeAction::Chat(ChatAction::StoreOp(
@@ -172,7 +172,7 @@ impl NetworkModel {
                     }
                 }
             }
-            RoutingFx::Protocol(fx) => {
+            RoutingFxDispatch::Protocol(fx) => {
                 tracing::warn!(
                     "Unhandled protocol effect (need to create NetworkFx to propagate higher up): {:?}",
                     fx

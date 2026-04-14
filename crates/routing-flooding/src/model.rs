@@ -1,12 +1,10 @@
 use std::collections::HashSet;
 
-use simdash_routing_common::{
-    ProtocolAction, ProtocolFx, ProtocolNetworkAction, SendFx, StorageFx,
-};
+use simdash_routing_common::{ProtocolNetworkAction, SendFx, StorageFx};
 use simdash_types::{Tickable, Ticks};
 
 use crate::{
-    FloodingFx, FloodingWireData,
+    ProtocolAction, ProtocolFx,
     action::FloodingAction,
     state::{FloodingOp, FloodingState},
 };
@@ -21,8 +19,8 @@ pub struct FloodingModel {
 
 impl polestar::Machine for FloodingModel {
     type State = FloodingState;
-    type Action = ProtocolAction<FloodingAction, FloodingWireData>;
-    type Fx = Option<ProtocolFx<FloodingFx, FloodingWireData>>;
+    type Action = ProtocolAction;
+    type Fx = Option<ProtocolFx>;
     type Error = anyhow::Error;
 
     fn transition(
@@ -95,6 +93,8 @@ mod tests {
     use pretty_assertions::assert_eq;
     use simdash_routing_common::ProtocolNetworkAction;
     use simdash_types::{NodeId, util::basic_op};
+
+    use crate::FloodingWireData;
 
     use super::*;
 
