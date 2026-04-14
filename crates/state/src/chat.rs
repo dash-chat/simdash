@@ -3,10 +3,14 @@ use std::collections::{HashMap, HashSet};
 use serde::{Deserialize, Serialize};
 use simdash_types::{GroupId, NodeId, OpId, Operation, Size};
 
+/// The dashchat-specific state of a node.
 #[derive(Serialize, Deserialize, Debug, Clone, Default, PartialEq, Eq)]
 pub struct ChatState {
+    /// The operations stored in the chat state
     pub op_store: HashMap<OpId, Operation>,
+    /// The contacts of the node
     pub contacts: HashSet<NodeId>,
+    /// The groups the node is a member of
     pub groups: HashSet<GroupId>,
     /// Maximum total payload size this node can store. None means unlimited.
     #[serde(default)]
@@ -17,6 +21,7 @@ impl ChatState {
     /// ChatState is timeless
     pub fn tick(&mut self) {}
 
+    /// Get the total size of all operations stored in the chat state
     pub fn stored_size(&self) -> Size {
         self.op_store
             .values()
@@ -24,6 +29,7 @@ impl ChatState {
             .fold(Size::from(0u64), |acc, s| Size::from(*acc + *s))
     }
 
+    /// Store an operation in the chat state, allowing for capacity limits.
     pub fn store_op(&mut self, op: Operation) -> anyhow::Result<()> {
         if self.op_store.contains_key(&op.id) {
             anyhow::bail!("Chat op already exists: op_id={:?}", op.id);

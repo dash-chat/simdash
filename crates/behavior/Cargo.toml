@@ -3,6 +3,7 @@ name = "simdash-behavior"
 version = "0.1.0"
 edition = "2024"
 
+
 [dependencies]
 anyhow = { workspace = true }
 derive_more = { workspace = true }
@@ -13,3 +14,7 @@ simdash-types = { workspace = true }
 simdash-model = { workspace = true }
 simdash-routing = { workspace = true }
 simdash-state = { workspace = true }
+
+
+[lints]
+workspace = true

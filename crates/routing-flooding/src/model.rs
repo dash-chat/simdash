@@ -6,15 +6,14 @@ use simdash_routing_common::{
 use simdash_types::{Tickable, Ticks};
 
 use crate::{
-    FloodingWireData,
+    FloodingFx, FloodingWireData,
     action::FloodingAction,
     state::{FloodingOp, FloodingState},
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[must_use]
-pub enum FloodingFx {}
-
+/// The Flooding model simply broadcasts operations to all neighbors indiscriminately.
+///
+/// It records the time of broadcast for each op, and repeats broadcast after a configurable interval.
 pub struct FloodingModel {
     /// Don't broadcast an op twice within this interval.
     pub broadcast_interval: Ticks,

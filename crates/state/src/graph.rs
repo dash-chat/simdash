@@ -8,18 +8,20 @@ use simdash_types::NodeId;
 
 use crate::node::NodeState;
 
+/// The state of an edge in the graph.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct EdgeState {
+    /// The ID of the topology this edge is part of
     pub topology_id: u32,
-    pub reversed: bool,
+    /// The number of ticks remaining for this edge
     pub remaining_ticks: Option<u32>,
 }
 
 impl EdgeState {
-    pub fn new(topology_id: u32, reversed: bool, longevity: u32) -> Self {
+    /// Create a new EdgeState with the given topology ID and longevity.
+    pub fn new(topology_id: u32, longevity: u32) -> Self {
         Self {
             topology_id,
-            reversed,
             remaining_ticks: if longevity == 0 {
                 None
             } else {
@@ -29,10 +31,13 @@ impl EdgeState {
     }
 }
 
+/// A network graph.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Graph<R = RoutingState, E = EdgeState> {
     graph: PetGraph<(), E>,
+    /// The nodes in the graph
     pub nodes: HashMap<NodeId, NodeState<R>>,
+    /// The subnets in the graph
     #[serde(skip, default)]
     subnets: HashMap<String, Vec<NodeId>>,
 }
@@ -48,18 +53,22 @@ impl<R, E> Default for Graph<R, E> {
 }
 
 impl<R: Clone, E> Graph<R, E> {
+    /// Create a new Graph.
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Get a reference to the graph.
     pub fn graph(&self) -> &PetGraph<(), E> {
         &self.graph
     }
 
+    /// Get a mutable reference to the graph.
     pub fn graph_mut(&mut self) -> &mut PetGraph<(), E> {
         &mut self.graph
     }
 
+    /// Get an iterator over the node IDs in the graph.
     pub fn node_ids(&self) -> impl Iterator<Item = NodeId> + '_ {
         let ids = self.nodes.keys().copied();
         debug_assert_eq!(
@@ -72,14 +81,17 @@ impl<R: Clone, E> Graph<R, E> {
         ids
     }
 
+    /// Get a reference to the state of a node.
     pub fn node_state(&self, node_id: NodeId) -> Option<&NodeState<R>> {
         self.nodes.get(&node_id)
     }
 
+    /// Get a mutable reference to the state of a node.
     pub fn node_state_mut(&mut self, node_id: NodeId) -> Option<&mut NodeState<R>> {
         self.nodes.get_mut(&node_id)
     }
 
+    /// Update the state of a node with a closure, typically a state transition function.
     pub fn update_node<O>(
         &mut self,
         node_id: NodeId,
@@ -93,6 +105,7 @@ impl<R: Clone, E> Graph<R, E> {
         Ok(state)
     }
 
+    /// Add a node to the graph.
     pub fn add_node(&mut self, node_id: NodeId, state: NodeState<R>) {
         let expected_idx = node_id.into();
         let idx = self.graph.add_node(());
@@ -103,6 +116,7 @@ impl<R: Clone, E> Graph<R, E> {
         self.nodes.insert(node_id, state);
     }
 
+    /// Add an edge to the graph.
     pub fn add_edge(&mut self, from: NodeId, to: NodeId, weight: E) -> bool {
         if !self.nodes.contains_key(&from) || !self.nodes.contains_key(&to) {
             return false;
@@ -111,20 +125,24 @@ impl<R: Clone, E> Graph<R, E> {
         true
     }
 
+    /// Set a subnet in the graph, used during topology generation.
     pub fn set_subnet(&mut self, name: impl Into<String>, mut node_ids: Vec<NodeId>) {
         node_ids.sort_unstable();
         node_ids.dedup();
         self.subnets.insert(name.into(), node_ids);
     }
 
+    /// Get the node IDs in a subnet.
     pub fn subnet_node_ids(&self, name: &str) -> Option<&[NodeId]> {
         self.subnets.get(name).map(Vec::as_slice)
     }
 
+    /// Get a reference to the subnets in the graph.
     pub fn subnets(&self) -> &HashMap<String, Vec<NodeId>> {
         &self.subnets
     }
 
+    /// Assert that the parts of the graph state are internally consistent.
     pub fn assert_integrity(&self) {
         assert_eq!(
             self.graph.node_count(),

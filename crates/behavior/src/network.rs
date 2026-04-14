@@ -4,11 +4,16 @@ use simdash_state::network::NetworkState;
 
 use simdash_types::Behavior;
 
+/// A "fair scheduling" behavior that lets each Node in a network take one Action per tick.
+///
+/// This models a uniform flow of time with nodes that are perfectly identical to each other
+/// in the rate that they take actions.
 pub struct RoundRobinNodeScheduler<B: Behavior<NodeModel>> {
     node_behavior: B,
 }
 
 impl<B: Behavior<NodeModel>> RoundRobinNodeScheduler<B> {
+    /// Constructor
     pub fn new(node_behavior: B) -> Self {
         Self { node_behavior }
     }

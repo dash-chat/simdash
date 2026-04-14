@@ -1,7 +1,7 @@
-use simdash_types::Behavior;
 use simdash_routing::{
     AnyRoutingAction, AnyRoutingData, RoutingAction, RoutingModel, RoutingState,
 };
+use simdash_types::Behavior;
 
 /// A no-op routing behavior that never triggers any routing actions.
 /// Useful as a baseline to observe the initial state without propagation.
@@ -13,11 +13,12 @@ impl Behavior<RoutingModel> for NoOpRoutingBehavior {
     }
 }
 
+/// A routing behavior that only generates actions for the Flooding protocol.
 pub struct BasicRoutingBehavior;
 
 impl Behavior<RoutingModel> for BasicRoutingBehavior {
     fn next(&mut self, state: &RoutingState) -> anyhow::Result<Vec<RoutingAction>> {
-        let mut b = simdash_routing::flooding::NaiveFloodingBehavior;
+        let mut b = simdash_routing::flooding::EagerFloodingBehavior;
         Ok(b.next(&state.flooding)?
             .into_iter()
             .map(|a| {

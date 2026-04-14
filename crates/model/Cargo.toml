@@ -21,3 +21,7 @@ tracing = { workspace = true }
 [dev-dependencies]
 net-topology = { workspace = true }
 pretty_assertions = { workspace = true }
+
+
+[lints]
+workspace = true

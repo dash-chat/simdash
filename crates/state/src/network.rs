@@ -15,6 +15,7 @@ pub struct NetworkTopologyState {
 }
 
 impl NetworkTopologyState {
+    /// Create a new NetworkTopologyState with the given random seed.
     pub fn new(seed: u64) -> Self {
         Self {
             seed,
@@ -30,13 +31,17 @@ impl NetworkTopologyState {
     }
 }
 
+/// The state of the network.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NetworkState {
+    /// The network graph
     pub graph: Graph,
+    /// The network topology state
     pub topology: NetworkTopologyState,
 }
 
 impl NetworkState {
+    /// All nodes with edges originating from the given node.
     pub fn neighborhood(&self, node_id: NodeId) -> impl Iterator<Item = NodeId> {
         self.graph
             .graph()
@@ -44,6 +49,7 @@ impl NetworkState {
             .map(|n| n.into())
     }
 
+    /// Load a network state from a file with postcard-serialized Graph.
     pub fn load_postcard(path: impl AsRef<Path>) -> Self {
         let path = path.as_ref();
         let path = path.canonicalize().unwrap();

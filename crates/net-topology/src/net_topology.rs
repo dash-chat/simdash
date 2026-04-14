@@ -1,8 +1,8 @@
 use std::collections::BTreeMap;
 
 use serde::Deserialize;
-use simdash_types::NodeId;
 use simdash_state::{EdgeState, Graph};
+use simdash_types::NodeId;
 
 /// How link destinations are chosen.
 #[derive(Debug, Clone, Deserialize)]
@@ -72,13 +72,9 @@ impl EdgeTopology {
 
     /// Adds this edge (and its reverse if bidirectional) to `graph` with `to` as the destination.
     pub fn add_to_graph(&self, graph: &mut Graph, to: NodeId) {
-        graph.add_edge(
-            self.from,
-            to,
-            EdgeState::new(self.id, false, self.longevity),
-        );
+        graph.add_edge(self.from, to, EdgeState::new(self.id, self.longevity));
         if matches!(self.ordinality, Ordinality::Bidirectional) {
-            graph.add_edge(to, self.from, EdgeState::new(self.id, true, self.longevity));
+            graph.add_edge(to, self.from, EdgeState::new(self.id, self.longevity));
         }
     }
 }

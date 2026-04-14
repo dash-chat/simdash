@@ -1,19 +1,22 @@
+//! The Node model manages all of the state of a single node in the network.
+
 use simdash_action::node::NodeAction;
 use simdash_routing::{RoutingFx, RoutingModel};
-use simdash_types::Ticks;
 
 use crate::chat::ChatModel;
 
+/// The Node model manages the state of a single node in the network.
+///
+/// It contains the state of the node's chat app and its routing protocol.
 pub struct NodeModel {
+    /// The chat app model
     pub dash: ChatModel,
+    /// The routing protocol model
     pub routing: RoutingModel,
 }
 
-pub struct NodeModelConfig {
-    pub broadcast_interval: Ticks,
-}
-
 impl NodeModel {
+    /// Constructor
     pub fn new(routing: RoutingModel) -> Self {
         Self {
             dash: ChatModel,
@@ -22,9 +25,11 @@ impl NodeModel {
     }
 }
 
+/// The effects that can be produced by a Node model.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[must_use]
 pub struct NodeFx {
+    /// The effects produced by the contained routing protocol
     pub routing: RoutingFx,
 }
 
@@ -41,22 +46,6 @@ impl polestar::Machine for NodeModel {
     ) -> polestar::TransitionResult<Self> {
         Ok(match action {
             NodeAction::Chat(action) => {
-                // Always trigger a StoreOp on the routing state if an op is stored in dash chat.
-                // (idempotent.)
-                //
-                // TODO: should this be part of the generic routing interface or must it be triggered manually in behavior?
-                //
-                // match &action {
-                //     ChatAction::StoreOp(op) => {
-                //         let (routing, fx) = self.routing.transition(
-                //             state.routing,
-                //             FloodingAction::StoreOp { op: op.clone() }.into(),
-                //         )?;
-                //         state.routing = routing;
-                //     }
-                //     _ => {}
-                // }
-
                 state.chat = self.dash.transition_(state.chat, action)?;
                 (state, None)
             }

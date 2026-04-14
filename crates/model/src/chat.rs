@@ -1,6 +1,11 @@
+//! Model of the chat state, including stored operations,
+//! joined groups, contacts.
+
 use simdash_action::chat::ChatAction;
 use simdash_state::chat::ChatState;
 
+/// The Chat model stores Dashchat-specific state, including stored operations,
+/// joined groups, and contacts.
 pub struct ChatModel;
 
 impl polestar::Machine for ChatModel {

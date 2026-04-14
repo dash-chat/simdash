@@ -5,12 +5,14 @@ use simdash_state::node::NodeState;
 
 use simdash_types::Behavior;
 
+/// A basic node behavior that simply generated Routing actions (no Chat actions).
 #[derive(Default)]
 pub struct BasicNodeBehavior<B: Behavior<RoutingModel>> {
     routing_behavior: B,
 }
 
 impl<B: Behavior<RoutingModel>> BasicNodeBehavior<B> {
+    /// Constructor
     pub fn new(routing_behavior: B) -> Self {
         Self { routing_behavior }
     }

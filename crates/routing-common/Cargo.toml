@@ -5,3 +5,7 @@ edition = "2024"
 
 [dependencies]
 simdash-types = { workspace = true }
+
+
+[lints]
+workspace = true

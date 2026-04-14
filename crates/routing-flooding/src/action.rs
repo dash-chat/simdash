@@ -1,7 +1,11 @@
 use crate::FloodingWireData;
 
+/// Actions for the Flooding protocol.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum FloodingAction {
+    /// An action to begin tracking an operation in the flooding state
     StoreOp(FloodingWireData),
+    /// An action to trigger a broadcast of whatever operations should be broadcast
+    /// for the current tick.
     TriggerBroadcast,
 }

@@ -2,6 +2,7 @@ use simdash_routing_common::{ProtocolAction, ProtocolFx, ProtocolNetworkAction};
 
 use crate::{NoopFx, WireData, action::NoopAction, state::NoopState};
 
+/// The Noop model simply does nothing.
 #[derive(Debug, Clone, Default)]
 pub struct NoopModel;
 

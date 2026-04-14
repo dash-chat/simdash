@@ -53,34 +53,56 @@ macro_rules! routing_protocols {
         ),+ $(,)?
     ) => {
 
+        /// The model composed of all user-defined routing protocols.
         pub struct RoutingModel {
-            $( pub $field: $model_ty, )+
+            $(
+                #[doc = concat!("The model for the `", stringify!($field), "` protocol")]
+                pub $field: $model_ty,
+            )+
         }
 
         impl RoutingModel {
+            /// Advance the routing model by one tick
             pub fn tick(&self, state: RoutingState) -> polestar::TransitionResult<Self> {
                 self.transition(state, ProtocolAction::Network(ProtocolNetworkAction::Tick))
             }
         }
 
+
+        /// The state composed of all user-defined routing protocol states.
         #[derive(Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
         pub struct RoutingState {
-            $( pub $field: $state_ty, )+
+            $(
+                #[doc = concat!("The state for the `", stringify!($field), "` protocol")]
+                pub $field: $state_ty,
+            )+
         }
 
+        /// An enum that unifies all possible routing wire data types.
         #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
         pub enum AnyRoutingData {
-            $( $Variant($data_ty), )+
+            $(
+                #[doc = concat!("The wire data type for the `", stringify!($Variant), "` protocol")]
+                $Variant($data_ty),
+            )+
         }
 
+        /// An enum that unifies all possible routing action types.
         #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
         pub enum AnyRoutingAction {
-            $( $Variant($action_ty), )+
+            $(
+                #[doc = concat!("The action type for the `", stringify!($Variant), "` protocol")]
+                $Variant($action_ty),
+            )+
         }
 
+        /// An enum that unifies all possible routing effect types.
         #[derive(Debug, Clone, PartialEq, Eq, Hash)]
         pub enum AnyRoutingFx {
-            $( $Variant($fx_ty), )+
+            $(
+                #[doc = concat!("The effect type for the `", stringify!($Variant), "` protocol")]
+                $Variant($fx_ty),
+            )+
         }
 
         impl Tickable for RoutingState {

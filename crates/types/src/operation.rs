@@ -27,7 +27,14 @@ pub struct EncryptedOp(Operation);
 impl EncryptedOp {
     /// This should only be used in contexts where decryption is actually allowed!
     /// The whole point is to pretend that the data remains encrypted in other contexts.
-    pub fn decrypt(self) -> Operation {
+    pub fn decrypt(self, _key: &EncryptionKey) -> Operation {
         self.0
     }
 }
+
+/// Represents a private encryption key.
+///
+/// This is more of a reminder that a key is needed. This could be modeled better,
+/// enforcing that the right key is used for the right [EncryptedOp].
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct EncryptionKey;

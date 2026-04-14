@@ -1,3 +1,5 @@
+//! A no-op routing protocol, which does nothing.
+
 mod action;
 mod behavior;
 mod fx;
