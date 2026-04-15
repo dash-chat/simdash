@@ -17,7 +17,7 @@ mod macros;
 
 use polestar::Machine;
 use simdash_routing_common::{ProtocolNetworkAction, RoutingAction, RoutingFx, SendFx};
-use simdash_types::{Tickable, Ticks};
+use simdash_types::{GetRoutingOpInfo, RoutingOpInfo, Tickable, Ticks};
 
 pub use simdash_protocol_flooding as flooding;
 pub use simdash_protocol_flooding_sync as flooding_sync;

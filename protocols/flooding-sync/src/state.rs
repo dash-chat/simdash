@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeSet, HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
 use simdash_types::*;
@@ -34,6 +34,17 @@ impl Tickable for State {
     }
 }
 
+impl GetRoutingOpInfo for State {
+    fn routing_op_infos(&self) -> impl Iterator<Item = RoutingOpInfo> {
+        self.op_buffer.ops.values().flat_map(|ops| {
+            ops.iter().map(|op| RoutingOpInfo {
+                id: op.encrypted.op_id(),
+                size: op.encrypted.size(),
+            })
+        })
+    }
+}
+
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct OpBuffer {
     ops: HashMap<LogId, BTreeSet<Op>>,
@@ -46,6 +57,8 @@ impl OpBuffer {
         let existing = log.insert(op);
         if existing {
             tracing::warn!("Op already exists: metadata={:?}", metadata);
+        } else {
+            tracing::info!("Stored new op: metadata={:?}", metadata);
         }
     }
 

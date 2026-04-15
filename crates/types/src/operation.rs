@@ -38,6 +38,19 @@ impl EncryptedOp {
     pub fn decrypt(self, _key: &EncryptionKey) -> Operation {
         self.0
     }
+
+    /// Reveal the OpId of the encrypted op.
+    /// Model logic should never make use of this, but it's useful
+    /// for external observability
+    pub fn op_id(&self) -> OpId {
+        self.0.id
+    }
+
+    /// Size of the op.
+    /// TODO: not accurate, doesn't include header
+    pub fn size(&self) -> Size {
+        self.0.header.payload_size
+    }
 }
 
 /// Represents a private encryption key.
@@ -46,3 +59,11 @@ impl EncryptedOp {
 /// enforcing that the right key is used for the right [EncryptedOp].
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct EncryptionKey;
+
+/// Used by the simulation runner's visualizations
+#[derive(Serialize, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct RoutingOpInfo {
+    pub id: OpId,
+    pub size: Size,
+    // pub since_last_send: Option<u32>,
+}

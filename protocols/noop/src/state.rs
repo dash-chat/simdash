@@ -14,6 +14,12 @@ impl Tickable for NoopState {
     }
 }
 
+impl GetRoutingOpInfo for NoopState {
+    fn routing_op_infos(&self) -> impl Iterator<Item = RoutingOpInfo> {
+        std::iter::empty()
+    }
+}
+
 /// Metadata needed for flooding.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
 pub struct NoopMetadata;

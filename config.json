@@ -6,7 +6,7 @@
     {
       "element": "node",
       "subnet": "mesh",
-      "number": 10,
+      "number": 4,
       "rules": [
         {
           "element": "link",
@@ -43,23 +43,11 @@
         "group_amount": 10,
         "group_size": {
           "type": "fixed",
-          "value": 10
+          "value": 3
         },
         "operations_count": {
           "type": "fixed",
-          "value": 40
-        }
-      },
-      {
-        "type": "contacts",
-        "subnets": "all",
-        "contacts_amount": {
-          "type": "fixed",
-          "value": 15
-        },
-        "operations_count": {
-          "type": "fixed",
-          "value": 30
+          "value": 2
         }
       }
     ]

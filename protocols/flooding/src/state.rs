@@ -17,6 +17,15 @@ impl Tickable for FloodingState {
     }
 }
 
+impl GetRoutingOpInfo for FloodingState {
+    fn routing_op_infos(&self) -> impl Iterator<Item = RoutingOpInfo> {
+        self.ops.values().map(|op| RoutingOpInfo {
+            id: op.id(),
+            size: op.data.metadata.size,
+        })
+    }
+}
+
 impl FloodingState {
     /// Get the IDs of all operations currently being tracked
     pub fn op_ids(&self) -> BTreeSet<OpId> {

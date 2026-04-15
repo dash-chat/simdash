@@ -97,3 +97,7 @@ pub trait ExtractMetadata<T> {
 pub trait Tickable {
     fn tick(&mut self);
 }
+
+pub trait GetRoutingOpInfo {
+    fn routing_op_infos(&self) -> impl Iterator<Item = RoutingOpInfo>;
+}

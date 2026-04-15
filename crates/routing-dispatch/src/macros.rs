@@ -78,6 +78,15 @@ macro_rules! routing_dispatch {
             )+
         }
 
+        impl GetRoutingOpInfo for RoutingDispatchState {
+            fn routing_op_infos(&self) -> impl Iterator<Item = RoutingOpInfo> {
+                let ops = std::iter::empty();
+                $( let ops = ops.chain(GetRoutingOpInfo::routing_op_infos(&self.$field)); )+
+                ops
+            }
+        }
+
+
         /// An enum that unifies all possible routing wire data types.
         #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
         pub enum AnyRoutingData {

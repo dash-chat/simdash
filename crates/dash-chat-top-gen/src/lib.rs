@@ -156,6 +156,8 @@ impl ChatStateGenerator {
             .flat_map(|(name, ids)| ids.iter().map(move |&id| (id, name.clone())))
             .collect();
 
+        let mut seqs = HashMap::new();
+
         for rule in &self.config.rules {
             match rule {
                 Rule::Groups(spec) => {
@@ -215,22 +217,27 @@ impl ChatStateGenerator {
 
                         // Generate operations for this group.
                         let num_ops = spec.operations_count.sample(&mut rng) as usize;
-                        for seq in 0..num_ops as u32 {
+                        for _ in 0..num_ops as u32 {
                             let &author = members.choose(&mut rng).unwrap();
                             let op_id = OpId::from(op_counter);
                             op_counter += 1;
                             let payload_size = Size::from(spec.operations_size.sample(&mut rng));
 
+                            let seq = seqs.entry((author, group_id)).or_insert(0);
+
+                            let header = Header {
+                                author,
+                                payload_size,
+                                seq: Seq::from(*seq as u32),
+                                log_id: LogId::from(group_id as u32),
+                            };
                             let op = Operation {
                                 id: op_id,
-                                header: Header {
-                                    author,
-                                    payload_size,
-                                    seq: Seq::from(seq),
-                                    log_id: LogId::from(0),
-                                },
+                                header,
                                 body: Body::GroupMessage { group_id },
                             };
+
+                            *seq += 1;
 
                             // Only the author stores the op initially;
                             // routing will deliver it to other members.
@@ -333,9 +340,7 @@ impl ChatStateGenerator {
                         let num_ops = spec.operations_count.sample(&mut rng) as usize;
                         let state = states.entry(node).or_default();
 
-                        let mut seqs = HashMap::new();
-
-                        for seq in 0..num_ops as u32 {
+                        for _ in 0..num_ops as u32 {
                             let op_id = OpId::from(op_counter);
                             op_counter += 1;
                             let payload_size = Size::from(spec.operations_size.sample(&mut rng));
@@ -343,7 +348,7 @@ impl ChatStateGenerator {
                             let (header, body) = if let Some(&&gid) =
                                 groups.iter().collect::<Vec<_>>().choose(&mut rng)
                             {
-                                let seq = seqs.entry(gid).or_insert(0);
+                                let seq = seqs.entry((node, gid)).or_insert(0);
                                 let header = Header {
                                     author: node,
                                     payload_size,
@@ -353,7 +358,7 @@ impl ChatStateGenerator {
                                 *seq += 1;
                                 (header, Body::GroupMessage { group_id: gid })
                             } else {
-                                let seq = seqs.entry(0).or_insert(0);
+                                let seq = seqs.entry((node, 0)).or_insert(0);
                                 let recipient = contacts
                                     .iter()
                                     .collect::<Vec<_>>()
@@ -370,6 +375,7 @@ impl ChatStateGenerator {
                                 *seq += 1;
                                 (header, Body::DirectMessage { recipient })
                             };
+                            println!("header: {:?}", header);
 
                             let _ = state.store_op(Operation {
                                 id: op_id,

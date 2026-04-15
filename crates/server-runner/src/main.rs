@@ -31,8 +31,8 @@ async fn main() {
 
     let cli = Cli::parse();
 
-    let setup = setup_from_input(&cli.input)
-        .unwrap_or_else(|e| panic!("Failed to set up simulation: {e}"));
+    let setup =
+        setup_from_input(&cli.input).unwrap_or_else(|e| panic!("Failed to set up simulation: {e}"));
 
     let state: AppState = Arc::new(Mutex::new(setup.sim));
 

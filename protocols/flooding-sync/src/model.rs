@@ -29,6 +29,7 @@ impl polestar::Machine for Model {
         mut state: Self::State,
         action: Self::Action,
     ) -> polestar::TransitionResult<Self> {
+        dbg!(&action);
         let (state, fx) = match action {
             RoutingAction::Network(ProtocolNetworkAction::Receive { data }) => match data {
                 WireData::Announce { state_vector } => {
@@ -36,7 +37,6 @@ impl polestar::Machine for Model {
                     if ops.is_empty() {
                         (state, None)
                     } else {
-                        dbg!(&ops);
                         (state, Some(ProtocolFx::broadcast(WireData::Ops { ops })))
                     }
                 }

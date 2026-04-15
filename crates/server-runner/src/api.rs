@@ -8,8 +8,8 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
-use simdash_types::{Body, NodeId, Operation};
 use simdash_state::network::NetworkState;
+use simdash_types::{Body, GetRoutingOpInfo, NodeId, Operation, RoutingOpInfo};
 use tokio::sync::Mutex;
 
 use simdash_simulation::sim::{OpSnapshot, Simulation};
@@ -140,17 +140,8 @@ fn build_delta_response(
             continue;
         }
 
-        let routing_ops: Vec<RoutingOpInfo> = node_state
-            .routing
-            .flooding
-            .ops
-            .values()
-            .map(|op| RoutingOpInfo {
-                id: *op.id(),
-                size: *op.data.metadata.size,
-                since_last_send: op.state().since_last_send.map(|t| *t),
-            })
-            .collect();
+        // TODO: make hash set
+        let routing_ops: Vec<RoutingOpInfo> = node_state.routing.routing_op_infos().collect();
 
         node_deltas.push(NodeDelta {
             id: *node_id,
@@ -245,17 +236,7 @@ fn build_node_infos(state: &NetworkState) -> Vec<NodeInfo> {
                 .map(|op| build_op_info(op))
                 .collect();
 
-            let routing_ops: Vec<RoutingOpInfo> = node_state
-                .routing
-                .flooding
-                .ops
-                .values()
-                .map(|op| RoutingOpInfo {
-                    id: *op.data.id,
-                    size: *op.data.metadata.size,
-                    since_last_send: op.state.since_last_send.map(|t| *t),
-                })
-                .collect();
+            let routing_ops: Vec<RoutingOpInfo> = node_state.routing.routing_op_infos().collect();
 
             Some(NodeInfo {
                 id: *node_id,
@@ -379,13 +360,6 @@ pub struct OpInfo {
 pub enum OpBody {
     GroupMessage { group_id: u64 },
     DirectMessage { recipient: u32 },
-}
-
-#[derive(Serialize, Clone)]
-pub struct RoutingOpInfo {
-    pub id: u32,
-    pub size: u64,
-    pub since_last_send: Option<u32>,
 }
 
 // --- Error handling ---
