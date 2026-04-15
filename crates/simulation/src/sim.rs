@@ -1,9 +1,10 @@
 use std::collections::{HashMap, HashSet};
 
 use dash_chat_top_gen::ChatTopology;
+use simdash_behavior::routing::{BasicFloodingSyncBehavior, NaiveFloodingBehavior};
 use simdash_state::network::{NetworkState, NetworkTopologyState};
 
-use crate::scenarios::{naive_flooding, no_routing, AnyScenario, AVAILABLE_BEHAVIORS};
+use crate::scenarios::{flooding_scenario, no_routing, AnyScenario, AVAILABLE_BEHAVIORS};
 
 /// Snapshot of op IDs per node, used to compute deltas.
 pub type OpSnapshot = HashMap<u32, HashSet<u32>>;
@@ -46,11 +47,22 @@ impl Simulation {
         topology: &ChatTopology,
     ) -> anyhow::Result<AnyScenario> {
         match behavior {
-            "naive-flooding" => Ok(AnyScenario::NaiveFlooding(naive_flooding::naive_flooding(
-                state.clone(),
-                DEFAULT_BROADCAST_INTERVAL,
-                topology.clone(),
-            ))),
+            "naive-flooding" => Ok(AnyScenario::NaiveFlooding(
+                flooding_scenario::flooding_scenario(
+                    state.clone(),
+                    DEFAULT_BROADCAST_INTERVAL,
+                    topology.clone(),
+                    NaiveFloodingBehavior,
+                ),
+            )),
+            "basic-flooding-sync" => Ok(AnyScenario::BasicFloodingSync(
+                flooding_scenario::flooding_scenario(
+                    state.clone(),
+                    DEFAULT_BROADCAST_INTERVAL,
+                    topology.clone(),
+                    BasicFloodingSyncBehavior,
+                ),
+            )),
             "no-routing" => Ok(AnyScenario::NoRouting(no_routing::no_routing(
                 state.clone(),
                 DEFAULT_BROADCAST_INTERVAL,

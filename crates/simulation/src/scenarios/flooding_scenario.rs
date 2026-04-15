@@ -1,7 +1,8 @@
 use dash_chat_top_gen::ChatTopology;
+use polestar::Machine;
 use simdash_behavior::network::RoundRobinNodeScheduler;
 use simdash_behavior::node::BasicNodeBehavior;
-use simdash_behavior::routing::BasicRoutingBehavior;
+use simdash_behavior::routing::{BasicFloodingSyncBehavior, NaiveFloodingBehavior};
 use simdash_model::network::NetworkModel;
 use simdash_model::node::NodeModel;
 use simdash_routing_dispatch::flooding::{FloodingOp, FloodingState};
@@ -9,15 +10,16 @@ use simdash_routing_dispatch::flooding_sync;
 use simdash_routing_dispatch::{noop::NoopState, RoutingDispatchModel, RoutingDispatchState};
 use simdash_scenario::Scenario;
 use simdash_state::network::NetworkState;
+use simdash_types::Behavior;
 
-pub type NaiveFloodingBehaviorType =
-    RoundRobinNodeScheduler<BasicNodeBehavior<BasicRoutingBehavior>>;
+pub type FloodingBehaviorType<B> = RoundRobinNodeScheduler<BasicNodeBehavior<B>>;
 
-pub fn naive_flooding(
+pub fn flooding_scenario<In: Behavior<RoutingDispatchModel>>(
     mut initial_state: NetworkState,
     broadcast_interval: u32,
     topology: ChatTopology,
-) -> Scenario<NetworkModel, NaiveFloodingBehaviorType> {
+    behavior: In,
+) -> Scenario<NetworkModel, RoundRobinNodeScheduler<BasicNodeBehavior<In>>> {
     // Seed each node's routing state from its chat op_store so flooding
     // knows about the initial ops and can broadcast them.
     let node_ids: Vec<_> = initial_state.graph.node_ids().collect();
@@ -51,6 +53,6 @@ pub fn naive_flooding(
         NodeModel::new(RoutingDispatchModel::standard(broadcast_interval.into())),
         topology,
     );
-    let behavior = RoundRobinNodeScheduler::new(BasicNodeBehavior::new(BasicRoutingBehavior));
+    let behavior = RoundRobinNodeScheduler::new(BasicNodeBehavior::new(behavior));
     Scenario::initial(model, initial_state, behavior)
 }
