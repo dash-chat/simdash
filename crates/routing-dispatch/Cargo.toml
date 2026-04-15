@@ -6,8 +6,8 @@ edition = "2024"
 [dependencies]
 simdash-types = { workspace = true }
 simdash-routing-common = { workspace = true }
-simdash-routing-flooding = { workspace = true }
-simdash-routing-noop = { workspace = true }
+simdash-protocol-flooding = { workspace = true }
+simdash-protocol-noop = { workspace = true }
 
 anyhow = { workspace = true }
 maplit = { workspace = true }

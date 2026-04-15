@@ -19,8 +19,8 @@ use polestar::Machine;
 use simdash_routing_common::{ProtocolNetworkAction, RoutingAction, RoutingFx, SendFx};
 use simdash_types::{Tickable, Ticks};
 
-pub use simdash_routing_flooding as flooding;
-pub use simdash_routing_noop as noop;
+pub use simdash_protocol_flooding as flooding;
+pub use simdash_protocol_noop as noop;
 
 crate::routing_dispatch! {
     Flooding / flooding => {
@@ -94,8 +94,8 @@ impl RoutingDispatchModel {
     /// Create a "standard" RoutingDispatchModel with default parameters.
     pub fn standard(broadcast_interval: Ticks) -> Self {
         Self {
-            flooding: simdash_routing_flooding::FloodingModel { broadcast_interval },
-            noop: simdash_routing_noop::NoopModel,
+            flooding: simdash_protocol_flooding::FloodingModel { broadcast_interval },
+            noop: simdash_protocol_noop::NoopModel,
         }
     }
 }

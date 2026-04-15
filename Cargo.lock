@@ -1538,6 +1538,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "simdash-protocol-flooding"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "maplit",
+ "polestar",
+ "pretty_assertions",
+ "serde",
+ "simdash-routing-common",
+ "simdash-types",
+ "tracing",
+]
+
+[[package]]
+name = "simdash-protocol-noop"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "maplit",
+ "polestar",
+ "pretty_assertions",
+ "serde",
+ "simdash-routing-common",
+ "simdash-types",
+ "tracing",
+]
+
+[[package]]
 name = "simdash-routing-common"
 version = "0.1.0"
 dependencies = [
@@ -1552,38 +1580,10 @@ dependencies = [
  "maplit",
  "polestar",
  "serde",
- "simdash-routing-common",
- "simdash-routing-flooding",
- "simdash-routing-noop",
- "simdash-types",
-]
-
-[[package]]
-name = "simdash-routing-flooding"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "maplit",
- "polestar",
- "pretty_assertions",
- "serde",
+ "simdash-protocol-flooding",
+ "simdash-protocol-noop",
  "simdash-routing-common",
  "simdash-types",
- "tracing",
-]
-
-[[package]]
-name = "simdash-routing-noop"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "maplit",
- "polestar",
- "pretty_assertions",
- "serde",
- "simdash-routing-common",
- "simdash-types",
- "tracing",
 ]
 
 [[package]]
