@@ -13,7 +13,7 @@ polestar = { workspace = true }
 postcard = { workspace = true }
 
 simdash-types = { workspace = true }
-simdash-routing = { workspace = true }
+simdash-routing-dispatch = { workspace = true }
 
 
 [lints]

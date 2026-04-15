@@ -48,7 +48,7 @@ mod tests {
     #[test]
     fn test_strongly_connected_graph() {
         let mut rng = rand::rng();
-        let nodes = vec![NodeState::<simdash_state::routing::RoutingState>::default(); 10];
+        let nodes = vec![NodeState::<simdash_state::routing::RoutingDispatchState>::default(); 10];
         let graph = strongly_connected_graph(nodes.clone(), &mut rng, 1.5);
         assert_eq!(graph.node_ids().count(), 10);
         assert!(dbg!(graph.graph().edge_count()) > 9);

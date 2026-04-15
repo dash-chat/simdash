@@ -4,8 +4,8 @@ use simdash_behavior::node::BasicNodeBehavior;
 use simdash_behavior::routing::BasicRoutingBehavior;
 use simdash_model::network::NetworkModel;
 use simdash_model::node::NodeModel;
-use simdash_routing::flooding::{FloodingOp, FloodingState};
-use simdash_routing::{noop::NoopState, RoutingModel, RoutingState};
+use simdash_routing_dispatch::flooding::{FloodingOp, FloodingState};
+use simdash_routing_dispatch::{noop::NoopState, RoutingDispatchModel, RoutingDispatchState};
 use simdash_scenario::Scenario;
 use simdash_state::network::NetworkState;
 
@@ -30,7 +30,7 @@ pub fn naive_flooding(
                     .values()
                     .map(|op| (op.id, FloodingOp::from_op(op.clone())))
                     .collect();
-                n.routing = RoutingState {
+                n.routing = RoutingDispatchState {
                     flooding: FloodingState { ops: routing_ops },
                     noop: NoopState::default(),
                 };
@@ -40,7 +40,7 @@ pub fn naive_flooding(
     }
 
     let model = NetworkModel::new(
-        NodeModel::new(RoutingModel::standard(broadcast_interval.into())),
+        NodeModel::new(RoutingDispatchModel::standard(broadcast_interval.into())),
         topology,
     );
     let behavior = RoundRobinNodeScheduler::new(BasicNodeBehavior::new(BasicRoutingBehavior));

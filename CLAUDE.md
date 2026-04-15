@@ -62,9 +62,9 @@ model
 - `FloodingAction::StoreOp | ReceiveOp | TriggerBroadcast`
 
 **`model`** — Polestar `Machine` implementations composing the state machines:
-- `NetworkModel` > `NodeModel` > `ChatModel` + `RoutingModel` (alias for `FloodingModel`)
+- `NetworkModel` > `NodeModel` > `ChatModel` + `RoutingDispatchModel` (alias for `FloodingModel`)
 - `NetworkModel::transition` dispatches actions, then applies effects (`FloodingFx::BroadcastOps` sends ops to all neighbors, `FloodingFx::StoreOp` persists received ops).
-- Routing is generic via type aliases (`RoutingModel = FloodingModel`, `RoutingState = FloodingState`), so new protocols can be swapped in.
+- Routing is generic via type aliases (`RoutingDispatchModel = FloodingModel`, `RoutingDispatchState = FloodingState`), so new protocols can be swapped in.
 
 **`net-top-gen`** — Generates `Graph` from a JSON rule list. Rules are applied sequentially: `NodeSpec` adds nodes, `LinkSpec` adds edges (per-node with random/fixed counts).
 

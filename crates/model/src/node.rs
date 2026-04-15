@@ -1,7 +1,7 @@
 //! The Node model manages all of the state of a single node in the network.
 
 use simdash_action::node::NodeAction;
-use simdash_routing::{RoutingFxDispatch, RoutingModel};
+use simdash_routing_dispatch::{RoutingDispatchFx, RoutingDispatchModel};
 
 use crate::chat::ChatModel;
 
@@ -12,12 +12,12 @@ pub struct NodeModel {
     /// The chat app model
     pub dash: ChatModel,
     /// The routing protocol model
-    pub routing: RoutingModel,
+    pub routing: RoutingDispatchModel,
 }
 
 impl NodeModel {
     /// Constructor
-    pub fn new(routing: RoutingModel) -> Self {
+    pub fn new(routing: RoutingDispatchModel) -> Self {
         Self {
             dash: ChatModel,
             routing,
@@ -30,7 +30,7 @@ impl NodeModel {
 #[must_use]
 pub struct NodeFx {
     /// The effects produced by the contained routing protocol
-    pub routing: RoutingFxDispatch,
+    pub routing: RoutingDispatchFx,
 }
 
 impl polestar::Machine for NodeModel {
@@ -68,16 +68,18 @@ mod tests {
     use polestar::Machine;
     use pretty_assertions::assert_eq;
     use simdash_action::{chat::ChatAction, node::NodeAction};
-    use simdash_routing::flooding::{FloodingAction, FloodingWireData};
-    use simdash_routing::{AnyRoutingAction, AnyRoutingData, RoutingActionDispatch, RoutingModel};
     use simdash_routing_common::{ProtocolNetworkAction, SendFx};
+    use simdash_routing_dispatch::flooding::{FloodingAction, FloodingWireData};
+    use simdash_routing_dispatch::{
+        AnyRoutingAction, AnyRoutingData, RoutingDispatchAction, RoutingDispatchModel,
+    };
     use simdash_state::node::NodeState;
     use simdash_types::{NodeId, util::basic_op};
 
     use super::*;
 
     fn model() -> NodeModel {
-        NodeModel::new(RoutingModel::standard(3.into()))
+        NodeModel::new(RoutingDispatchModel::standard(3.into()))
     }
 
     /// Routing used to be synced when ops were stored. Not anymore, for now.
@@ -115,21 +117,21 @@ mod tests {
         let op = basic_op(1);
         let data = FloodingWireData::new(op.clone());
         let store_chat = NodeAction::Chat(ChatAction::StoreOp(op));
-        let store_routing = NodeAction::Routing(RoutingActionDispatch::Protocol(
+        let store_routing = NodeAction::Routing(RoutingDispatchAction::Protocol(
             AnyRoutingAction::Flooding(FloodingAction::StoreOp(data.clone())),
         ));
         let (state, _) = m.transitions(state, [store_chat, store_routing]).unwrap();
         let (_, fx) = m
             .transition(
                 state,
-                NodeAction::Routing(RoutingActionDispatch::Protocol(AnyRoutingAction::Flooding(
+                NodeAction::Routing(RoutingDispatchAction::Protocol(AnyRoutingAction::Flooding(
                     FloodingAction::TriggerBroadcast,
                 ))),
             )
             .unwrap();
         assert_eq!(
             fx.unwrap().routing,
-            RoutingFxDispatch::Network(SendFx::BroadcastData {
+            RoutingDispatchFx::Network(SendFx::BroadcastData {
                 data: [AnyRoutingData::Flooding(data)].into_iter().collect(),
             })
         );
@@ -145,7 +147,7 @@ mod tests {
         let (state, _) = m
             .transition(
                 state,
-                NodeAction::Routing(RoutingActionDispatch::Network(
+                NodeAction::Routing(RoutingDispatchAction::Network(
                     ProtocolNetworkAction::Receive {
                         from: NodeId::from(9),
                         data: [AnyRoutingData::Flooding(FloodingWireData::new(op.clone()))]

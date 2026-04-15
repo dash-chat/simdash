@@ -12,7 +12,7 @@ polestar = { workspace = true }
 simdash-action = { workspace = true }
 simdash-types = { workspace = true }
 simdash-model = { workspace = true }
-simdash-routing = { workspace = true }
+simdash-routing-dispatch = { workspace = true }
 simdash-state = { workspace = true }
 
 

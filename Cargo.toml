@@ -21,8 +21,8 @@ simdash-action = { path = "crates/action" }
 simdash-behavior = { path = "crates/behavior" }
 simdash-distribution = { path = "crates/distribution" }
 simdash-model = { path = "crates/model" }
-simdash-routing = { path = "crates/routing" }
 simdash-routing-common = { path = "crates/routing-common" }
+simdash-routing-dispatch = { path = "crates/routing-dispatch" }
 simdash-routing-flooding = { path = "crates/routing-flooding" }
 simdash-routing-noop = { path = "crates/routing-noop" }
 simdash-runner = { path = "crates/runner" }

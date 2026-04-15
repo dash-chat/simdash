@@ -19,5 +19,5 @@ simdash-types = { workspace = true }
 simdash-model = { workspace = true }
 simdash-scenario = { workspace = true }
 simdash-state = { workspace = true }
-simdash-routing = { workspace = true }
+simdash-routing-dispatch = { workspace = true }
 tracing = "0.1"

@@ -1,8 +1,8 @@
-/// Generates `RoutingModel`, `RoutingState`, `AnyRoutingAction`, `AnyRoutingData`,
+/// Generates `RoutingDispatchModel`, `RoutingDispatchState`, `AnyRoutingAction`, `AnyRoutingData`,
 /// `AnyRoutingFx`, their `polestar::Machine` impl, and per-protocol helper functions,
 /// dispatching across all listed protocols.
 ///
-/// Each protocol is active simultaneously — `RoutingState` is a struct with one
+/// Each protocol is active simultaneously — `RoutingDispatchState` is a struct with one
 /// field per protocol, and `AnyRoutingAction`/`AnyRoutingData`/`AnyRoutingFx` are
 /// enums that name which protocol produced or receives the action/effect.
 ///
@@ -20,7 +20,7 @@
 /// # Example
 ///
 /// ```rust,ignore
-/// routing_protocols! {
+/// routing_dispatch! {
 ///     Flooding / flooding => {
 ///         model:  FloodingModel,
 ///         state:  FloodingState,
@@ -32,15 +32,15 @@
 /// ```
 ///
 /// Expands to:
-/// - `RoutingModel` struct with one field per protocol
-/// - `RoutingState` struct with one field per protocol
+/// - `RoutingDispatchModel` struct with one field per protocol
+/// - `RoutingDispatchState` struct with one field per protocol
 /// - `AnyRoutingData`, `AnyRoutingAction`, `AnyRoutingFx` enums
-/// - `polestar::Machine` impl on `RoutingModel`
-/// - `RoutingModel::tick()` method
-/// - `RoutingState::tick()` method
+/// - `polestar::Machine` impl on `RoutingDispatchModel`
+/// - `RoutingDispatchModel::tick()` method
+/// - `RoutingDispatchState::tick()` method
 
 #[macro_export]
-macro_rules! routing_protocols {
+macro_rules! routing_dispatch {
     (
         $(
             $Variant:ident / $field:ident => {
@@ -54,16 +54,16 @@ macro_rules! routing_protocols {
     ) => {
 
         /// The model composed of all user-defined routing protocols.
-        pub struct RoutingModel {
+        pub struct RoutingDispatchModel {
             $(
                 #[doc = concat!("The model for the `", stringify!($field), "` protocol")]
                 pub $field: $model_ty,
             )+
         }
 
-        impl RoutingModel {
+        impl RoutingDispatchModel {
             /// Advance the routing model by one tick
-            pub fn tick(&self, state: RoutingState) -> polestar::TransitionResult<Self> {
+            pub fn tick(&self, state: RoutingDispatchState) -> polestar::TransitionResult<Self> {
                 self.transition(state, RoutingAction::Network(ProtocolNetworkAction::Tick))
             }
         }
@@ -71,7 +71,7 @@ macro_rules! routing_protocols {
 
         /// The state composed of all user-defined routing protocol states.
         #[derive(Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
-        pub struct RoutingState {
+        pub struct RoutingDispatchState {
             $(
                 #[doc = concat!("The state for the `", stringify!($field), "` protocol")]
                 pub $field: $state_ty,
@@ -105,14 +105,14 @@ macro_rules! routing_protocols {
             )+
         }
 
-        impl Tickable for RoutingState {
+        impl Tickable for RoutingDispatchState {
             fn tick(&mut self) {
                 $( Tickable::tick(&mut self.$field); )+
             }
         }
 
-        impl Machine for RoutingModel {
-            type State  = RoutingState;
+        impl Machine for RoutingDispatchModel {
+            type State  = RoutingDispatchState;
             type Action = RoutingAction<AnyRoutingAction, AnyRoutingData>;
             type Fx     = Option<RoutingFx<AnyRoutingFx, AnyRoutingData>>;
             type Error  = anyhow::Error;

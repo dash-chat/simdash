@@ -4,7 +4,7 @@ use simdash_behavior::node::BasicNodeBehavior;
 use simdash_behavior::routing::BasicRoutingBehavior;
 use simdash_model::network::NetworkModel;
 use simdash_model::node::NodeModel;
-use simdash_routing::RoutingModel;
+use simdash_routing_dispatch::RoutingDispatchModel;
 use simdash_scenario::Scenario;
 use simdash_state::network::NetworkState;
 
@@ -22,7 +22,7 @@ pub fn no_routing(
             .map(|id| {
                 (
                     id,
-                    NodeModel::new(RoutingModel::standard(broadcast_interval.into())),
+                    NodeModel::new(RoutingDispatchModel::standard(broadcast_interval.into())),
                 )
             })
             .collect(),

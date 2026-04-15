@@ -97,7 +97,7 @@ pub enum RoutingFloodingAction {
     Flooding(FloodingAction),
 }
 
-fn transition(state: RoutingState, action: ProtocolAction) -> (RoutingState, RoutingFx) {
+fn transition(state: RoutingDispatchState, action: ProtocolAction) -> (RoutingDispatchState, RoutingFx) {
     match action {
         ProtocolAction::Receive { from, data } => {
             match data {

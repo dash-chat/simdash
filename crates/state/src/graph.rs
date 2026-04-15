@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use petgraph::graph::Graph as PetGraph;
 use polestar::ext::MapExt;
 use serde::{Deserialize, Serialize};
-use simdash_routing::RoutingState;
+use simdash_routing_dispatch::RoutingDispatchState;
 use simdash_types::NodeId;
 
 use crate::node::NodeState;
@@ -33,7 +33,7 @@ impl EdgeState {
 
 /// A network graph.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Graph<R = RoutingState, E = EdgeState> {
+pub struct Graph<R = RoutingDispatchState, E = EdgeState> {
     graph: PetGraph<(), E>,
     /// The nodes in the graph
     pub nodes: HashMap<NodeId, NodeState<R>>,

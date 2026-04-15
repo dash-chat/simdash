@@ -1478,7 +1478,7 @@ version = "0.1.0"
 dependencies = [
  "derive_more 2.1.1",
  "serde",
- "simdash-routing",
+ "simdash-routing-dispatch",
  "simdash-state",
  "simdash-types",
 ]
@@ -1492,7 +1492,7 @@ dependencies = [
  "polestar",
  "simdash-action",
  "simdash-model",
- "simdash-routing",
+ "simdash-routing-dispatch",
  "simdash-state",
  "simdash-types",
 ]
@@ -1530,15 +1530,22 @@ dependencies = [
  "pretty_assertions",
  "rand",
  "simdash-action",
- "simdash-routing",
  "simdash-routing-common",
+ "simdash-routing-dispatch",
  "simdash-state",
  "simdash-types",
  "tracing",
 ]
 
 [[package]]
-name = "simdash-routing"
+name = "simdash-routing-common"
+version = "0.1.0"
+dependencies = [
+ "simdash-types",
+]
+
+[[package]]
+name = "simdash-routing-dispatch"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -1548,13 +1555,6 @@ dependencies = [
  "simdash-routing-common",
  "simdash-routing-flooding",
  "simdash-routing-noop",
- "simdash-types",
-]
-
-[[package]]
-name = "simdash-routing-common"
-version = "0.1.0"
-dependencies = [
  "simdash-types",
 ]
 
@@ -1612,7 +1612,7 @@ dependencies = [
  "simdash-action",
  "simdash-behavior",
  "simdash-model",
- "simdash-routing",
+ "simdash-routing-dispatch",
  "simdash-state",
  "simdash-types",
 ]
@@ -1651,7 +1651,7 @@ dependencies = [
  "simdash-behavior",
  "simdash-generator",
  "simdash-model",
- "simdash-routing",
+ "simdash-routing-dispatch",
  "simdash-scenario",
  "simdash-state",
  "simdash-types",
@@ -1669,7 +1669,7 @@ dependencies = [
  "postcard",
  "rand",
  "serde",
- "simdash-routing",
+ "simdash-routing-dispatch",
  "simdash-types",
 ]
 
