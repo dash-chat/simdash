@@ -33,7 +33,12 @@ impl polestar::Machine for Model {
             RoutingAction::Network(ProtocolNetworkAction::Receive { data }) => match data {
                 WireData::Announce { state_vector } => {
                     let ops = state.op_buffer.diff(&state_vector);
-                    (state, Some(ProtocolFx::broadcast(WireData::Ops { ops })))
+                    if ops.is_empty() {
+                        (state, None)
+                    } else {
+                        dbg!(&ops);
+                        (state, Some(ProtocolFx::broadcast(WireData::Ops { ops })))
+                    }
                 }
                 WireData::Ops { ops } => {
                     for op in ops {

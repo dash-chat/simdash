@@ -14,13 +14,14 @@ impl Behavior<RoutingDispatchModel> for NoOpRoutingBehavior {
     }
 }
 
-/// A routing behavior that only generates actions for the Flooding protocol.
+/// A routing behavior that only generates actions for the FloodingSync protocol.
 pub struct BasicRoutingBehavior;
 
 impl Behavior<RoutingDispatchModel> for BasicRoutingBehavior {
     fn next(&mut self, state: &RoutingDispatchState) -> anyhow::Result<Vec<RoutingDispatchAction>> {
         let mut b = simdash_routing_dispatch::flooding_sync::StandardBehavior;
-        Ok(b.next(&state.flooding_sync)?
+        let actions = b
+            .next(&state.flooding_sync)?
             .into_iter()
             .map(|a| {
                 simdash_routing_dispatch::lift_action(
@@ -29,6 +30,7 @@ impl Behavior<RoutingDispatchModel> for BasicRoutingBehavior {
                     AnyRoutingAction::FloodingSync,
                 )
             })
-            .collect())
+            .collect();
+        Ok(actions)
     }
 }

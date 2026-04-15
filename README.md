@@ -27,6 +27,7 @@ Protocols are developed in their own separate crates. To develop a new protocol,
 - add it to the `Cargo.toml` file
 - add it to the `routing_dispatch!` macro in `simdash-routing-dispatch`
 - hook up a Scenario with a Behavior that uses your protocol
+- TODO: what else?
 
 The protocol crate must depend on `simdash-routing-common` and `simdash-types`, as well as `polestar` for state machine types, and can communicate with the rest of the system
 through the [`ProtocolAction`] and [`ProtocolFx`] enums.
