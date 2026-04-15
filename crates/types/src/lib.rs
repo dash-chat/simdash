@@ -30,6 +30,21 @@ pub struct EdgeId(u32);
 )]
 pub struct Size(u64);
 
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize, From, Deref,
+)]
+pub struct LogId(u32);
+
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize, From, Deref,
+)]
+pub struct LogHeight(u32);
+
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize, From, Deref,
+)]
+pub struct Seq(u32);
+
 /// A number of ticks (a duration).
 #[derive(
     Serialize,

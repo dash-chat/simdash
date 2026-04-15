@@ -1552,6 +1552,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "simdash-protocol-flooding-sync"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "derive_more 2.1.1",
+ "polestar",
+ "serde",
+ "simdash-routing-common",
+ "simdash-types",
+]
+
+[[package]]
 name = "simdash-protocol-noop"
 version = "0.1.0"
 dependencies = [

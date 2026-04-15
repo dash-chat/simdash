@@ -52,7 +52,7 @@ impl ChatState {
 
 #[cfg(test)]
 mod tests {
-    use simdash_types::{Body, Header};
+    use simdash_types::{Body, Header, LogId, Seq};
 
     use super::*;
 
@@ -62,6 +62,8 @@ mod tests {
             header: Header {
                 author: NodeId::from(1),
                 payload_size: Size::from(size),
+                seq: Seq::from(2),
+                log_id: LogId::from(3),
             },
             body: Body::DirectMessage {
                 recipient: NodeId::from(2),

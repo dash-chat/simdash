@@ -9,6 +9,8 @@ use serde::Deserialize;
 use serde::Serialize;
 use simdash_distribution::Distribution;
 use simdash_state::chat::ChatState;
+use simdash_types::LogId;
+use simdash_types::Seq;
 use simdash_types::{Body, GroupId, Header, Operation};
 use simdash_types::{NodeId, OpId, Size};
 
@@ -213,7 +215,7 @@ impl ChatStateGenerator {
 
                         // Generate operations for this group.
                         let num_ops = spec.operations_count.sample(&mut rng) as usize;
-                        for _ in 0..num_ops {
+                        for seq in 0..num_ops as u32 {
                             let &author = members.choose(&mut rng).unwrap();
                             let op_id = OpId::from(op_counter);
                             op_counter += 1;
@@ -224,6 +226,8 @@ impl ChatStateGenerator {
                                 header: Header {
                                     author,
                                     payload_size,
+                                    seq: Seq::from(seq),
+                                    log_id: LogId::from(0),
                                 },
                                 body: Body::GroupMessage { group_id },
                             };
@@ -271,7 +275,7 @@ impl ChatStateGenerator {
                         let num_ops = spec.operations_count.sample(&mut rng) as usize;
                         let contacts_vec: Vec<NodeId> = contacts.iter().copied().collect();
 
-                        for _ in 0..num_ops {
+                        for seq in 0..num_ops as u32 {
                             let op_id = OpId::from(op_counter);
                             op_counter += 1;
                             let payload_size = Size::from(spec.operations_size.sample(&mut rng));
@@ -282,6 +286,8 @@ impl ChatStateGenerator {
                                 header: Header {
                                     author: node,
                                     payload_size,
+                                    seq: Seq::from(seq),
+                                    log_id: LogId::from(0),
                                 },
                                 body: Body::DirectMessage { recipient },
                             };
@@ -327,7 +333,7 @@ impl ChatStateGenerator {
                         let num_ops = spec.operations_count.sample(&mut rng) as usize;
                         let state = states.entry(node).or_default();
 
-                        for _ in 0..num_ops {
+                        for seq in 0..num_ops as u32 {
                             let op_id = OpId::from(op_counter);
                             op_counter += 1;
                             let payload_size = Size::from(spec.operations_size.sample(&mut rng));
@@ -352,6 +358,8 @@ impl ChatStateGenerator {
                                 header: Header {
                                     author: node,
                                     payload_size,
+                                    seq: Seq::from(seq),
+                                    log_id: LogId::from(0),
                                 },
                                 body,
                             });

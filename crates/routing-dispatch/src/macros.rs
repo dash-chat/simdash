@@ -128,7 +128,7 @@ macro_rules! routing_dispatch {
                         Ok((state, None))
                     }
 
-                    RoutingAction::Network(ProtocolNetworkAction::Receive { from, data }) => {
+                    RoutingAction::Network(ProtocolNetworkAction::Receive { data }) => {
                         let mut result_fx = None;
                         $(
                             let protocol_data: std::collections::HashSet<$data_ty> = data
@@ -143,7 +143,6 @@ macro_rules! routing_dispatch {
                                 let (new, fx) = self.$field.transition(
                                     state.$field,
                                     RoutingAction::Network(ProtocolNetworkAction::Receive {
-                                        from,
                                         data: protocol_data,
                                     }),
                                 )?;

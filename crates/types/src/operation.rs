@@ -1,4 +1,4 @@
-use crate::{GroupId, NodeId, OpId, Size};
+use crate::{GroupId, LogId, NodeId, OpId, Seq, Size};
 use derive_more::From;
 use serde::{Deserialize, Serialize};
 
@@ -12,6 +12,8 @@ pub enum Body {
 pub struct Header {
     pub author: NodeId,
     pub payload_size: Size,
+    pub seq: Seq,
+    pub log_id: LogId,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]

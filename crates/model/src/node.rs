@@ -149,7 +149,6 @@ mod tests {
                 state,
                 NodeAction::Routing(RoutingDispatchAction::Network(
                     ProtocolNetworkAction::Receive {
-                        from: NodeId::from(9),
                         data: [AnyRoutingData::Flooding(FloodingWireData::new(op.clone()))]
                             .into_iter()
                             .collect(),

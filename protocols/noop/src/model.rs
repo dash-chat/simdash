@@ -20,9 +20,7 @@ impl polestar::Machine for NoopModel {
         let (state, fx) = match action {
             RoutingAction::Network(ProtocolNetworkAction::Tick) => (state, None),
 
-            RoutingAction::Network(ProtocolNetworkAction::Receive { from: _, data: _ }) => {
-                (state, None)
-            }
+            RoutingAction::Network(ProtocolNetworkAction::Receive { data: _ }) => (state, None),
             RoutingAction::Protocol(NoopAction::Noop) => (state, None),
         };
         Ok((state, fx))

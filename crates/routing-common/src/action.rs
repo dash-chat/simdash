@@ -26,8 +26,8 @@ impl<A, D: Eq + Hash> From<A> for RoutingAction<A, D> {
 
 impl<A, D: Eq + Hash> RoutingAction<A, D> {
     /// Convenience method to create a Receive action.
-    pub fn receive(from: simdash_types::NodeId, data: HashSet<D>) -> Self {
-        RoutingAction::Network(ProtocolNetworkAction::Receive { from, data })
+    pub fn receive(data: HashSet<D>) -> Self {
+        RoutingAction::Network(ProtocolNetworkAction::Receive { data })
     }
 
     /// Convenience method to create a Tick action.
@@ -45,10 +45,8 @@ impl<A, D: Eq + Hash> RoutingAction<A, D> {
 /// always due to a [`crate::ProtocolFx::Network`] effect.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ProtocolNetworkAction<D: Eq + Hash> {
-    /// An action to receive data from a specific node
+    /// An action to receive data from the network
     Receive {
-        /// The node that sent the data
-        from: simdash_types::NodeId,
         /// The protocol wire data received
         data: HashSet<D>,
     },

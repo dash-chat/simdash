@@ -55,9 +55,8 @@ pub fn lift_action<A, D: Eq + std::hash::Hash>(
         RoutingAction::Network(ProtocolNetworkAction::Tick) => {
             RoutingDispatchAction::Network(ProtocolNetworkAction::Tick)
         }
-        RoutingAction::Network(ProtocolNetworkAction::Receive { from, data }) => {
+        RoutingAction::Network(ProtocolNetworkAction::Receive { data }) => {
             RoutingDispatchAction::Network(ProtocolNetworkAction::Receive {
-                from,
                 data: data.into_iter().map(wrap_data).collect(),
             })
         }

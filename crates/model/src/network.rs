@@ -124,10 +124,7 @@ impl NetworkModel {
                             self.node.transition(
                                 node_state,
                                 NodeAction::Routing(RoutingDispatchAction::Network(
-                                    ProtocolNetworkAction::Receive {
-                                        from: node_id,
-                                        data: data.clone(),
-                                    },
+                                    ProtocolNetworkAction::Receive { data: data.clone() },
                                 )),
                             )
                         })?;
@@ -142,10 +139,7 @@ impl NetworkModel {
                         self.node.transition(
                             node_state,
                             NodeAction::Routing(RoutingDispatchAction::Network(
-                                ProtocolNetworkAction::Receive {
-                                    from: node_id,
-                                    data,
-                                },
+                                ProtocolNetworkAction::Receive { data },
                             )),
                         )
                     })?;

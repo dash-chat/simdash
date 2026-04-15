@@ -1,0 +1,47 @@
+use simdash_routing_common::{ProtocolNetworkAction, RoutingAction};
+use simdash_types::Ticks;
+
+use crate::{ProtocolAction, ProtocolFx, action::Action, state::State};
+
+/// The Noop model simply does nothing.
+#[derive(Debug, Clone, Default)]
+pub struct Model {
+    /// Ticks to wait between sync rounds
+    pub sync_interval: Ticks,
+}
+
+impl Model {
+    /// Constructor
+    pub fn new(sync_interval: Ticks) -> Self {
+        Self { sync_interval }
+    }
+}
+
+impl polestar::Machine for Model {
+    type State = State;
+    type Action = ProtocolAction;
+    type Fx = Option<ProtocolFx>;
+    type Error = anyhow::Error;
+
+    fn transition(
+        &self,
+        mut state: Self::State,
+        action: Self::Action,
+    ) -> polestar::TransitionResult<Self> {
+        let (state, fx) = match action {
+            RoutingAction::Network(ProtocolNetworkAction::Receive { data }) => (state, None),
+            RoutingAction::Protocol(Action::TriggerSync) => {
+                state.countdown = self.sync_interval;
+                let fx = ProtocolFx::broadcast(todo!());
+                (state, Some(fx))
+            }
+            RoutingAction::Network(ProtocolNetworkAction::Tick) => {
+                if state.countdown > 0.into() {
+                    state.countdown = state.countdown - 1.into();
+                }
+                (state, None)
+            }
+        };
+        Ok((state, fx))
+    }
+}

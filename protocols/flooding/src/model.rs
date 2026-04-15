@@ -34,7 +34,7 @@ impl polestar::Machine for FloodingModel {
                 (state, None)
             }
 
-            ProtocolAction::Network(ProtocolNetworkAction::Receive { from: _, data }) => {
+            ProtocolAction::Network(ProtocolNetworkAction::Receive { data }) => {
                 let mut out = vec![];
                 for op in data {
                     let mut flooding_op = FloodingOp::from_wire(op);
@@ -92,7 +92,7 @@ mod tests {
     use polestar::Machine;
     use pretty_assertions::assert_eq;
     use simdash_routing_common::ProtocolNetworkAction;
-    use simdash_types::{NodeId, util::basic_op};
+    use simdash_types::util::basic_op;
 
     use crate::FloodingWireData;
 
@@ -202,7 +202,6 @@ mod tests {
             .transition(
                 state,
                 ProtocolAction::Network(ProtocolNetworkAction::Receive {
-                    from: NodeId::from(9),
                     data: hashset![data.clone()],
                 }),
             )
