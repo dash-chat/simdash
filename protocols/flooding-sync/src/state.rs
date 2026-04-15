@@ -14,6 +14,20 @@ pub struct State {
     pub op_buffer: OpBuffer,
 }
 
+impl State {
+    pub fn from_ops(ops: BTreeSet<Op>) -> Self {
+        let mut op_buffer: OpBuffer = Default::default();
+        for op in ops {
+            op_buffer.store_op(op);
+        }
+
+        Self {
+            countdown: 0.into(),
+            op_buffer,
+        }
+    }
+}
+
 impl Tickable for State {
     fn tick(&mut self) {
         self.countdown = self.countdown + 1.into();

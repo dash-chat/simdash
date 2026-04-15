@@ -20,6 +20,7 @@ use simdash_routing_common::{ProtocolNetworkAction, RoutingAction, RoutingFx, Se
 use simdash_types::{Tickable, Ticks};
 
 pub use simdash_protocol_flooding as flooding;
+pub use simdash_protocol_flooding_sync as flooding_sync;
 pub use simdash_protocol_noop as noop;
 
 crate::routing_dispatch! {
@@ -29,6 +30,13 @@ crate::routing_dispatch! {
         action: flooding::FloodingAction,
         fx:     flooding::FloodingFx,
         data:   flooding::FloodingWireData,
+    },
+    FloodingSync / flooding_sync => {
+        model:  flooding_sync::Model,
+        state:  flooding_sync::State,
+        action: flooding_sync::Action,
+        fx:     flooding_sync::Fx,
+        data:   flooding_sync::WireData,
     },
     Noop / noop => {
         model:  noop::NoopModel,
@@ -91,9 +99,14 @@ pub fn lift_fx<F, D: Eq + std::hash::Hash>(
 
 impl RoutingDispatchModel {
     /// Create a "standard" RoutingDispatchModel with default parameters.
-    pub fn standard(broadcast_interval: Ticks) -> Self {
+    pub fn standard(interval: Ticks) -> Self {
         Self {
-            flooding: simdash_protocol_flooding::FloodingModel { broadcast_interval },
+            flooding: simdash_protocol_flooding::FloodingModel {
+                broadcast_interval: interval,
+            },
+            flooding_sync: flooding_sync::Model {
+                sync_interval: interval,
+            },
             noop: simdash_protocol_noop::NoopModel,
         }
     }

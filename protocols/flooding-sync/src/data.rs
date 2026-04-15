@@ -42,4 +42,13 @@ pub struct Op {
     pub encrypted: EncryptedOp,
 }
 
+impl Op {
+    pub fn from_op(op: &simdash_types::Operation) -> Self {
+        Self {
+            metadata: Metadata::from_op(op),
+            encrypted: EncryptedOp::from(op.clone()),
+        }
+    }
+}
+
 pub type StateVector = BTreeMap<LogId, LogHeight>;

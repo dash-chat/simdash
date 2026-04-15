@@ -31,6 +31,7 @@ net-topology = { path = "crates/net-topology" }
 dash-chat-top-gen = { path = "crates/dash-chat-top-gen" }
 
 simdash-protocol-flooding = { path = "protocols/flooding" }
+simdash-protocol-flooding-sync = { path = "protocols/flooding-sync" }
 simdash-protocol-noop = { path = "protocols/noop" }
 
 polestar = { git = "https://github.com/maackle/polestar-rs.git", branch = "main" }

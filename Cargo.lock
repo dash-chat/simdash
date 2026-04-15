@@ -1596,6 +1596,7 @@ dependencies = [
  "polestar",
  "serde",
  "simdash-protocol-flooding",
+ "simdash-protocol-flooding-sync",
  "simdash-protocol-noop",
  "simdash-routing-common",
  "simdash-types",

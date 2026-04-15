@@ -3,8 +3,6 @@ use simdash_behavior::node::BasicNodeBehavior;
 use simdash_behavior::{network::RoundRobinNodeScheduler, routing::NoOpRoutingBehavior};
 use simdash_model::network::NetworkModel;
 use simdash_model::node::NodeModel;
-use simdash_routing_dispatch::flooding::FloodingModel;
-use simdash_routing_dispatch::noop::NoopModel;
 use simdash_routing_dispatch::RoutingDispatchModel;
 use simdash_scenario::Scenario;
 use simdash_state::network::NetworkState;
@@ -17,12 +15,7 @@ pub fn no_routing(
     topology: ChatTopology,
 ) -> Scenario<NetworkModel, NoRoutingBehaviorType> {
     let model = NetworkModel::new(
-        NodeModel::new(RoutingDispatchModel {
-            flooding: FloodingModel {
-                broadcast_interval: broadcast_interval.into(),
-            },
-            noop: NoopModel,
-        }),
+        NodeModel::new(RoutingDispatchModel::standard(broadcast_interval.into())),
         topology,
     );
     let behavior = RoundRobinNodeScheduler::new(BasicNodeBehavior::new(NoOpRoutingBehavior));

@@ -19,14 +19,14 @@ pub struct BasicRoutingBehavior;
 
 impl Behavior<RoutingDispatchModel> for BasicRoutingBehavior {
     fn next(&mut self, state: &RoutingDispatchState) -> anyhow::Result<Vec<RoutingDispatchAction>> {
-        let mut b = simdash_routing_dispatch::flooding::EagerFloodingBehavior;
-        Ok(b.next(&state.flooding)?
+        let mut b = simdash_routing_dispatch::flooding_sync::StandardBehavior;
+        Ok(b.next(&state.flooding_sync)?
             .into_iter()
             .map(|a| {
                 simdash_routing_dispatch::lift_action(
                     a,
-                    AnyRoutingData::Flooding,
-                    AnyRoutingAction::Flooding,
+                    AnyRoutingData::FloodingSync,
+                    AnyRoutingAction::FloodingSync,
                 )
             })
             .collect())

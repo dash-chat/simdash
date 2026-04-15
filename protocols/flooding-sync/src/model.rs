@@ -30,19 +30,18 @@ impl polestar::Machine for Model {
         action: Self::Action,
     ) -> polestar::TransitionResult<Self> {
         let (state, fx) = match action {
-            RoutingAction::Network(ProtocolNetworkAction::Receive { data }) => {
-                match data {
-                    WireData::Announce { state_vector } => {
-                        todo!()
-                    }
-                    WireData::Ops { ops } => {
-                        for op in ops {
-                            state.op_buffer.store_op(op);
-                        }
-                    }
+            RoutingAction::Network(ProtocolNetworkAction::Receive { data }) => match data {
+                WireData::Announce { state_vector } => {
+                    let ops = state.op_buffer.diff(&state_vector);
+                    (state, Some(ProtocolFx::broadcast(WireData::Ops { ops })))
                 }
-                (state, None)
-            }
+                WireData::Ops { ops } => {
+                    for op in ops {
+                        state.op_buffer.store_op(op);
+                    }
+                    (state, None)
+                }
+            },
             RoutingAction::Protocol(Action::TriggerSync) => {
                 state.countdown = self.sync_interval;
                 let state_vector = state.op_buffer.state_vector();
