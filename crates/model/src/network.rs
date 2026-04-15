@@ -150,7 +150,7 @@ impl NetworkModel {
             },
 
             // TODO: this could also be handled at the Node level, or by the Simulator.
-            RoutingDispatchFx::Node(StorageFx::StoreOps { ops }) => {
+            RoutingDispatchFx::Node(StorageFx::StoreOps { op: ops }) => {
                 let fx = state.graph.update_node(node_id, |node_state| {
                     let actions = ops.into_iter().map(|op| {
                         NodeAction::Chat(ChatAction::StoreOp(

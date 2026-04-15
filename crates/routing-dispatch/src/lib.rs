@@ -57,7 +57,7 @@ pub fn lift_action<A, D: Eq + std::hash::Hash>(
         }
         RoutingAction::Network(ProtocolNetworkAction::Receive { data }) => {
             RoutingDispatchAction::Network(ProtocolNetworkAction::Receive {
-                data: data.into_iter().map(wrap_data).collect(),
+                data: wrap_data(data),
             })
         }
         RoutingAction::Protocol(a) => RoutingDispatchAction::Protocol(wrap_action(a)),
@@ -75,13 +75,13 @@ pub fn lift_fx<F, D: Eq + std::hash::Hash>(
     match fx {
         RoutingFx::Network(SendFx::BroadcastData { data }) => {
             RoutingDispatchFx::Network(SendFx::BroadcastData {
-                data: data.into_iter().map(wrap_data).collect(),
+                data: wrap_data(data),
             })
         }
         RoutingFx::Network(SendFx::UnicastData { to, data }) => {
             RoutingDispatchFx::Network(SendFx::UnicastData {
                 to,
-                data: data.into_iter().map(wrap_data).collect(),
+                data: wrap_data(data),
             })
         }
         RoutingFx::Node(fx) => RoutingDispatchFx::Node(fx),

@@ -9,7 +9,7 @@ pub struct NoopModel;
 impl polestar::Machine for NoopModel {
     type State = NoopState;
     type Action = ProtocolAction;
-    type Fx = Option<ProtocolFx>;
+    type Fx = Vec<ProtocolFx>;
     type Error = anyhow::Error;
 
     fn transition(
@@ -17,12 +17,11 @@ impl polestar::Machine for NoopModel {
         state: Self::State,
         action: Self::Action,
     ) -> polestar::TransitionResult<Self> {
-        let (state, fx) = match action {
-            RoutingAction::Network(ProtocolNetworkAction::Tick) => (state, None),
-
-            RoutingAction::Network(ProtocolNetworkAction::Receive { data: _ }) => (state, None),
-            RoutingAction::Protocol(NoopAction::Noop) => (state, None),
+        let state = match action {
+            RoutingAction::Network(ProtocolNetworkAction::Tick) => state,
+            RoutingAction::Network(ProtocolNetworkAction::Receive { data: _ }) => state,
+            RoutingAction::Protocol(NoopAction::Noop) => state,
         };
-        Ok((state, fx))
+        Ok((state, vec![]))
     }
 }

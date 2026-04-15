@@ -21,18 +21,18 @@ pub enum RoutingFx<Fx, D: Eq + Hash> {
 
 impl<Fx, D: Eq + Hash> RoutingFx<Fx, D> {
     /// Convenience method to for the [`SendFx::UnicastData`] effect.
-    pub fn unicast(to: simdash_types::NodeId, data: HashSet<D>) -> Self {
+    pub fn unicast(to: simdash_types::NodeId, data: D) -> Self {
         RoutingFx::Network(SendFx::UnicastData { to, data })
     }
 
     /// Convenience method for the [`SendFx::BroadcastData`] effect.
-    pub fn broadcast(data: HashSet<D>) -> Self {
+    pub fn broadcast(data: D) -> Self {
         RoutingFx::Network(SendFx::BroadcastData { data })
     }
 
-    /// Convenience method for the [`StorageFx::StoreOps`] effect.
-    pub fn store_ops(ops: Vec<EncryptedOp>) -> Self {
-        RoutingFx::Node(StorageFx::StoreOps { ops })
+    /// Convenience method for the [`StorageFx::StoreOp`] effect.
+    pub fn store_op(op: EncryptedOp) -> Self {
+        RoutingFx::Node(StorageFx::StoreOps { op })
     }
 
     /// Convenience method to wrap a Protocol effect.
@@ -46,8 +46,8 @@ impl<Fx, D: Eq + Hash> RoutingFx<Fx, D> {
 pub enum StorageFx {
     /// An effect to store operations in the Chat state
     StoreOps {
-        /// The ops to be stored
-        ops: Vec<EncryptedOp>,
+        /// The op to be stored
+        op: EncryptedOp,
     },
 }
 
@@ -59,11 +59,11 @@ pub enum SendFx<D: Eq + Hash> {
         /// The node to send the data to
         to: simdash_types::NodeId,
         /// The protocol wire data to send
-        data: HashSet<D>,
+        data: D,
     },
     /// An effect to send data to all current neighbors of the node
     BroadcastData {
         /// The protocol wire data to send
-        data: HashSet<D>,
+        data: D,
     },
 }

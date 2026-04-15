@@ -20,7 +20,7 @@ pub struct FloodingModel {
 impl polestar::Machine for FloodingModel {
     type State = FloodingState;
     type Action = ProtocolAction;
-    type Fx = Option<ProtocolFx>;
+    type Fx = Vec<ProtocolFx>;
     type Error = anyhow::Error;
 
     fn transition(
@@ -31,26 +31,22 @@ impl polestar::Machine for FloodingModel {
         let (state, fx) = match action {
             ProtocolAction::Network(ProtocolNetworkAction::Tick) => {
                 state.tick();
-                (state, None)
+                (state, vec![])
             }
 
             ProtocolAction::Network(ProtocolNetworkAction::Receive { data }) => {
-                let mut out = vec![];
-                for op in data {
-                    let mut flooding_op = FloodingOp::from_wire(op);
-                    let id = flooding_op.id();
-                    if state.ops.contains_key(&id) {
-                        // Op already exists, just drop it.
-                        continue;
-                    }
-                    // Mark as recently sent so the node doesn't re-broadcast
-                    // the op in the same round it was received.
-                    flooding_op.touch();
-                    state.ops.insert(id, flooding_op.clone());
-                    out.push(flooding_op.data.encrypted);
+                let mut flooding_op = FloodingOp::from_wire(data);
+                let id = flooding_op.id();
+                if state.ops.contains_key(&id) {
+                    // Op already exists, just drop it.
+                    return Ok((state, vec![]));
                 }
-                let fx = ProtocolFx::Node(StorageFx::StoreOps { ops: out });
-                (state, Some(fx))
+                // Mark as recently sent so the node doesn't re-broadcast
+                // the op in the same round it was received.
+                flooding_op.touch();
+                state.ops.insert(id, flooding_op.clone());
+                let fx = vec![ProtocolFx::store_op(flooding_op.data.encrypted)];
+                (state, fx)
             }
             ProtocolAction::Protocol(FloodingAction::StoreOp(data)) => {
                 let op = FloodingOp::from_wire(data);
@@ -58,10 +54,10 @@ impl polestar::Machine for FloodingModel {
                 if existing.is_some() {
                     anyhow::bail!("Flooding op already exists: op_id={:?}", op.id());
                 }
-                (state, None)
+                (state, vec![])
             }
             ProtocolAction::Protocol(FloodingAction::TriggerBroadcast) => {
-                let broadcasted = state
+                let fx = state
                     .ops
                     .values_mut()
                     .filter(|op| {
@@ -72,14 +68,10 @@ impl polestar::Machine for FloodingModel {
                     })
                     .map(|op| {
                         op.touch();
-                        op.data.clone()
+                        ProtocolFx::broadcast(op.data.clone())
                     })
-                    .collect::<HashSet<_>>();
-                (
-                    state,
-                    (!broadcasted.is_empty())
-                        .then(|| ProtocolFx::Network(SendFx::BroadcastData { data: broadcasted })),
-                )
+                    .collect();
+                (state, fx)
             }
         };
         Ok((state, fx))
@@ -131,12 +123,7 @@ mod tests {
         let (_, fx) = m
             .transition(state, FloodingAction::TriggerBroadcast.into())
             .unwrap();
-        assert_eq!(
-            fx,
-            Some(ProtocolFx::Network(SendFx::BroadcastData {
-                data: hashset![data],
-            })),
-        );
+        assert_eq!(fx, vec![ProtocolFx::broadcast(data)],);
     }
 
     /// An op that was just broadcast should NOT be immediately re-broadcast.
@@ -157,7 +144,7 @@ mod tests {
         let (_, fx) = m
             .transition(state, FloodingAction::TriggerBroadcast.into())
             .unwrap();
-        assert_eq!(fx, None);
+        assert_eq!(fx, vec![]);
     }
 
     /// After broadcast_interval ticks, an op is eligible for re-broadcast.
@@ -173,21 +160,16 @@ mod tests {
                 [
                     FloodingAction::StoreOp(data.clone()).into(),
                     FloodingAction::TriggerBroadcast.into(),
-                    ProtocolAction::Network(ProtocolNetworkAction::Tick),
-                    ProtocolAction::Network(ProtocolNetworkAction::Tick),
-                    ProtocolAction::Network(ProtocolNetworkAction::Tick),
+                    ProtocolAction::tick(),
+                    ProtocolAction::tick(),
+                    ProtocolAction::tick(),
                 ],
             )
             .unwrap();
         let (_, fx) = m
             .transition(state, FloodingAction::TriggerBroadcast.into())
             .unwrap();
-        assert_eq!(
-            fx,
-            Some(ProtocolFx::Network(SendFx::BroadcastData {
-                data: hashset![data],
-            })),
-        );
+        assert_eq!(fx, vec![ProtocolFx::broadcast(data)],);
     }
 
     /// ReceiveOp stores the op in state and produces no Fx.
@@ -199,19 +181,9 @@ mod tests {
         let op_id = op.id;
         let data = FloodingWireData::new(op.clone());
         let (state, fx) = m
-            .transition(
-                state,
-                ProtocolAction::Network(ProtocolNetworkAction::Receive {
-                    data: hashset![data.clone()],
-                }),
-            )
+            .transition(state, ProtocolAction::receive(data.clone()))
             .unwrap();
-        assert_eq!(
-            fx,
-            Some(ProtocolFx::Node(StorageFx::StoreOps {
-                ops: vec![data.encrypted]
-            }))
-        );
+        assert_eq!(fx, vec!(ProtocolFx::store_op(data.encrypted)));
         assert!(state.ops.contains_key(&op_id));
     }
 }

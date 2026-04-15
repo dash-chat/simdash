@@ -1,4 +1,4 @@
-use std::{collections::HashSet, hash::Hash};
+use std::hash::Hash;
 
 /// The complete set of actions that be performed on a protocol model.
 ///
@@ -26,7 +26,7 @@ impl<A, D: Eq + Hash> From<A> for RoutingAction<A, D> {
 
 impl<A, D: Eq + Hash> RoutingAction<A, D> {
     /// Convenience method to create a Receive action.
-    pub fn receive(data: HashSet<D>) -> Self {
+    pub fn receive(data: D) -> Self {
         RoutingAction::Network(ProtocolNetworkAction::Receive { data })
     }
 
@@ -48,7 +48,7 @@ pub enum ProtocolNetworkAction<D: Eq + Hash> {
     /// An action to receive data from the network
     Receive {
         /// The protocol wire data received
-        data: HashSet<D>,
+        data: D,
     },
     /// An action to advance the protocol state by one tick
     Tick,

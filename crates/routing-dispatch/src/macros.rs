@@ -129,43 +129,32 @@ macro_rules! routing_dispatch {
                     }
 
                     RoutingAction::Network(ProtocolNetworkAction::Receive { data }) => {
-                        let mut result_fx = None;
-                        $(
-                            let protocol_data: std::collections::HashSet<$data_ty> = data
-                                .iter()
-                                .filter_map(|d| match d {
-                                    AnyRoutingData::$Variant(inner) => Some(inner.clone()),
-                                    #[allow(unreachable_patterns)]
-                                    _ => None,
-                                })
-                                .collect();
-                            if !protocol_data.is_empty() {
-                                let (new, fx) = self.$field.transition(
-                                    state.$field,
-                                    RoutingAction::Network(ProtocolNetworkAction::Receive {
-                                        data: protocol_data,
-                                    }),
-                                )?;
-                                state.$field = new;
-                                result_fx = fx.map(|fx| {
-                                    crate::lift_fx(fx, AnyRoutingData::$Variant, AnyRoutingFx::$Variant)
-                                });
-                            }
-                        )+
-                        Ok((state, result_fx))
+                        match data {
+                            $(
+                                AnyRoutingData::$Variant(data) => {
+                                    let (new, fx) = self.$field.transition(
+                                        state.$field,
+                                        RoutingAction::Network(ProtocolNetworkAction::Receive {data}),
+                                    )?;
+                                    state.$field = new;
+                                    Ok((state, Some(crate::lift_fx(fx, AnyRoutingData::$Variant, AnyRoutingFx::$Variant))))
+                                }
+                            )+
+                        }
                     }
 
                     RoutingAction::Protocol(action) => match action {
                         $(
                             AnyRoutingAction::$Variant(a) => {
-                                let (new, fx) = self.$field.transition(
+                                let (new, fxes) = self.$field.transition(
                                     state.$field,
                                     RoutingAction::Protocol(a),
                                 )?;
                                 state.$field = new;
-                                Ok((state, fx.map(|fx| {
+                                let result_fx = fxes.into_iter().last().map(|fx| {
                                     crate::lift_fx(fx, AnyRoutingData::$Variant, AnyRoutingFx::$Variant)
-                                })))
+                                });
+                                Ok((state, result_fx))
                             }
                         )+
                     },
