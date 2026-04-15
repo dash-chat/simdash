@@ -24,6 +24,23 @@ impl<A, D: Eq + Hash> From<A> for RoutingAction<A, D> {
     }
 }
 
+impl<A, D: Eq + Hash> RoutingAction<A, D> {
+    /// Convenience method to create a Receive action.
+    pub fn receive(from: simdash_types::NodeId, data: HashSet<D>) -> Self {
+        RoutingAction::Network(ProtocolNetworkAction::Receive { from, data })
+    }
+
+    /// Convenience method to create a Tick action.
+    pub fn tick() -> Self {
+        RoutingAction::Network(ProtocolNetworkAction::Tick)
+    }
+
+    /// Convenience method to wrap a Protocol action.
+    pub fn protocol(action: A) -> Self {
+        RoutingAction::Protocol(action)
+    }
+}
+
 /// An action triggered by network behavior,
 /// always due to a [`crate::ProtocolFx::Network`] effect.
 #[derive(Debug, Clone, PartialEq, Eq)]

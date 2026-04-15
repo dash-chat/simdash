@@ -19,6 +19,28 @@ pub enum RoutingFx<Fx, D: Eq + Hash> {
     Protocol(Fx),
 }
 
+impl<Fx, D: Eq + Hash> RoutingFx<Fx, D> {
+    /// Convenience method to for the [`SendFx::UnicastData`] effect.
+    pub fn unicast(to: simdash_types::NodeId, data: HashSet<D>) -> Self {
+        RoutingFx::Network(SendFx::UnicastData { to, data })
+    }
+
+    /// Convenience method for the [`SendFx::BroadcastData`] effect.
+    pub fn broadcast(data: HashSet<D>) -> Self {
+        RoutingFx::Network(SendFx::BroadcastData { data })
+    }
+
+    /// Convenience method for the [`StorageFx::StoreOps`] effect.
+    pub fn store_ops(ops: Vec<EncryptedOp>) -> Self {
+        RoutingFx::Node(StorageFx::StoreOps { ops })
+    }
+
+    /// Convenience method to wrap a Protocol effect.
+    pub fn protocol(fx: Fx) -> Self {
+        RoutingFx::Protocol(fx)
+    }
+}
+
 /// An effect which causes chat app state to change
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum StorageFx {
