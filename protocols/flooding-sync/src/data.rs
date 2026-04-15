@@ -6,19 +6,23 @@ use simdash_types::{EncryptedOp, LogHeight, LogId, Seq};
 /// The data sent over the wire between nodes using the flooding-sync protocol.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum WireData {
+    /// An announcement of the state vector
     Announce {
+        /// The state vector
         state_vector: StateVector,
     },
+    /// A list of operations in response to an announcement
     Ops {
-        ops: BTreeSet<(LogId, Seq, EncryptedOp)>,
+        /// The operations
+        ops: BTreeSet<Op>,
     },
 }
 
 /// Metadata needed for flooding.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
 pub struct Metadata {
-    log_id: LogId,
-    seq: Seq,
+    pub log_id: LogId,
+    pub seq: Seq,
 }
 
 /// Metadata needed for Noop.
@@ -32,9 +36,10 @@ impl Metadata {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
 pub struct Op {
-    metadata: Metadata,
-    encrypted: EncryptedOp,
+    pub metadata: Metadata,
+    pub encrypted: EncryptedOp,
 }
 
 pub type StateVector = BTreeSet<(LogId, LogHeight)>;

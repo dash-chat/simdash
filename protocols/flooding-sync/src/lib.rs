@@ -1,4 +1,6 @@
-//! A no-op routing protocol, which does nothing.
+//! Use log height syncing to flood the network with operations
+
+#![allow(missing_docs)]
 
 mod action;
 mod behavior;

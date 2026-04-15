@@ -5,7 +5,7 @@ pub use operation::*;
 
 pub mod util;
 
-use derive_more::{Deref, From};
+use derive_more::{Add, Deref, From};
 use serde::{Deserialize, Serialize};
 
 pub type GroupId = u64;
@@ -36,7 +36,20 @@ pub struct Size(u64);
 pub struct LogId(u32);
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize, From, Deref,
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    PartialEq,
+    Eq,
+    Hash,
+    Ord,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+    From,
+    Deref,
+    Add,
 )]
 pub struct LogHeight(u32);
 

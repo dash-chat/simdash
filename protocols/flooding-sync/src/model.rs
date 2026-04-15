@@ -1,9 +1,10 @@
+use maplit::hashset;
 use simdash_routing_common::{ProtocolNetworkAction, RoutingAction};
 use simdash_types::Ticks;
 
-use crate::{ProtocolAction, ProtocolFx, action::Action, state::State};
+use crate::{ProtocolAction, ProtocolFx, WireData, action::Action, state::State};
 
-/// The Noop model simply does nothing.
+/// The FloodingSync model implements the flooding-sync protocol.
 #[derive(Debug, Clone, Default)]
 pub struct Model {
     /// Ticks to wait between sync rounds
@@ -32,7 +33,8 @@ impl polestar::Machine for Model {
             RoutingAction::Network(ProtocolNetworkAction::Receive { data }) => (state, None),
             RoutingAction::Protocol(Action::TriggerSync) => {
                 state.countdown = self.sync_interval;
-                let fx = ProtocolFx::broadcast(todo!());
+                let state_vector = state.op_buffer.state_vector();
+                let fx = ProtocolFx::broadcast(hashset![WireData::Announce { state_vector }]);
                 (state, Some(fx))
             }
             RoutingAction::Network(ProtocolNetworkAction::Tick) => {
