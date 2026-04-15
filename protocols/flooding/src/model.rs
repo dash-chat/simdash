@@ -1,7 +1,5 @@
-use std::collections::HashSet;
-
-use simdash_routing_common::{ProtocolNetworkAction, SendFx, StorageFx};
-use simdash_types::{Tickable, Ticks};
+use simdash_routing_common::ProtocolNetworkAction;
+use simdash_types::Ticks;
 
 use crate::{
     ProtocolAction, ProtocolFx,

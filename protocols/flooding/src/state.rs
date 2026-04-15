@@ -11,8 +11,9 @@ pub struct FloodingState {
     pub ops: HashMap<OpId, FloodingOp>,
 }
 
-impl Tickable for FloodingState {
-    fn tick(&mut self) {
+impl FloodingState {
+    /// Advance the state by one tick
+    pub fn tick(&mut self) {
         self.ops.values_mut().for_each(|op| op.tick());
     }
 }

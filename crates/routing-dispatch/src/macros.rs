@@ -61,14 +61,6 @@ macro_rules! routing_dispatch {
             )+
         }
 
-        impl RoutingDispatchModel {
-            /// Advance the routing model by one tick
-            pub fn tick(&self, state: RoutingDispatchState) -> polestar::TransitionResult<Self> {
-                self.transition(state, RoutingAction::Network(ProtocolNetworkAction::Tick))
-            }
-        }
-
-
         /// The state composed of all user-defined routing protocol states.
         #[derive(Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
         pub struct RoutingDispatchState {
@@ -114,12 +106,6 @@ macro_rules! routing_dispatch {
             )+
         }
 
-        impl Tickable for RoutingDispatchState {
-            fn tick(&mut self) {
-                $( Tickable::tick(&mut self.$field); )+
-            }
-        }
-
         impl Machine for RoutingDispatchModel {
             type State  = RoutingDispatchState;
             type Action = RoutingAction<AnyRoutingAction, AnyRoutingData>;
@@ -133,7 +119,12 @@ macro_rules! routing_dispatch {
             ) -> polestar::TransitionResult<Self> {
                 match action {
                     RoutingAction::Network(ProtocolNetworkAction::Tick) => {
-                        Tickable::tick(&mut state);
+                        {
+                            $(
+                                let (new, _fx) = self.$field.transition(state.$field, RoutingAction::tick())?;
+                                state.$field = new;
+                             )+
+                        }
                         Ok((state, vec![]))
                     }
 

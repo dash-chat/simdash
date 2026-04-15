@@ -2,7 +2,6 @@
 
 use serde::{Deserialize, Serialize};
 use simdash_routing_dispatch::RoutingDispatchState;
-use simdash_types::Tickable;
 
 use crate::chat::ChatState;
 
@@ -19,11 +18,5 @@ impl NodeState<RoutingDispatchState> {
     /// Get a reference to the chat state of the node
     pub fn chat(&self) -> &ChatState {
         &self.chat
-    }
-
-    /// Tick the internal states of the node
-    pub fn tick(&mut self) {
-        self.chat.tick();
-        self.routing.tick();
     }
 }

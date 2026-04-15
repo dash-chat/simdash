@@ -1,5 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
+use derive_more::Deref;
 use serde::{Deserialize, Serialize};
 use simdash_types::*;
 
@@ -28,12 +29,6 @@ impl State {
     }
 }
 
-impl Tickable for State {
-    fn tick(&mut self) {
-        self.countdown = self.countdown + 1.into();
-    }
-}
-
 impl GetRoutingOpInfo for State {
     fn routing_op_infos(&self) -> impl Iterator<Item = RoutingOpInfo> {
         self.op_buffer.ops.values().flat_map(|ops| {
@@ -45,16 +40,32 @@ impl GetRoutingOpInfo for State {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Deref)]
+pub struct StoredOp {
+    #[deref]
+    pub op: Op,
+    pub since_last_send: Ticks,
+}
+
+impl StoredOp {
+    pub fn new(op: Op) -> Self {
+        Self {
+            op,
+            since_last_send: 0.into(),
+        }
+    }
+}
+
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct OpBuffer {
-    ops: HashMap<LogId, BTreeSet<Op>>,
+    ops: HashMap<LogId, BTreeSet<StoredOp>>,
 }
 
 impl OpBuffer {
     pub fn store_op(&mut self, op: Op) {
         let log = self.ops.entry(op.metadata.log_id).or_default();
         let metadata = op.metadata.clone();
-        let existing = log.insert(op);
+        let existing = log.insert(StoredOp::new(op));
         if existing {
             tracing::warn!("Op already exists: metadata={:?}", metadata);
         } else {
@@ -86,6 +97,7 @@ impl OpBuffer {
             .flat_map(|(log_id, ops)| {
                 let height = other.get(log_id).map(|h| **h).unwrap_or(0);
                 ops.iter()
+                    .map(|op| &op.op)
                     .filter(move |op| *op.metadata.seq >= height)
                     .cloned()
             })

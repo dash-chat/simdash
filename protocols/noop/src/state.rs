@@ -8,8 +8,9 @@ pub struct NoopState {
     pub ticks: Ticks,
 }
 
-impl Tickable for NoopState {
-    fn tick(&mut self) {
+impl NoopState {
+    /// Advance the state by one tick
+    pub fn tick(&mut self) {
         self.ticks = self.ticks + 1.into();
     }
 }

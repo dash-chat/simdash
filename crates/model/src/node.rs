@@ -1,6 +1,7 @@
 //! The Node model manages all of the state of a single node in the network.
 
-use simdash_action::node::NodeAction;
+use simdash_action::{chat::ChatAction, node::NodeAction};
+use simdash_routing_common::{ProtocolNetworkAction, RoutingAction};
 use simdash_routing_dispatch::{RoutingDispatchFx, RoutingDispatchModel};
 
 use crate::chat::ChatModel;
@@ -58,8 +59,12 @@ impl polestar::Machine for NodeModel {
                 )
             }
             NodeAction::Tick => {
-                let (routing, fx) = self.routing.tick(state.routing)?;
-                state.routing = routing;
+                let (new, fx) = self.routing.transition(
+                    state.routing,
+                    RoutingAction::Network(ProtocolNetworkAction::Tick),
+                )?;
+                state.routing = new;
+
                 (
                     state,
                     fx.into_iter().map(|fx| NodeFx { routing: fx }).collect(),
