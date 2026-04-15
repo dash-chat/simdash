@@ -20,3 +20,14 @@ just viewer     # Launch backend + frontend viewer, uses config.json as default
 just test       # Run all tests
 just generate   # Generate topology from config
 ```
+
+## Protocol Development
+
+Protocols are developed in their own separate crates. To develop a new protocol, create a new crate in the `protocols` directory, and: 
+- add it to the `Cargo.toml` file
+- add it to the `routing_dispatch!` macro in `simdash-routing-dispatch`
+- hook up a Scenario with a Behavior that uses your protocol
+
+The protocol crate must depend on `simdash-routing-common` and `simdash-types`, and can communicate with the rest of the system
+through the [`ProtocolAction`] and [`ProtocolFx`] enums.
+
