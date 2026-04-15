@@ -114,7 +114,7 @@ macro_rules! routing_dispatch {
         impl Machine for RoutingDispatchModel {
             type State  = RoutingDispatchState;
             type Action = RoutingAction<AnyRoutingAction, AnyRoutingData>;
-            type Fx     = Option<RoutingFx<AnyRoutingFx, AnyRoutingData>>;
+            type Fx     = Vec<RoutingFx<AnyRoutingFx, AnyRoutingData>>;
             type Error  = anyhow::Error;
 
             fn transition(
@@ -125,7 +125,7 @@ macro_rules! routing_dispatch {
                 match action {
                     RoutingAction::Network(ProtocolNetworkAction::Tick) => {
                         Tickable::tick(&mut state);
-                        Ok((state, None))
+                        Ok((state, vec![]))
                     }
 
                     RoutingAction::Network(ProtocolNetworkAction::Receive { data }) => {
@@ -137,7 +137,8 @@ macro_rules! routing_dispatch {
                                         RoutingAction::Network(ProtocolNetworkAction::Receive {data}),
                                     )?;
                                     state.$field = new;
-                                    Ok((state, Some(crate::lift_fx(fx, AnyRoutingData::$Variant, AnyRoutingFx::$Variant))))
+                                    let fx = fx.into_iter().map(|fx| crate::lift_fx(fx, AnyRoutingData::$Variant, AnyRoutingFx::$Variant)).collect();
+                                    Ok((state, fx))
                                 }
                             )+
                         }
@@ -151,9 +152,9 @@ macro_rules! routing_dispatch {
                                     RoutingAction::Protocol(a),
                                 )?;
                                 state.$field = new;
-                                let result_fx = fxes.into_iter().last().map(|fx| {
+                                let result_fx = fxes.into_iter().map(|fx| {
                                     crate::lift_fx(fx, AnyRoutingData::$Variant, AnyRoutingFx::$Variant)
-                                });
+                                }).collect();
                                 Ok((state, result_fx))
                             }
                         )+

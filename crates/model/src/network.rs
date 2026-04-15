@@ -91,7 +91,7 @@ impl polestar::Machine for NetworkModel {
                     Ok((node_state, node_fx))
                 }) {
                     Ok(fx) => {
-                        if let Some(fx) = fx {
+                        for fx in fx {
                             self.apply_node_effects(&mut state, node_id, fx)?;
                         }
                     }
@@ -129,7 +129,7 @@ impl NetworkModel {
                             )
                         })?;
 
-                        if let Some(fx) = fx {
+                        for fx in fx {
                             self.apply_node_effects(state, neighbor, fx)?;
                         }
                     }
@@ -143,27 +143,22 @@ impl NetworkModel {
                             )),
                         )
                     })?;
-                    if let Some(fx) = fx {
+                    for fx in fx {
                         self.apply_node_effects(state, to, fx)?;
                     }
                 }
             },
 
             // TODO: this could also be handled at the Node level, or by the Simulator.
-            RoutingDispatchFx::Node(StorageFx::StoreOps { op: ops }) => {
+            RoutingDispatchFx::Node(StorageFx::StoreOp { op }) => {
                 let fx = state.graph.update_node(node_id, |node_state| {
-                    let actions = ops.into_iter().map(|op| {
-                        NodeAction::Chat(ChatAction::StoreOp(
-                            op.decrypt(&simdash_types::EncryptionKey),
-                        ))
-                    });
-                    self.node.transitions(node_state, actions)
+                    let action = NodeAction::Chat(ChatAction::StoreOp(
+                        op.decrypt(&simdash_types::EncryptionKey),
+                    ));
+                    self.node.transition(node_state, action)
                 })?;
                 for fx in fx {
-                    // TODO: smell
-                    if let Some(fx) = fx {
-                        self.apply_node_effects(state, node_id, fx)?;
-                    }
+                    self.apply_node_effects(state, node_id, fx)?;
                 }
             }
             RoutingDispatchFx::Protocol(fx) => {

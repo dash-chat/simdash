@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use serde::{Deserialize, Serialize};
 use simdash_types::{EncryptedOp, LogHeight, LogId, Seq};
@@ -42,4 +42,4 @@ pub struct Op {
     pub encrypted: EncryptedOp,
 }
 
-pub type StateVector = BTreeSet<(LogId, LogHeight)>;
+pub type StateVector = BTreeMap<LogId, LogHeight>;

@@ -23,8 +23,14 @@ pub struct Operation {
     pub body: Body,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, From)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, From)]
 pub struct EncryptedOp(Operation);
+
+impl std::fmt::Debug for EncryptedOp {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "EncryptedOp")
+    }
+}
 
 impl EncryptedOp {
     /// This should only be used in contexts where decryption is actually allowed!

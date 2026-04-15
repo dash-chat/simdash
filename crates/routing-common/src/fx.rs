@@ -32,7 +32,7 @@ impl<Fx, D: Eq + Hash> RoutingFx<Fx, D> {
 
     /// Convenience method for the [`StorageFx::StoreOp`] effect.
     pub fn store_op(op: EncryptedOp) -> Self {
-        RoutingFx::Node(StorageFx::StoreOps { op })
+        RoutingFx::Node(StorageFx::StoreOp { op })
     }
 
     /// Convenience method to wrap a Protocol effect.
@@ -44,9 +44,9 @@ impl<Fx, D: Eq + Hash> RoutingFx<Fx, D> {
 /// An effect which causes chat app state to change
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum StorageFx {
-    /// An effect to store operations in the Chat state
-    StoreOps {
-        /// The op to be stored
+    /// An effect to ask the node to decrypt and store operations in the Chat state
+    StoreOp {
+        /// The op to be decrypted and stored
         op: EncryptedOp,
     },
 }

@@ -50,10 +50,25 @@ impl OpBuffer {
             })
             .collect()
     }
+
+    pub fn diff(&self, other: &StateVector) -> BTreeSet<Op> {
+        self.ops
+            .iter()
+            .flat_map(|(log_id, ops)| {
+                let height = other.get(log_id).map(|h| **h).unwrap_or(0);
+                ops.iter()
+                    .filter(move |op| *op.metadata.seq >= height)
+                    .cloned()
+            })
+            .collect()
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    use pretty_assertions::assert_eq;
+    use std::collections::BTreeMap;
+
     use simdash_types::util::basic_op;
 
     use crate::Metadata;
@@ -79,7 +94,7 @@ mod tests {
         state.store_op(make_op(22.into(), 2.into()));
         assert_eq!(
             state.state_vector(),
-            BTreeSet::from([
+            BTreeMap::from([
                 (11.into(), LogHeight::from(3)),
                 (22.into(), LogHeight::from(3))
             ])
@@ -88,10 +103,65 @@ mod tests {
         state.store_op(make_op(11.into(), 37.into()));
         assert_eq!(
             state.state_vector(),
-            BTreeSet::from([
+            BTreeMap::from([
                 (11.into(), LogHeight::from(38)),
                 (22.into(), LogHeight::from(3))
             ])
+        );
+    }
+
+    #[test]
+    fn test_diff() {
+        let mut s1 = OpBuffer::default();
+        let mut s2 = OpBuffer::default();
+
+        s1.store_op(make_op(11.into(), 0.into()));
+        s1.store_op(make_op(11.into(), 1.into()));
+        s1.store_op(make_op(11.into(), 2.into()));
+        s1.store_op(make_op(22.into(), 0.into()));
+        s1.store_op(make_op(22.into(), 1.into()));
+        s1.store_op(make_op(22.into(), 2.into()));
+        s1.store_op(make_op(33.into(), 0.into()));
+
+        s2.store_op(make_op(22.into(), 0.into()));
+        s2.store_op(make_op(33.into(), 0.into()));
+        s2.store_op(make_op(33.into(), 1.into()));
+        s2.store_op(make_op(44.into(), 0.into()));
+
+        let v1 = s1.state_vector();
+        let v2 = s2.state_vector();
+
+        assert_eq!(
+            v1,
+            BTreeMap::from([
+                (11.into(), LogHeight::from(3)),
+                (22.into(), LogHeight::from(3)),
+                (33.into(), LogHeight::from(1)),
+            ])
+        );
+
+        assert_eq!(
+            v2,
+            BTreeMap::from([
+                (22.into(), LogHeight::from(1)),
+                (33.into(), LogHeight::from(2)),
+                (44.into(), LogHeight::from(1)),
+            ])
+        );
+
+        assert_eq!(
+            s1.diff(&v2),
+            BTreeSet::from([
+                make_op(11.into(), 0.into()),
+                make_op(11.into(), 1.into()),
+                make_op(11.into(), 2.into()),
+                make_op(22.into(), 1.into()),
+                make_op(22.into(), 2.into()),
+            ])
+        );
+        assert_eq!(
+            s2.diff(&v1),
+            BTreeSet::from([make_op(33.into(), 1.into()), make_op(44.into(), 0.into()),])
         );
     }
 }

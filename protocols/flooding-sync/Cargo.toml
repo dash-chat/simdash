@@ -8,6 +8,7 @@ anyhow = { workspace = true }
 derive_more = { workspace = true }
 maplit = { workspace = true }
 polestar = { workspace = true }
+pretty_assertions = { workspace = true }
 serde = { workspace = true }
 simdash-types = { workspace = true }
 simdash-routing-common = { workspace = true }

@@ -36,7 +36,7 @@ pub struct NodeFx {
 impl polestar::Machine for NodeModel {
     type State = simdash_state::node::NodeState;
     type Action = simdash_action::node::NodeAction;
-    type Fx = Option<NodeFx>;
+    type Fx = Vec<NodeFx>;
     type Error = anyhow::Error;
 
     fn transition(
@@ -47,17 +47,23 @@ impl polestar::Machine for NodeModel {
         Ok(match action {
             NodeAction::Chat(action) => {
                 state.chat = self.dash.transition_(state.chat, action)?;
-                (state, None)
+                (state, vec![])
             }
             NodeAction::Routing(action) => {
                 let (routing, fx) = self.routing.transition(state.routing, action)?;
                 state.routing = routing;
-                (state, fx.map(|fx| NodeFx { routing: fx }))
+                (
+                    state,
+                    fx.into_iter().map(|fx| NodeFx { routing: fx }).collect(),
+                )
             }
             NodeAction::Tick => {
                 let (routing, fx) = self.routing.tick(state.routing)?;
                 state.routing = routing;
-                (state, fx.map(|fx| NodeFx { routing: fx }))
+                (
+                    state,
+                    fx.into_iter().map(|fx| NodeFx { routing: fx }).collect(),
+                )
             }
         })
     }
@@ -130,9 +136,9 @@ mod tests {
             )
             .unwrap();
         assert_eq!(
-            fx.unwrap().routing,
+            fx[0].routing,
             RoutingDispatchFx::Network(SendFx::BroadcastData {
-                data: [AnyRoutingData::Flooding(data)].into_iter().collect(),
+                data: AnyRoutingData::Flooding(data),
             })
         );
     }
@@ -149,9 +155,7 @@ mod tests {
                 state,
                 NodeAction::Routing(RoutingDispatchAction::Network(
                     ProtocolNetworkAction::Receive {
-                        data: [AnyRoutingData::Flooding(FloodingWireData::new(op.clone()))]
-                            .into_iter()
-                            .collect(),
+                        data: AnyRoutingData::Flooding(FloodingWireData::new(op.clone())),
                     },
                 )),
             )

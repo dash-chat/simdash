@@ -1559,6 +1559,7 @@ dependencies = [
  "derive_more 2.1.1",
  "maplit",
  "polestar",
+ "pretty_assertions",
  "serde",
  "simdash-routing-common",
  "simdash-types",
