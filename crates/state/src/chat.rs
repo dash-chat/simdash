@@ -32,7 +32,8 @@ impl ChatState {
     /// Store an operation in the chat state, allowing for capacity limits.
     pub fn store_op(&mut self, op: Operation) -> anyhow::Result<()> {
         if self.op_store.contains_key(&op.id) {
-            anyhow::bail!("Chat op already exists: op_id={:?}", op.id);
+            tracing::warn!("Chat op already exists: op_id={:?}", op.id);
+            return Ok(());
         }
         if let Some(capacity) = self.storage_capacity {
             let new_size = *self.stored_size() + *op.header.payload_size;

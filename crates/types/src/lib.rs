@@ -5,19 +5,45 @@ pub use operation::*;
 
 pub mod util;
 
-use derive_more::{Add, Deref, From};
+use derive_more::{Add, Deref, Display, From};
 use serde::{Deserialize, Serialize};
 
 pub type GroupId = u64;
 
 #[derive(
-    Serialize, Deserialize, PartialOrd, Ord, Debug, Clone, Copy, PartialEq, Eq, Hash, From, Deref,
+    Serialize,
+    Deserialize,
+    PartialOrd,
+    Ord,
+    Debug,
+    Display,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    From,
+    Deref,
 )]
+#[display("N({})", _0)]
 pub struct NodeId(u32);
 
 #[derive(
-    Serialize, Deserialize, PartialOrd, Ord, Debug, Clone, Copy, PartialEq, Eq, Hash, From, Deref,
+    Serialize,
+    Deserialize,
+    PartialOrd,
+    Ord,
+    Debug,
+    Display,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    From,
+    Deref,
 )]
+#[display("op{}", _0)]
 pub struct OpId(u32);
 
 #[derive(
@@ -26,13 +52,39 @@ pub struct OpId(u32);
 pub struct EdgeId(u32);
 
 #[derive(
-    Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, From, Deref,
+    Serialize,
+    Deserialize,
+    Debug,
+    Display,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    From,
+    Deref,
 )]
+#[display("({})B", _0)]
 pub struct Size(u64);
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize, From, Deref,
+    Debug,
+    Display,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    Ord,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+    From,
+    Deref,
 )]
+#[display("L{}", _0)]
 pub struct LogId(u32);
 
 #[derive(
@@ -50,6 +102,7 @@ pub struct LogId(u32);
     From,
     Deref,
     Add,
+    Display,
 )]
 pub struct LogHeight(u32);
 

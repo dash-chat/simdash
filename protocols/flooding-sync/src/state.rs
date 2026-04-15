@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use serde::{Deserialize, Serialize};
 use simdash_types::*;
@@ -63,19 +63,21 @@ impl OpBuffer {
     }
 
     pub fn state_vector(&self) -> StateVector {
-        self.ops
-            .iter()
-            .map(|(log_id, ops)| {
-                (
-                    log_id.clone(),
-                    ops.iter()
-                        .map(|op| op.metadata.seq)
-                        .max()
-                        .map(|seq| LogHeight::from(*seq + 1u32))
-                        .unwrap_or_default(),
-                )
-            })
-            .collect()
+        StateVector::from(
+            self.ops
+                .iter()
+                .map(|(log_id, ops)| {
+                    (
+                        log_id.clone(),
+                        ops.iter()
+                            .map(|op| op.metadata.seq)
+                            .max()
+                            .map(|seq| LogHeight::from(*seq + 1u32))
+                            .unwrap_or_default(),
+                    )
+                })
+                .collect::<BTreeMap<_, _>>(),
+        )
     }
 
     pub fn diff(&self, other: &StateVector) -> BTreeSet<Op> {
@@ -120,7 +122,7 @@ mod tests {
         state.store_op(make_op(22.into(), 1.into()));
         state.store_op(make_op(22.into(), 2.into()));
         assert_eq!(
-            state.state_vector(),
+            *state.state_vector(),
             BTreeMap::from([
                 (11.into(), LogHeight::from(3)),
                 (22.into(), LogHeight::from(3))
@@ -129,7 +131,7 @@ mod tests {
 
         state.store_op(make_op(11.into(), 37.into()));
         assert_eq!(
-            state.state_vector(),
+            *state.state_vector(),
             BTreeMap::from([
                 (11.into(), LogHeight::from(38)),
                 (22.into(), LogHeight::from(3))
@@ -159,7 +161,7 @@ mod tests {
         let v2 = s2.state_vector();
 
         assert_eq!(
-            v1,
+            *v1,
             BTreeMap::from([
                 (11.into(), LogHeight::from(3)),
                 (22.into(), LogHeight::from(3)),
@@ -168,7 +170,7 @@ mod tests {
         );
 
         assert_eq!(
-            v2,
+            *v2,
             BTreeMap::from([
                 (22.into(), LogHeight::from(1)),
                 (33.into(), LogHeight::from(2)),

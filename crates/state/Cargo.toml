@@ -11,6 +11,7 @@ serde = { workspace = true }
 petgraph = { workspace = true }
 polestar = { workspace = true }
 postcard = { workspace = true }
+tracing = { workspace = true }
 
 simdash-types = { workspace = true }
 simdash-routing-dispatch = { workspace = true }

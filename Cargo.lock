@@ -1687,6 +1687,7 @@ dependencies = [
  "serde",
  "simdash-routing-dispatch",
  "simdash-types",
+ "tracing",
 ]
 
 [[package]]

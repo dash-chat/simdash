@@ -1,5 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
+use derive_more::{Debug, Deref, From};
+
 use serde::{Deserialize, Serialize};
 use simdash_types::{EncryptedOp, LogHeight, LogId, Seq};
 
@@ -7,10 +9,10 @@ use simdash_types::{EncryptedOp, LogHeight, LogId, Seq};
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 pub enum WireData {
     /// An announcement of the state vector
-    Announce {
+    Announce(
         /// The state vector
-        state_vector: StateVector,
-    },
+        StateVector,
+    ),
     /// A list of operations in response to an announcement
     Ops {
         /// The operations
@@ -37,6 +39,7 @@ impl Metadata {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
+#[debug("Op({:?})", metadata)]
 pub struct Op {
     pub metadata: Metadata,
     pub encrypted: EncryptedOp,
@@ -51,4 +54,8 @@ impl Op {
     }
 }
 
-pub type StateVector = BTreeMap<LogId, LogHeight>;
+#[derive(
+    Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize, From, Deref,
+)]
+#[debug("StateVector({:?})", _0.iter().map(|(log_id, log_height)| format!("{}:{}", log_id, log_height)).collect::<Vec<String>>().join(", "))]
+pub struct StateVector(BTreeMap<LogId, LogHeight>);

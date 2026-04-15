@@ -1,4 +1,3 @@
-use maplit::hashset;
 use simdash_routing_common::{ProtocolNetworkAction, RoutingAction};
 use simdash_types::Ticks;
 
@@ -21,7 +20,7 @@ impl Model {
 impl polestar::Machine for Model {
     type State = State;
     type Action = ProtocolAction;
-    type Fx = Option<ProtocolFx>;
+    type Fx = Vec<ProtocolFx>;
     type Error = anyhow::Error;
 
     fn transition(
@@ -29,37 +28,46 @@ impl polestar::Machine for Model {
         mut state: Self::State,
         action: Self::Action,
     ) -> polestar::TransitionResult<Self> {
-        dbg!(&action);
+        // println!("* ACTION:   {:?}", action);
         let (state, fx) = match action {
             RoutingAction::Network(ProtocolNetworkAction::Receive { data }) => match data {
-                WireData::Announce { state_vector } => {
+                WireData::Announce(state_vector) => {
                     let ops = state.op_buffer.diff(&state_vector);
+                    // println!("* STATEVEC: {:?}", state.op_buffer.state_vector());
                     if ops.is_empty() {
-                        (state, None)
+                        (state, vec![])
                     } else {
-                        (state, Some(ProtocolFx::broadcast(WireData::Ops { ops })))
+                        (state, vec![ProtocolFx::broadcast(WireData::Ops { ops })])
                     }
                 }
                 WireData::Ops { ops } => {
-                    for op in ops {
-                        state.op_buffer.store_op(op);
-                    }
-                    (state, None)
+                    let fx = ops
+                        .into_iter()
+                        .map(|op| {
+                            let encrypted = op.encrypted.clone();
+                            state.op_buffer.store_op(op);
+                            ProtocolFx::store_op(encrypted)
+                        })
+                        .collect();
+                    (state, fx)
                 }
             },
             RoutingAction::Protocol(Action::TriggerSync) => {
                 state.countdown = self.sync_interval;
                 let state_vector = state.op_buffer.state_vector();
-                let fx = ProtocolFx::broadcast(WireData::Announce { state_vector });
-                (state, Some(fx))
+                let fx = ProtocolFx::broadcast(WireData::Announce(state_vector));
+                (state, vec![fx])
             }
             RoutingAction::Network(ProtocolNetworkAction::Tick) => {
                 if state.countdown > 0.into() {
                     state.countdown = state.countdown - 1.into();
                 }
-                (state, None)
+                (state, vec![])
             }
         };
+        // println!("* STATE:    {:?}", state);
+        // println!("* FX:       {:?}", fx);
+        // println!();
         Ok((state, fx))
     }
 }
