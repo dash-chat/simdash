@@ -155,8 +155,9 @@ pub fn setup_from_json(json: serde_json::Value) -> anyhow::Result<SimSetup> {
         let prev: SimulationSnapshot =
             serde_json::from_value(json).context("Failed to parse simulation snapshot")?;
 
-        let (dash_topology, seed) = simdash_generator::generate_topology_from_config(&prev.config)
-            .context("Failed to regenerate topology from saved config")?;
+        let sim_config: simdash_generator::SimConfig = serde_json::from_value(prev.config.clone())
+            .context("Failed to parse config from snapshot")?;
+        let (dash_topology, seed) = simdash_generator::generate_topology_from_config(sim_config);
 
         println!(
             "Resuming from tick {} ({} nodes, {} edges)",
@@ -177,8 +178,9 @@ pub fn setup_from_json(json: serde_json::Value) -> anyhow::Result<SimSetup> {
         })
     } else {
         // This is a config — start fresh
-        let (dash_topology, seed) = simdash_generator::generate_topology_from_config(&json)
-            .context("Failed to generate topology from config")?;
+        let sim_config: simdash_generator::SimConfig = serde_json::from_value(json.clone())
+            .context("Failed to parse config")?;
+        let (dash_topology, seed) = simdash_generator::generate_topology_from_config(sim_config);
 
         println!(
             "Generated network topology: {} nodes, {} edges",

@@ -1,42 +1,43 @@
 use std::path::Path;
 
 use anyhow::{Context, Result};
-use dash_chat_top_gen::ChatStateGenerator;
+use dash_chat_top_gen::{ChatStateGenerator, ChatTopologyConfig};
 pub use dash_chat_top_gen::ChatTopology;
-use net_topology::TopologyGenerator;
+use net_topology::{TopologyConfig, TopologyGenerator};
+use serde::Deserialize;
 pub use simdash_state::graph::Graph;
 use simdash_state::network::{NetworkState, NetworkTopologyState};
+
+/// Top-level config struct that mirrors the full config file format.
+#[derive(Debug, Deserialize)]
+pub struct SimConfig {
+    #[serde(default)]
+    pub seed: u64,
+    #[serde(rename = "net-top")]
+    pub net_top: TopologyConfig,
+    #[serde(rename = "dash-chat-top")]
+    pub dash_chat_top: ChatTopologyConfig,
+}
 
 /// Reads a JSON config file and generates the chat topology (intermediate representation).
 pub fn generate_topology(config_path: &Path) -> Result<(ChatTopology, u64)> {
     let contents = std::fs::read_to_string(config_path).context("Failed to read config file")?;
 
-    let config: serde_json::Value =
+    let config: SimConfig =
         serde_json::from_str(&contents).context("Failed to parse config as JSON")?;
 
-    generate_topology_from_config(&config)
+    Ok(generate_topology_from_config(config))
 }
 
-/// Generates the chat topology from an already-parsed JSON config value.
-pub fn generate_topology_from_config(config: &serde_json::Value) -> Result<(ChatTopology, u64)> {
-    let seed = config.get("seed").and_then(|v| v.as_u64()).unwrap_or(0);
+/// Generates the chat topology from an already-parsed config.
+pub fn generate_topology_from_config(config: SimConfig) -> (ChatTopology, u64) {
+    let SimConfig { seed, net_top, dash_chat_top } = config;
 
-    let net_top_value = config
-        .get("net-top")
-        .context("config must have a 'net-top' key")?;
-
-    let net_top_json = serde_json::to_string(net_top_value)?;
-    let generator = TopologyGenerator::from_json(&net_top_json)?;
-    let topology = generator.generate(seed);
-
-    let dash_chat_value = config
-        .get("dash-chat-top")
-        .context("config must have a 'dash-chat-top' key")?;
-    let dash_chat_json = serde_json::to_string(dash_chat_value)?;
-    let chat_gen = ChatStateGenerator::from_json(&dash_chat_json)?;
+    let topology = TopologyGenerator::new(net_top).generate(seed);
+    let chat_gen = ChatStateGenerator { config: dash_chat_top };
     let dash_topology = chat_gen.generate(seed, topology);
 
-    Ok((dash_topology, seed))
+    (dash_topology, seed)
 }
 
 pub fn generate_graph(config_path: &Path) -> Result<Graph> {

@@ -58,6 +58,10 @@ pub struct TopologyGenerator {
 }
 
 impl TopologyGenerator {
+    pub fn new(config: TopologyConfig) -> Self {
+        Self { config }
+    }
+
     pub fn from_json(json: &str) -> anyhow::Result<Self> {
         let config = serde_json::from_str(json)?;
         Ok(Self { config })
