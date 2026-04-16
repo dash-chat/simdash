@@ -13,6 +13,7 @@ polestar = { workspace = true }
 postcard = { workspace = true }
 serde = { workspace = true }
 serde_json = "1"
+serde_yml = "0.0.12"
 simdash-action = { workspace = true }
 simdash-behavior = { workspace = true }
 simdash-types = { workspace = true }

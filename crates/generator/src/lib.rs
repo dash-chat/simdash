@@ -19,13 +19,23 @@ pub struct SimConfig {
     pub dash_chat_top: ChatTopologyConfig,
 }
 
-/// Reads a JSON config file and generates the chat topology (intermediate representation).
-pub fn generate_topology(config_path: &Path) -> Result<(ChatTopology, u64)> {
+/// Parses a `SimConfig` from a file, selecting JSON or YAML based on the file extension.
+pub fn parse_sim_config(config_path: &Path) -> Result<SimConfig> {
     let contents = std::fs::read_to_string(config_path).context("Failed to read config file")?;
+    let ext = config_path.extension().and_then(|e| e.to_str()).unwrap_or("");
+    match ext {
+        "yaml" | "yml" => {
+            serde_yml::from_str(&contents).context("Failed to parse config as YAML")
+        }
+        _ => {
+            serde_json::from_str(&contents).context("Failed to parse config as JSON")
+        }
+    }
+}
 
-    let config: SimConfig =
-        serde_json::from_str(&contents).context("Failed to parse config as JSON")?;
-
+/// Reads a config file and generates the chat topology (intermediate representation).
+pub fn generate_topology(config_path: &Path) -> Result<(ChatTopology, u64)> {
+    let config = parse_sim_config(config_path)?;
     Ok(generate_topology_from_config(config))
 }
 

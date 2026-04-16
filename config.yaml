@@ -1,0 +1,36 @@
+name: simdash
+seed: 7
+behavior: naive-flooding
+net-top:
+  - element: node
+    subnet: mesh
+    number: 40
+    rules:
+      - element: link
+        strategy: per_node
+        count:
+          min: 0
+          max: 4
+        destination:
+          selection: random
+          subnet: mesh
+        ordinality: bidirectional
+        longevity: 0
+        spawn_chance: 1
+  - element: node
+    subnet: cloud
+    number: 1
+dash-chat-top:
+  storage_capacity_per_node_kb:
+    type: fixed
+    value: 4000
+  rules:
+    - type: groups
+      subnets: all
+      group_amount: 10
+      group_size:
+        type: fixed
+        value: 10
+      operations_count:
+        type: fixed
+        value: 10

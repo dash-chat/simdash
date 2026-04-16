@@ -17,7 +17,7 @@ use simdash_simulation::snapshot::setup_from_input;
 #[derive(Parser)]
 struct Cli {
     /// Path to a JSON config file or a previous simulation snapshot to resume
-    #[arg(default_value = "config.json")]
+    #[arg(default_value = "config.yaml")]
     input: PathBuf,
 
     /// Port to listen on

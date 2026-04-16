@@ -142,9 +142,13 @@ pub struct SimSetup {
 /// created.
 pub fn setup_from_input(path: &Path) -> anyhow::Result<SimSetup> {
     let contents = std::fs::read_to_string(path).context("Failed to read input file")?;
-    let json: serde_json::Value =
-        serde_json::from_str(&contents).context("Failed to parse input as JSON")?;
-
+    let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+    let json: serde_json::Value = match ext {
+        "yaml" | "yml" => {
+            serde_yml::from_str(&contents).context("Failed to parse input as YAML")?
+        }
+        _ => serde_json::from_str(&contents).context("Failed to parse input as JSON")?,
+    };
     setup_from_json(json)
 }
 
@@ -178,8 +182,8 @@ pub fn setup_from_json(json: serde_json::Value) -> anyhow::Result<SimSetup> {
         })
     } else {
         // This is a config — start fresh
-        let sim_config: simdash_generator::SimConfig = serde_json::from_value(json.clone())
-            .context("Failed to parse config")?;
+        let sim_config: simdash_generator::SimConfig =
+            serde_json::from_value(json.clone()).context("Failed to parse config")?;
         let (dash_topology, seed) = simdash_generator::generate_topology_from_config(sim_config);
 
         println!(

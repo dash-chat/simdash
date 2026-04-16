@@ -1690,6 +1690,7 @@ dependencies = [
  "postcard",
  "serde",
  "serde_json",
+ "serde_yml",
  "simdash-action",
  "simdash-behavior",
  "simdash-generator",

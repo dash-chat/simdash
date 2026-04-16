@@ -13,7 +13,7 @@ use simdash_simulation::snapshot::{
 #[derive(Parser)]
 struct Cli {
     /// Path to a JSON config file or a previous simulation snapshot to resume
-    #[arg(default_value = "config.json")]
+    #[arg(default_value = "config.yaml")]
     input: PathBuf,
 
     /// Number of ticks to simulate (runs until Ctrl-C if omitted)

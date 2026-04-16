@@ -7,7 +7,7 @@ use clap::Parser;
 #[derive(Parser)]
 struct Cli {
     /// Path to the JSON config file
-    #[arg(default_value = "config.json")]
+    #[arg(default_value = "config.yaml")]
     config: PathBuf,
 
     /// Path to the output postcard file

@@ -14,9 +14,9 @@ A deterministic network simulator for [Dash Chat](https://dashchat.org), a p2p e
 ### Commands
 
 ```bash
-just run        # Run the CLI simulation, uses config.json as default
+just run        # Run the CLI simulation, uses config.yaml as default
 just resume     # Resume simulation, uses gen/snapshot.json as default
-just viewer     # Launch backend + frontend viewer, uses config.json as default
+just viewer     # Launch backend + frontend viewer, uses config.yaml as default
 just test       # Run all tests
 just generate   # Generate topology from config
 ```
