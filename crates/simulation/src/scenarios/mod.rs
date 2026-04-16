@@ -2,7 +2,7 @@ pub mod flooding_scenario;
 pub mod no_routing;
 
 use simdash_model_network::NetworkModel;
-use simdash_model_node::{BasicFloodingSyncBehavior, NaiveFloodingBehavior};
+use simdash_routing_dispatch::{BasicFloodingSyncBehavior, NaiveFloodingBehavior};
 use simdash_scenario::Scenario;
 
 use self::flooding_scenario::FloodingBehaviorType;

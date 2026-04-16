@@ -13,7 +13,10 @@
 //! - the RoutingDispatchModel is an independent model at the bottom of the state machine hierarchy that needs to know how to trigger network- and node-level Effects
 //! - the protocol must ultimately be driven by network-level Behaviors at the top of the hierarchy
 
+mod behavior;
 mod macros;
+
+pub use behavior::*;
 
 use polestar::Machine;
 use simdash_routing_common::{ProtocolNetworkAction, RoutingAction, RoutingFx, SendFx};

@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use dash_chat_top_gen::ChatTopology;
 use simdash_model_network::{NetworkState, NetworkTopologyState};
-use simdash_model_node::{BasicFloodingSyncBehavior, NaiveFloodingBehavior};
+use simdash_routing_dispatch::{BasicFloodingSyncBehavior, NaiveFloodingBehavior};
 
 use crate::scenarios::{flooding_scenario, no_routing, AnyScenario, AVAILABLE_BEHAVIORS};
 
