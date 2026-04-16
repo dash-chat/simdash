@@ -7,13 +7,13 @@ use std::collections::HashSet;
 use dash_chat_top_gen::ChatTopology;
 use polestar::Machine;
 use rand::seq::IndexedRandom;
-use simdash_action::{chat::ChatAction, node::NodeAction};
+use simdash_model_chat::ChatAction;
+use simdash_model_node::{NodeAction, NodeFx, NodeModel};
 use simdash_routing_common::{ProtocolNetworkAction, SendFx, StorageFx};
 use simdash_routing_dispatch::{RoutingDispatchAction, RoutingDispatchFx};
-use simdash_state::network::NetworkState;
 use simdash_types::NodeId;
 
-use crate::node::{NodeFx, NodeModel};
+use crate::{NetworkAction, NetworkState};
 
 /// The Network model manages the network-level state:
 /// - the state of each Node
@@ -32,8 +32,8 @@ impl NetworkModel {
 }
 
 impl polestar::Machine for NetworkModel {
-    type State = simdash_state::network::NetworkState;
-    type Action = simdash_action::network::NetworkAction;
+    type State = NetworkState;
+    type Action = NetworkAction;
     type Fx = ();
     type Error = anyhow::Error;
 
@@ -43,7 +43,7 @@ impl polestar::Machine for NetworkModel {
         action: Self::Action,
     ) -> polestar::TransitionResult<Self> {
         match action {
-            simdash_action::network::NetworkAction::Tick => {
+            NetworkAction::Tick => {
                 for edge in state.graph.graph_mut().edge_weights_mut() {
                     if let Some(ref mut ticks) = edge.remaining_ticks {
                         *ticks = ticks.saturating_sub(1);
@@ -58,7 +58,7 @@ impl polestar::Machine for NetworkModel {
                 Ok((state, ()))
             }
 
-            simdash_action::network::NetworkAction::EvolveTopology => {
+            NetworkAction::EvolveTopology => {
                 state
                     .graph
                     .graph_mut()
@@ -85,7 +85,7 @@ impl polestar::Machine for NetworkModel {
                 Ok((state, ()))
             }
 
-            simdash_action::network::NetworkAction::Node(node_id, node_action) => {
+            NetworkAction::Node(node_id, node_action) => {
                 let () = match state.graph.update_node(node_id, |node_state| {
                     let (node_state, node_fx) = self.node.transition(node_state, node_action)?;
                     Ok((node_state, node_fx))

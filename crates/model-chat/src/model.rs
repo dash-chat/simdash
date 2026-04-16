@@ -1,8 +1,8 @@
 //! Model of the chat state, including stored operations,
 //! joined groups, contacts.
 
-use simdash_action::chat::ChatAction;
-use simdash_state::chat::ChatState;
+use crate::ChatAction;
+use crate::ChatState;
 
 /// The Chat model stores Dashchat-specific state, including stored operations,
 /// joined groups, and contacts.

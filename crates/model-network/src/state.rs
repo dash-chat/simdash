@@ -2,9 +2,10 @@ use std::path::Path;
 
 use rand::{SeedableRng, rngs::StdRng};
 use serde::{Deserialize, Serialize};
+use simdash_model_node::Graph;
 use simdash_types::NodeId;
 
-use crate::Graph;
+// ── NetworkTopologyState ───────────────────────────────────────────────────
 
 /// Seeded RNG for topology evolution operations.
 /// Stores seed + call count so the full state is serializable.
@@ -30,6 +31,8 @@ impl NetworkTopologyState {
         rng
     }
 }
+
+// ── NetworkState ───────────────────────────────────────────────────────────
 
 /// The state of the network.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -68,8 +71,9 @@ impl NetworkState {
 
 #[cfg(test)]
 mod tests {
+    use simdash_model_node::NodeState;
+
     use super::*;
-    use crate::node::NodeState;
 
     fn make_network() -> NetworkState {
         //  0 -> 1 -> 2

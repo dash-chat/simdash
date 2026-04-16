@@ -1,12 +1,38 @@
+//! State types for the node and graph level.
+//!
+//! `NodeState` represents all state for a single node.
+//! `Graph` and `EdgeState` live here (rather than in `simdash-model-network`)
+//! so that topology generators can depend on them without creating a circular
+//! dependency with the network model.
+
 use std::collections::{HashMap, HashSet};
 
 use petgraph::graph::Graph as PetGraph;
 use polestar::ext::MapExt;
 use serde::{Deserialize, Serialize};
+use simdash_model_chat::ChatState;
 use simdash_routing_dispatch::RoutingDispatchState;
 use simdash_types::NodeId;
 
-use crate::node::NodeState;
+// ── NodeState ──────────────────────────────────────────────────────────────
+
+/// The state of a node.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct NodeState<R = RoutingDispatchState> {
+    /// The chat state of the node
+    pub chat: ChatState,
+    /// The routing state of the node
+    pub routing: R,
+}
+
+impl NodeState<RoutingDispatchState> {
+    /// Get a reference to the chat state of the node
+    pub fn chat(&self) -> &ChatState {
+        &self.chat
+    }
+}
+
+// ── EdgeState ──────────────────────────────────────────────────────────────
 
 /// The state of an edge in the graph.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -30,6 +56,8 @@ impl EdgeState {
         }
     }
 }
+
+// ── Graph ──────────────────────────────────────────────────────────────────
 
 /// A network graph.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -89,6 +117,12 @@ impl<R: Clone, E> Graph<R, E> {
     /// Get a mutable reference to the state of a node.
     pub fn node_state_mut(&mut self, node_id: NodeId) -> Option<&mut NodeState<R>> {
         self.nodes.get_mut(&node_id)
+    }
+
+    /// Convert a petgraph NodeIndex to a NodeId.
+    pub fn node_id(&self, idx: petgraph::graph::NodeIndex) -> Option<NodeId> {
+        let node_id = NodeId::from(idx);
+        self.nodes.contains_key(&node_id).then_some(node_id)
     }
 
     /// Update the state of a node with a closure, typically a state transition function.

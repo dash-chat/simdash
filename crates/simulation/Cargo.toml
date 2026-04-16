@@ -14,11 +14,10 @@ postcard = { workspace = true }
 serde = { workspace = true }
 serde_json = "1"
 serde_yml = "0.0.12"
-simdash-action = { workspace = true }
-simdash-behavior = { workspace = true }
 simdash-types = { workspace = true }
-simdash-model = { workspace = true }
+simdash-model-chat = { workspace = true }
+simdash-model-node = { workspace = true }
+simdash-model-network = { workspace = true }
 simdash-scenario = { workspace = true }
-simdash-state = { workspace = true }
 simdash-routing-dispatch = { workspace = true }
 tracing = "0.1"

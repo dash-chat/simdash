@@ -1,6 +1,6 @@
 use simdash_types::{GroupId, NodeId, Operation};
 
-/// Actions for [`simdash_model::chat::ChatModel`].
+/// Actions for the chat model.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ChatAction {
     /// Store an operation in the chat state.

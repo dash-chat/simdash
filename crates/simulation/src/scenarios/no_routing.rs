@@ -1,11 +1,8 @@
 use dash_chat_top_gen::ChatTopology;
-use simdash_behavior::node::BasicNodeBehavior;
-use simdash_behavior::{network::RoundRobinNodeScheduler, routing::NoOpRoutingBehavior};
-use simdash_model::network::NetworkModel;
-use simdash_model::node::NodeModel;
+use simdash_model_network::{NetworkModel, NetworkState, RoundRobinNodeScheduler};
+use simdash_model_node::{BasicNodeBehavior, NodeModel, NoOpRoutingBehavior};
 use simdash_routing_dispatch::RoutingDispatchModel;
 use simdash_scenario::Scenario;
-use simdash_state::network::NetworkState;
 
 pub type NoRoutingBehaviorType = RoundRobinNodeScheduler<BasicNodeBehavior<NoOpRoutingBehavior>>;
 

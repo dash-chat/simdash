@@ -1,0 +1,23 @@
+[package]
+name = "simdash-model-network"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = { workspace = true }
+polestar = { workspace = true }
+postcard = { workspace = true }
+rand = "0.9"
+serde = { workspace = true }
+tracing = { workspace = true }
+
+dash-chat-top-gen = { workspace = true }
+net-topology = { workspace = true }
+simdash-model-chat = { workspace = true }
+simdash-model-node = { workspace = true }
+simdash-routing-common = { workspace = true }
+simdash-routing-dispatch = { workspace = true }
+simdash-types = { workspace = true }
+
+[lints]
+workspace = true

@@ -5,8 +5,8 @@ use dash_chat_top_gen::{ChatStateGenerator, ChatTopologyConfig};
 pub use dash_chat_top_gen::ChatTopology;
 use net_topology::{TopologyConfig, TopologyGenerator};
 use serde::Deserialize;
-pub use simdash_state::graph::Graph;
-use simdash_state::network::{NetworkState, NetworkTopologyState};
+pub use simdash_model_node::Graph;
+use simdash_model_network::{NetworkState, NetworkTopologyState};
 
 /// Top-level config struct that mirrors the full config file format.
 #[derive(Debug, Deserialize)]

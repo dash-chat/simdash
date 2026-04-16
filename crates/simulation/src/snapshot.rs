@@ -3,7 +3,7 @@ use std::path::Path;
 
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
-use simdash_state::network::NetworkState;
+use simdash_model_network::NetworkState;
 use simdash_types::{NodeId, OpId, Operation};
 
 use crate::sim::Simulation;

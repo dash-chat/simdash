@@ -8,7 +8,7 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
-use simdash_state::network::NetworkState;
+use simdash_model_network::NetworkState;
 use simdash_types::{Body, GetRoutingOpInfo, NodeId, Operation, RoutingOpInfo};
 use tokio::sync::Mutex;
 

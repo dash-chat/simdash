@@ -8,13 +8,7 @@ anyhow = { workspace = true }
 derive_more = { workspace = true }
 polestar = { workspace = true }
 
-dash-chat-top-gen = { workspace = true }
-simdash-action = { workspace = true }
-simdash-behavior = { workspace = true }
 simdash-types = { workspace = true }
-simdash-model = { workspace = true }
-simdash-routing-dispatch = { workspace = true }
-simdash-state = { workspace = true }
 
 
 [lints]

@@ -8,7 +8,7 @@ use rand::prelude::*;
 use serde::Deserialize;
 use serde::Serialize;
 use simdash_distribution::Distribution;
-use simdash_state::chat::ChatState;
+use simdash_model_chat::ChatState;
 use simdash_types::LogId;
 use simdash_types::Seq;
 use simdash_types::{Body, GroupId, Header, Operation};

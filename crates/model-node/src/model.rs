@@ -1,10 +1,11 @@
 //! The Node model manages all of the state of a single node in the network.
 
-use simdash_action::{chat::ChatAction, node::NodeAction};
+use simdash_model_chat::ChatModel;
 use simdash_routing_common::{ProtocolNetworkAction, RoutingAction};
 use simdash_routing_dispatch::{RoutingDispatchFx, RoutingDispatchModel};
 
-use crate::chat::ChatModel;
+use crate::NodeAction;
+use crate::NodeState;
 
 /// The Node model manages the state of a single node in the network.
 ///
@@ -35,8 +36,8 @@ pub struct NodeFx {
 }
 
 impl polestar::Machine for NodeModel {
-    type State = simdash_state::node::NodeState;
-    type Action = simdash_action::node::NodeAction;
+    type State = NodeState;
+    type Action = NodeAction;
     type Fx = Vec<NodeFx>;
     type Error = anyhow::Error;
 
@@ -78,13 +79,12 @@ impl polestar::Machine for NodeModel {
 mod tests {
     use polestar::Machine;
     use pretty_assertions::assert_eq;
-    use simdash_action::{chat::ChatAction, node::NodeAction};
+    use simdash_model_chat::ChatAction;
     use simdash_routing_common::{ProtocolNetworkAction, SendFx};
     use simdash_routing_dispatch::flooding::{FloodingAction, FloodingWireData};
     use simdash_routing_dispatch::{
         AnyRoutingAction, AnyRoutingData, RoutingDispatchAction, RoutingDispatchModel,
     };
-    use simdash_state::node::NodeState;
     use simdash_types::{NodeId, util::basic_op};
 
     use super::*;

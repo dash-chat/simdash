@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use petgraph::Direction;
-use simdash_state::Graph;
+use simdash_model_node::Graph;
 
 pub fn outgoing_distribution(graph: &Graph) -> [usize; 5] {
     let mut dist = [0usize; 5];

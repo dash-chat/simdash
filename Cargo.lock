@@ -405,7 +405,8 @@ dependencies = [
  "serde",
  "serde_json",
  "simdash-distribution",
- "simdash-state",
+ "simdash-model-chat",
+ "simdash-model-node",
  "simdash-types",
 ]
 
@@ -939,7 +940,8 @@ dependencies = [
  "rand",
  "serde",
  "serde_json",
- "simdash-state",
+ "simdash-model-node",
+ "simdash-routing-dispatch",
  "simdash-types",
 ]
 
@@ -1498,31 +1500,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "simdash-action"
-version = "0.1.0"
-dependencies = [
- "derive_more 2.1.1",
- "serde",
- "simdash-routing-dispatch",
- "simdash-state",
- "simdash-types",
-]
-
-[[package]]
-name = "simdash-behavior"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "derive_more 2.1.1",
- "polestar",
- "simdash-action",
- "simdash-model",
- "simdash-routing-dispatch",
- "simdash-state",
- "simdash-types",
-]
-
-[[package]]
 name = "simdash-distribution"
 version = "0.1.0"
 dependencies = [
@@ -1543,23 +1520,53 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yml",
- "simdash-state",
+ "simdash-model-network",
+ "simdash-model-node",
 ]
 
 [[package]]
-name = "simdash-model"
+name = "simdash-model-chat"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "polestar",
+ "serde",
+ "simdash-types",
+ "tracing",
+]
+
+[[package]]
+name = "simdash-model-network"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "dash-chat-top-gen",
  "net-topology",
  "polestar",
- "pretty_assertions",
+ "postcard",
  "rand",
- "simdash-action",
+ "serde",
+ "simdash-model-chat",
+ "simdash-model-node",
  "simdash-routing-common",
  "simdash-routing-dispatch",
- "simdash-state",
+ "simdash-types",
+ "tracing",
+]
+
+[[package]]
+name = "simdash-model-node"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "petgraph 0.8.3",
+ "polestar",
+ "postcard",
+ "pretty_assertions",
+ "serde",
+ "simdash-model-chat",
+ "simdash-routing-common",
+ "simdash-routing-dispatch",
  "simdash-types",
  "tracing",
 ]
@@ -1649,14 +1656,8 @@ name = "simdash-scenario"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "dash-chat-top-gen",
  "derive_more 2.1.1",
  "polestar",
- "simdash-action",
- "simdash-behavior",
- "simdash-model",
- "simdash-routing-dispatch",
- "simdash-state",
  "simdash-types",
 ]
 
@@ -1669,8 +1670,8 @@ dependencies = [
  "clap",
  "serde",
  "serde_json",
+ "simdash-model-network",
  "simdash-simulation",
- "simdash-state",
  "simdash-types",
  "tokio",
  "tower-http",
@@ -1691,29 +1692,12 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_yml",
- "simdash-action",
- "simdash-behavior",
  "simdash-generator",
- "simdash-model",
+ "simdash-model-chat",
+ "simdash-model-network",
+ "simdash-model-node",
  "simdash-routing-dispatch",
  "simdash-scenario",
- "simdash-state",
- "simdash-types",
- "tracing",
-]
-
-[[package]]
-name = "simdash-state"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "derive_more 2.1.1",
- "petgraph 0.8.3",
- "polestar",
- "postcard",
- "rand",
- "serde",
- "simdash-routing-dispatch",
  "simdash-types",
  "tracing",
 ]

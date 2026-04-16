@@ -1,15 +1,11 @@
 use dash_chat_top_gen::ChatTopology;
-use polestar::Machine;
-use simdash_behavior::network::RoundRobinNodeScheduler;
-use simdash_behavior::node::BasicNodeBehavior;
-use simdash_behavior::routing::{BasicFloodingSyncBehavior, NaiveFloodingBehavior};
-use simdash_model::network::NetworkModel;
-use simdash_model::node::NodeModel;
+use simdash_model_network::{NetworkModel, RoundRobinNodeScheduler};
+use simdash_model_node::{BasicNodeBehavior, NodeModel};
 use simdash_routing_dispatch::flooding::{FloodingOp, FloodingState};
 use simdash_routing_dispatch::flooding_sync;
 use simdash_routing_dispatch::{noop::NoopState, RoutingDispatchModel, RoutingDispatchState};
+use simdash_model_network::NetworkState;
 use simdash_scenario::Scenario;
-use simdash_state::network::NetworkState;
 use simdash_types::Behavior;
 
 pub type FloodingBehaviorType<B> = RoundRobinNodeScheduler<BasicNodeBehavior<B>>;

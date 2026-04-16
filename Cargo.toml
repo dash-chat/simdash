@@ -17,16 +17,15 @@ postcard = { version = "1", features = ["use-std"] }
 tracing = "0.1"
 
 simdash-types = { path = "crates/types" }
-simdash-action = { path = "crates/action" }
-simdash-behavior = { path = "crates/behavior" }
+simdash-model-chat = { path = "crates/model-chat" }
+simdash-model-node = { path = "crates/model-node" }
+simdash-model-network = { path = "crates/model-network" }
 simdash-distribution = { path = "crates/distribution" }
-simdash-model = { path = "crates/model" }
 simdash-routing-common = { path = "crates/routing-common" }
 simdash-routing-dispatch = { path = "crates/routing-dispatch" }
 simdash-runner = { path = "crates/runner" }
 simdash-scenario = { path = "crates/scenario" }
 simdash-simulation = { path = "crates/simulation" }
-simdash-state = { path = "crates/state" }
 net-topology = { path = "crates/net-topology" }
 dash-chat-top-gen = { path = "crates/dash-chat-top-gen" }
 

@@ -1,8 +1,9 @@
-use simdash_action::network::NetworkAction;
-use simdash_model::{network::NetworkModel, node::NodeModel};
-use simdash_state::network::NetworkState;
+//! Behaviors for the network level.
 
+use simdash_model_node::NodeModel;
 use simdash_types::Behavior;
+
+use crate::{NetworkAction, NetworkModel, NetworkState};
 
 /// A "fair scheduling" behavior that lets each Node in a network take one Action per tick.
 ///
@@ -28,7 +29,7 @@ impl<B: Behavior<NodeModel>> Behavior<NetworkModel> for RoundRobinNodeScheduler<
             .flat_map(|(node_id, node_state)| {
                 let actions = self
                     .node_behavior
-                    .next(&node_state)
+                    .next(node_state)
                     .expect("todo, what to do on errors?");
                 actions
                     .into_iter()

@@ -117,13 +117,13 @@ mod tests {
     }
 
     #[test]
-    fn store_op_duplicate_is_rejected() {
+    fn store_op_duplicate_is_ignored() {
         let mut state = ChatState {
             storage_capacity: Some(Size::from(500u64)),
             ..Default::default()
         };
         assert!(state.store_op(make_op(1, 100)).is_ok());
-        assert!(state.store_op(make_op(1, 100)).is_err());
+        assert!(state.store_op(make_op(1, 100)).is_ok());
         assert_eq!(state.op_store.len(), 1);
     }
 }

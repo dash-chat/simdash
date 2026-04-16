@@ -1,7 +1,7 @@
+use simdash_model_node::NodeAction;
 use simdash_types::NodeId;
 
-use crate::node::NodeAction;
-
+/// Actions for the network model.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NetworkAction {
     /// Tick every node

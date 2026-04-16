@@ -1,21 +1,23 @@
 [package]
-name = "simdash-state"
+name = "simdash-model-node"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 anyhow = { workspace = true }
-derive_more = { workspace = true }
-rand = "0.9"
-serde = { workspace = true }
 petgraph = { workspace = true }
 polestar = { workspace = true }
 postcard = { workspace = true }
+serde = { workspace = true }
 tracing = { workspace = true }
 
-simdash-types = { workspace = true }
+simdash-model-chat = { workspace = true }
+simdash-routing-common = { workspace = true }
 simdash-routing-dispatch = { workspace = true }
+simdash-types = { workspace = true }
 
+[dev-dependencies]
+pretty_assertions = { workspace = true }
 
 [lints]
 workspace = true

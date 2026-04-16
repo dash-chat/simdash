@@ -1,8 +1,8 @@
 pub mod flooding_scenario;
 pub mod no_routing;
 
-use simdash_behavior::routing::{BasicFloodingSyncBehavior, NaiveFloodingBehavior};
-use simdash_model::network::NetworkModel;
+use simdash_model_network::NetworkModel;
+use simdash_model_node::{BasicFloodingSyncBehavior, NaiveFloodingBehavior};
 use simdash_scenario::Scenario;
 
 use self::flooding_scenario::FloodingBehaviorType;
@@ -21,7 +21,7 @@ pub enum AnyScenario {
 }
 
 impl AnyScenario {
-    pub fn state(&self) -> Option<&simdash_state::network::NetworkState> {
+    pub fn state(&self) -> Option<&simdash_model_network::NetworkState> {
         match self {
             AnyScenario::NaiveFlooding(s) => s.state(),
             AnyScenario::BasicFloodingSync(s) => s.state(),
