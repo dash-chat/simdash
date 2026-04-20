@@ -11,3 +11,9 @@ pub enum NetworkAction {
     /// Dispatch a NodeAction to a particular node
     Node(NodeId, NodeAction),
 }
+
+impl NetworkAction {
+    pub fn node(node_id: NodeId, action: NodeAction) -> Self {
+        NetworkAction::Node(node_id, action)
+    }
+}

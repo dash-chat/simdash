@@ -34,3 +34,6 @@ simdash-protocol-flooding-sync = { path = "protocols/flooding-sync" }
 simdash-protocol-noop = { path = "protocols/noop" }
 
 polestar = { git = "https://github.com/maackle/polestar-rs.git", branch = "main" }
+
+[patch."https://github.com/maackle/polestar-rs.git"]
+polestar = { path = "/home/michael/proj/polestar-rs/polestar" }

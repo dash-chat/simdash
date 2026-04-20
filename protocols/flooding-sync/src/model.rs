@@ -53,6 +53,9 @@ impl polestar::Machine for Model {
                 }
             },
             RoutingAction::Protocol(Action::TriggerSync) => {
+                if state.countdown > 0.into() {
+                    return Ok((state, vec![]));
+                }
                 state.countdown = self.sync_interval;
                 let state_vector = state.op_buffer.state_vector();
                 let fx = ProtocolFx::broadcast(WireData::Announce(state_vector));

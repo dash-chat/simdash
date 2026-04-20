@@ -10,7 +10,7 @@ use simdash_types::Behavior;
 /// and uses the Behavior to produce Actions to perform state transitions.
 pub struct Scenario<M, B>
 where
-    M: Machine<Fx = (), Error = anyhow::Error>,
+    M: Machine<Error = anyhow::Error>,
     B: Behavior<M>,
 {
     model: M,
@@ -21,7 +21,7 @@ where
 
 impl<M, B> Scenario<M, B>
 where
-    M: Machine<Fx = (), Error = anyhow::Error>,
+    M: Machine<Error = anyhow::Error>,
     B: Behavior<M>,
 {
     /// Create a new Scenario with the given Model, initial state, and Behavior.
@@ -37,10 +37,12 @@ where
     /// Advance the Scenario by one step.
     pub fn advance(&mut self) -> anyhow::Result<bool> {
         if let Some(mut state) = self.state.take() {
-            let actions = self.behavior.next(&state)?;
+            let actions = self.behavior.next_tick(&state)?;
             let empty = actions.is_empty();
             for action in actions {
-                state = self.model.transition_(state, action.clone())?;
+                let (new_state, fx) = self.model.transition(state, action.clone())?;
+                state = new_state;
+                self.behavior.handle_fx(&state, fx)?;
                 self.history.push(action);
             }
             self.state = Some(state);

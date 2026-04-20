@@ -22,10 +22,10 @@ impl<B: Behavior<RoutingDispatchModel>> BasicNodeBehavior<B> {
 }
 
 impl<B: Behavior<RoutingDispatchModel>> Behavior<NodeModel> for BasicNodeBehavior<B> {
-    fn next(&mut self, state: &NodeState) -> anyhow::Result<Vec<NodeAction>> {
+    fn next_tick(&mut self, state: &NodeState) -> anyhow::Result<Vec<NodeAction>> {
         Ok(self
             .routing_behavior
-            .next(&state.routing)?
+            .next_tick(&state.routing)?
             .into_iter()
             .map(NodeAction::Routing)
             .collect())

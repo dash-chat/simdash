@@ -6,14 +6,25 @@ use crate::*;
 pub struct NaiveFloodingBehavior;
 
 impl Behavior<RoutingDispatchModel> for NaiveFloodingBehavior {
-    fn next(&mut self, state: &RoutingDispatchState) -> anyhow::Result<Vec<RoutingDispatchAction>> {
+    fn next_tick(
+        &mut self,
+        state: &RoutingDispatchState,
+    ) -> anyhow::Result<Vec<RoutingDispatchAction>> {
         let mut b = crate::flooding::EagerFloodingBehavior;
         let actions = b
-            .next(&state.flooding)?
+            .next_tick(&state.flooding)?
             .into_iter()
             .map(|a| crate::lift_action(a, AnyRoutingData::Flooding, AnyRoutingAction::Flooding))
             .collect();
         Ok(actions)
+    }
+
+    fn handle_fx(
+        &mut self,
+        state: &RoutingDispatchState,
+        fx: Vec<RoutingDispatchFx>,
+    ) -> anyhow::Result<Option<Vec<RoutingDispatchFx>>> {
+        Ok(None)
     }
 }
 
@@ -21,10 +32,13 @@ impl Behavior<RoutingDispatchModel> for NaiveFloodingBehavior {
 pub struct BasicFloodingSyncBehavior;
 
 impl Behavior<RoutingDispatchModel> for BasicFloodingSyncBehavior {
-    fn next(&mut self, state: &RoutingDispatchState) -> anyhow::Result<Vec<RoutingDispatchAction>> {
+    fn next_tick(
+        &mut self,
+        state: &RoutingDispatchState,
+    ) -> anyhow::Result<Vec<RoutingDispatchAction>> {
         let mut b = crate::flooding_sync::StandardBehavior;
         let actions = b
-            .next(&state.flooding_sync)?
+            .next_tick(&state.flooding_sync)?
             .into_iter()
             .map(|a| {
                 crate::lift_action(
@@ -43,7 +57,10 @@ impl Behavior<RoutingDispatchModel> for BasicFloodingSyncBehavior {
 pub struct NoOpRoutingBehavior;
 
 impl Behavior<RoutingDispatchModel> for NoOpRoutingBehavior {
-    fn next(&mut self, _: &RoutingDispatchState) -> anyhow::Result<Vec<RoutingDispatchAction>> {
+    fn next_tick(
+        &mut self,
+        _: &RoutingDispatchState,
+    ) -> anyhow::Result<Vec<RoutingDispatchAction>> {
         Ok(vec![])
     }
 }
