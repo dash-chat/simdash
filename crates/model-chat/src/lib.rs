@@ -1,3 +1,6 @@
+//! Model of the chat state, including stored operations,
+//! joined groups, and contacts.
+
 mod action;
 mod behavior;
 mod model;

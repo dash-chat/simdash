@@ -13,6 +13,7 @@ pub enum NetworkAction {
 }
 
 impl NetworkAction {
+    /// Convenience method to create a Node action.
     pub fn node(node_id: NodeId, action: NodeAction) -> Self {
         NetworkAction::Node(node_id, action)
     }

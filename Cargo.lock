@@ -1658,6 +1658,7 @@ dependencies = [
  "derive_more 2.1.1",
  "polestar",
  "simdash-types",
+ "tracing",
 ]
 
 [[package]]

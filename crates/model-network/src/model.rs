@@ -5,13 +5,8 @@
 use std::collections::HashSet;
 
 use dash_chat_top_gen::ChatTopology;
-use polestar::Machine;
 use rand::seq::IndexedRandom;
-use simdash_model_chat::ChatAction;
-use simdash_model_node::{NodeAction, NodeFx, NodeModel};
-use simdash_routing_common::{ProtocolNetworkAction, SendFx, StorageFx};
-use simdash_routing_dispatch::{RoutingDispatchAction, RoutingDispatchFx};
-use simdash_types::NodeId;
+use simdash_model_node::{NodeAction, NodeModel};
 
 use crate::{NetworkAction, NetworkFx, NetworkState};
 

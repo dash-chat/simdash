@@ -21,8 +21,8 @@ impl Behavior<RoutingDispatchModel> for NaiveFloodingBehavior {
 
     fn handle_fx(
         &mut self,
-        state: &RoutingDispatchState,
-        fx: Vec<RoutingDispatchFx>,
+        _state: &RoutingDispatchState,
+        _fx: Vec<RoutingDispatchFx>,
     ) -> anyhow::Result<Option<Vec<RoutingDispatchFx>>> {
         Ok(None)
     }

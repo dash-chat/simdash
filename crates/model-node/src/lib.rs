@@ -1,3 +1,6 @@
+//! Model of the node state, including the state of the chat app
+//! and the routing protocol.
+
 mod action;
 mod behavior;
 mod model;

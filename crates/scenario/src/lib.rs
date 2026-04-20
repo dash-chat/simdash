@@ -11,6 +11,7 @@ use simdash_types::Behavior;
 pub struct Scenario<M, B>
 where
     M: Machine<Error = anyhow::Error>,
+    M::Fx: std::fmt::Debug,
     B: Behavior<M>,
 {
     model: M,
@@ -22,6 +23,7 @@ where
 impl<M, B> Scenario<M, B>
 where
     M: Machine<Error = anyhow::Error>,
+    M::Fx: std::fmt::Debug,
     B: Behavior<M>,
 {
     /// Create a new Scenario with the given Model, initial state, and Behavior.
@@ -42,7 +44,10 @@ where
             for action in actions {
                 let (new_state, fx) = self.model.transition(state, action.clone())?;
                 state = new_state;
-                self.behavior.handle_fx(&state, fx)?;
+                let unhandled = self.behavior.handle_fx(&state, fx)?;
+                if let Some(fx) = unhandled {
+                    tracing::warn!("Scenario received unhandled effects: {:?}", fx);
+                }
                 self.history.push(action);
             }
             self.state = Some(state);

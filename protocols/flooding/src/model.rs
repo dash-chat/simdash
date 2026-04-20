@@ -78,10 +78,8 @@ impl polestar::Machine for FloodingModel {
 
 #[cfg(test)]
 mod tests {
-    use maplit::hashset;
     use polestar::Machine;
     use pretty_assertions::assert_eq;
-    use simdash_routing_common::ProtocolNetworkAction;
     use simdash_types::util::basic_op;
 
     use crate::FloodingWireData;

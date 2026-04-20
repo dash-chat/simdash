@@ -1,3 +1,6 @@
+//! Model of the network state, including the state of each node
+//! and the network topology.
+
 mod action;
 mod behavior;
 mod fx;
