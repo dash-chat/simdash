@@ -17,6 +17,7 @@ pub type NoRoutingScenario = Scenario<NetworkModel, NoRoutingBehaviorType>;
 pub enum AnyScenario {
     NaiveFlooding(NaiveFloodingScenario),
     BasicFloodingSync(BasicFloodingSyncScenario),
+    // Stig(StigScenario),
     NoRouting(NoRoutingScenario),
 }
 

@@ -6,7 +6,9 @@ use serde::{Deserialize, Serialize};
 use simdash_routing_common::{ProtocolNetworkAction, RoutingAction};
 use simdash_types::Ticks;
 
-use crate::{Announce, ProtocolAction, ProtocolFx, WireData, action::Action, state::State};
+use crate::{
+    Announce, Metadata, Payload, ProtocolAction, ProtocolFx, WireData, action::Action, state::State,
+};
 
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, From, Deref,
@@ -55,26 +57,51 @@ impl polestar::Machine for Model {
         // println!("* ACTION:   {:?}", action);
         let (state, fx) = match action {
             RoutingAction::Network(ProtocolNetworkAction::Receive { data }) => match data {
-                WireData::Announce(a) => {
-                    state.routes.record(a);
-                    todo!();
-                    // let ops = state.op_buffer.diff(a.topic_id, &a.state_vector);
-                    // if ops.is_empty() {
-                    //     (state, vec![])
-                    // } else {
-                    //     (state, vec![ProtocolFx::broadcast(WireData::Ops { ops })])
-                    // }
+                WireData::Announce(mut a) => {
+                    state.routes.record(a.clone());
+                    a.hops += 1.into();
+                    a.relay = self.mesh_id;
+
+                    let mut fx = vec![];
+                    // TODO: decide to also relay a payload if a new route was established
+
+                    for (topic_id, state_vector) in &a.topics {
+                        let ops = state.op_buffer.diff(*topic_id, &state_vector);
+                        if !ops.is_empty() {
+                            let addressees =
+                                state.routes.targets(ops.iter().map(|op| &op.metadata));
+                            if !addressees.is_empty() {
+                                fx.push(ProtocolFx::broadcast(WireData::Payload(Payload {
+                                    addressees,
+                                    ops,
+                                })));
+                            }
+                        }
+                    }
+
+                    fx.push(ProtocolFx::broadcast(WireData::Announce(a)));
+
+                    (state, fx)
                 }
                 WireData::Payload(payload) => {
-                    let fx = payload
-                        .ops
-                        .into_iter()
-                        .map(|op| {
-                            let encrypted = op.encrypted.clone();
-                            state.op_buffer.store_op(op);
-                            ProtocolFx::store_op(encrypted)
-                        })
-                        .collect();
+                    let mut fx = vec![];
+                    if payload.addressees.contains(&self.mesh_id) {
+                        let addressees = state
+                            .routes
+                            .targets(payload.ops.iter().map(|op| &op.metadata));
+                        if !addressees.is_empty() {
+                            fx.push(ProtocolFx::broadcast(WireData::Payload(Payload {
+                                addressees,
+                                ops: payload.ops.clone(),
+                            })));
+                        }
+                    }
+
+                    fx.extend(payload.ops.into_iter().map(|op| {
+                        let encrypted = op.encrypted.clone();
+                        state.op_buffer.store_op(op);
+                        ProtocolFx::store_op(encrypted)
+                    }));
                     (state, fx)
                 }
             },

@@ -63,6 +63,14 @@ impl Simulation {
                     BasicFloodingSyncBehavior,
                 ),
             )),
+            // "stig" => Ok(AnyScenario::Stig(
+            //     flooding_scenario::flooding_scenario(
+            //         state.clone(),
+            //         DEFAULT_BROADCAST_INTERVAL,
+            //         topology.clone(),
+            //         BasicFloodingSyncBehavior,
+            //     ),
+            // )),
             "no-routing" => Ok(AnyScenario::NoRouting(no_routing::no_routing(
                 state.clone(),
                 DEFAULT_BROADCAST_INTERVAL,

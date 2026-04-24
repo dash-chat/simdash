@@ -9,6 +9,8 @@ use crate::{Announce, Metadata, SourceId, StateVector};
 pub struct PeerLogFact {
     pub state_vector: StateVector,
     pub age: Ticks,
+    pub hops: Hops,
+    pub relay: SourceId,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -25,11 +27,24 @@ impl RoutingTable {
                 .or_default()
                 .entry(announce.author)
                 .or_insert_with(|| PeerLogFact {
-                    state_vector: state_vector.clone(),
+                    state_vector: StateVector::new(std::iter::empty()),
                     age: 0.into(),
+                    hops: announce.hops,
+                    relay: announce.relay,
                 });
+
+            // Always merge: retain the highest known height for each log.
+            // NOTE: if a lower-hop relay arrives with a lower state vector, the merged
+            // result will be optimistic (we'll think the peer has more data than the
+            // low-hop route knows about). Acceptable for now.
+            entry.state_vector = entry.state_vector.merge(&state_vector);
             entry.age = 0.into();
-            entry.state_vector = state_vector;
+
+            // Only update the relay when this route has fewer hops.
+            if announce.hops < entry.hops {
+                entry.hops = announce.hops;
+                entry.relay = announce.relay;
+            }
         }
     }
 
@@ -105,8 +120,50 @@ mod tests {
         }
     }
 
+    fn relay_of(table: &RoutingTable, topic: u32, src: SourceId) -> SourceId {
+        table.facts[&topic.into()][&src].relay
+    }
+
     #[test]
-    fn test_record() {
+    fn test_record_merge() {
+        let alice = SourceId::new();
+        let relay1 = SourceId::new();
+        let relay2 = SourceId::new();
+
+        // state vectors are always unioned regardless of hop count
+        let mut table = RoutingTable::default();
+        let mut a1 = Announce::new(alice, statevec(0, [(1, 5), (2, 3)]));
+        a1.hops = 1.into();
+        a1.relay = relay1;
+        let mut a2 = Announce::new(alice, statevec(0, [(1, 3), (2, 7)]));
+        a2.hops = 2.into();
+        a2.relay = relay2;
+
+        table.record(a1.clone());
+        // relay1 stored (only route)
+        assert_eq!(relay_of(&table, 0, alice), relay1);
+
+        table.record(a2.clone());
+        // relay stays relay1 (lower hops); state vector is merged: log1=max(5,3)=5, log2=max(3,7)=7
+        assert_eq!(relay_of(&table, 0, alice), relay1);
+        let sv = &table.facts[&0.into()][&alice].state_vector;
+        assert_eq!(sv[&1.into()], 5.into());
+        assert_eq!(sv[&2.into()], 7.into());
+
+        // reverse: higher-hop route arrives first, lower-hop route updates relay
+        let mut table2 = RoutingTable::default();
+        table2.record(a2);
+        assert_eq!(relay_of(&table2, 0, alice), relay2);
+        table2.record(a1);
+        // relay updates to relay1 (fewer hops); state vector still merged
+        assert_eq!(relay_of(&table2, 0, alice), relay1);
+        let sv2 = &table2.facts[&0.into()][&alice].state_vector;
+        assert_eq!(sv2[&1.into()], 5.into());
+        assert_eq!(sv2[&2.into()], 7.into());
+    }
+
+    #[test]
+    fn test_targets() {
         let mut table = RoutingTable::default();
 
         let alice = SourceId::new();

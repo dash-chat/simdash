@@ -1,6 +1,6 @@
 name: simdash
 seed: 7
-behavior: naive-flooding
+behavior: stig
 net-top:
   - element: node
     subnet: mesh

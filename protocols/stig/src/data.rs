@@ -95,4 +95,16 @@ impl StateVector {
     pub fn new(entries: impl IntoIterator<Item = (LogId, LogHeight)>) -> Self {
         Self(entries.into_iter().collect())
     }
+
+    /// Returns a new StateVector with the max log height for each log across both vectors.
+    pub fn merge(&self, other: &StateVector) -> StateVector {
+        let mut result = self.0.clone();
+        for (log_id, height) in other.iter() {
+            result
+                .entry(*log_id)
+                .and_modify(|h| *h = (*h).max(*height))
+                .or_insert(*height);
+        }
+        StateVector(result)
+    }
 }
