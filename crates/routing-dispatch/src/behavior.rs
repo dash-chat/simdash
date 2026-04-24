@@ -52,6 +52,24 @@ impl Behavior<RoutingDispatchModel> for BasicFloodingSyncBehavior {
     }
 }
 
+/// A routing behavior that only generates actions for the FloodingSync protocol.
+pub struct BasicStigBehavior;
+
+impl Behavior<RoutingDispatchModel> for BasicStigBehavior {
+    fn next_tick(
+        &mut self,
+        state: &RoutingDispatchState,
+    ) -> anyhow::Result<Vec<RoutingDispatchAction>> {
+        let mut b = crate::stig::StandardBehavior;
+        let actions = b
+            .next_tick(&state.stig)?
+            .into_iter()
+            .map(|a| crate::lift_action(a, AnyRoutingData::Stig, AnyRoutingAction::Stig))
+            .collect();
+        Ok(actions)
+    }
+}
+
 /// A no-op routing behavior that never triggers any routing actions.
 /// Useful as a baseline to observe the initial state without propagation.
 pub struct NoOpRoutingBehavior;

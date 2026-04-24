@@ -2,7 +2,9 @@ pub mod flooding_scenario;
 pub mod no_routing;
 
 use simdash_model_network::NetworkModel;
-use simdash_routing_dispatch::{BasicFloodingSyncBehavior, NaiveFloodingBehavior};
+use simdash_routing_dispatch::{
+    BasicFloodingSyncBehavior, BasicStigBehavior, NaiveFloodingBehavior,
+};
 use simdash_scenario::Scenario;
 
 use self::flooding_scenario::FloodingBehaviorType;
@@ -12,12 +14,13 @@ pub type NaiveFloodingScenario =
     Scenario<NetworkModel, FloodingBehaviorType<NaiveFloodingBehavior>>;
 pub type BasicFloodingSyncScenario =
     Scenario<NetworkModel, FloodingBehaviorType<BasicFloodingSyncBehavior>>;
+pub type StigScenario = Scenario<NetworkModel, FloodingBehaviorType<BasicStigBehavior>>;
 pub type NoRoutingScenario = Scenario<NetworkModel, NoRoutingBehaviorType>;
 
 pub enum AnyScenario {
     NaiveFlooding(NaiveFloodingScenario),
     BasicFloodingSync(BasicFloodingSyncScenario),
-    // Stig(StigScenario),
+    Stig(StigScenario),
     NoRouting(NoRoutingScenario),
 }
 
@@ -26,6 +29,7 @@ impl AnyScenario {
         match self {
             AnyScenario::NaiveFlooding(s) => s.state(),
             AnyScenario::BasicFloodingSync(s) => s.state(),
+            AnyScenario::Stig(s) => s.state(),
             AnyScenario::NoRouting(s) => s.state(),
         }
     }
@@ -34,6 +38,7 @@ impl AnyScenario {
         match self {
             AnyScenario::NaiveFlooding(s) => s.advance(),
             AnyScenario::BasicFloodingSync(s) => s.advance(),
+            AnyScenario::Stig(s) => s.advance(),
             AnyScenario::NoRouting(s) => s.advance(),
         }
     }
@@ -42,9 +47,15 @@ impl AnyScenario {
         match self {
             AnyScenario::NaiveFlooding(s) => &s.model().topology,
             AnyScenario::BasicFloodingSync(s) => &s.model().topology,
+            AnyScenario::Stig(s) => &s.model().topology,
             AnyScenario::NoRouting(s) => &s.model().topology,
         }
     }
 }
 
-pub const AVAILABLE_BEHAVIORS: &[&str] = &["naive-flooding", "basic-flooding-sync", "no-routing"];
+pub const AVAILABLE_BEHAVIORS: &[&str] = &[
+    "naive-flooding",
+    "basic-flooding-sync",
+    "stig",
+    "no-routing",
+];

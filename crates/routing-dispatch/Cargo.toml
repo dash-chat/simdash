@@ -9,6 +9,7 @@ simdash-routing-common = { workspace = true }
 simdash-protocol-flooding = { workspace = true }
 simdash-protocol-flooding-sync = { workspace = true }
 simdash-protocol-noop = { workspace = true }
+simdash-protocol-stig = { workspace = true }
 
 anyhow = { workspace = true }
 maplit = { workspace = true }

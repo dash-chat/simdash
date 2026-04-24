@@ -25,7 +25,7 @@ use simdash_types::{GetRoutingOpInfo, RoutingOpInfo, Ticks};
 pub use simdash_protocol_flooding as flooding;
 pub use simdash_protocol_flooding_sync as flooding_sync;
 pub use simdash_protocol_noop as noop;
-// pub use simdash_protocol_stig as stig;
+pub use simdash_protocol_stig as stig;
 
 crate::routing_dispatch! {
     Flooding / flooding => {
@@ -42,13 +42,13 @@ crate::routing_dispatch! {
         fx:     flooding_sync::Fx,
         data:   flooding_sync::WireData,
     },
-    // Stig / stig => {
-    //     model:  stig::Model,
-    //     state:  stig::State,
-    //     action: stig::Action,
-    //     fx:     stig::Fx,
-    //     data:   stig::WireData,
-    // },
+    Stig / stig => {
+        model:  stig::Model,
+        state:  stig::State,
+        action: stig::Action,
+        fx:     stig::Fx,
+        data:   stig::WireData,
+    },
     Noop / noop => {
         model:  noop::NoopModel,
         state:  noop::NoopState,
@@ -117,6 +117,7 @@ impl RoutingDispatchModel {
             },
             flooding_sync: flooding_sync::Model::new(interval),
             noop: simdash_protocol_noop::NoopModel,
+            stig: simdash_protocol_stig::Model::new(interval),
         }
     }
 }

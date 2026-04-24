@@ -1646,6 +1646,7 @@ dependencies = [
  "simdash-protocol-flooding",
  "simdash-protocol-flooding-sync",
  "simdash-protocol-noop",
+ "simdash-protocol-stig",
  "simdash-routing-common",
  "simdash-types",
 ]

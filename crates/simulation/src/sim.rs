@@ -2,7 +2,9 @@ use std::collections::{HashMap, HashSet};
 
 use dash_chat_top_gen::ChatTopology;
 use simdash_model_network::{NetworkState, NetworkTopologyState};
-use simdash_routing_dispatch::{BasicFloodingSyncBehavior, NaiveFloodingBehavior};
+use simdash_routing_dispatch::{
+    BasicFloodingSyncBehavior, BasicStigBehavior, NaiveFloodingBehavior,
+};
 
 use crate::scenarios::{flooding_scenario, no_routing, AnyScenario, AVAILABLE_BEHAVIORS};
 
@@ -63,14 +65,12 @@ impl Simulation {
                     BasicFloodingSyncBehavior,
                 ),
             )),
-            // "stig" => Ok(AnyScenario::Stig(
-            //     flooding_scenario::flooding_scenario(
-            //         state.clone(),
-            //         DEFAULT_BROADCAST_INTERVAL,
-            //         topology.clone(),
-            //         BasicFloodingSyncBehavior,
-            //     ),
-            // )),
+            "stig" => Ok(AnyScenario::Stig(flooding_scenario::flooding_scenario(
+                state.clone(),
+                DEFAULT_BROADCAST_INTERVAL,
+                topology.clone(),
+                BasicStigBehavior,
+            ))),
             "no-routing" => Ok(AnyScenario::NoRouting(no_routing::no_routing(
                 state.clone(),
                 DEFAULT_BROADCAST_INTERVAL,

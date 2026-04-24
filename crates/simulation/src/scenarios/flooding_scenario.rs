@@ -1,10 +1,10 @@
 use dash_chat_top_gen::ChatTopology;
+use simdash_model_network::NetworkState;
 use simdash_model_network::{NetworkModel, RoundRobinNodeScheduler};
 use simdash_model_node::{BasicNodeBehavior, NodeModel};
 use simdash_routing_dispatch::flooding::{FloodingOp, FloodingState};
-use simdash_routing_dispatch::flooding_sync;
+use simdash_routing_dispatch::{flooding_sync, stig};
 use simdash_routing_dispatch::{noop::NoopState, RoutingDispatchModel, RoutingDispatchState};
-use simdash_model_network::NetworkState;
 use simdash_scenario::Scenario;
 use simdash_types::Behavior;
 
@@ -39,6 +39,7 @@ pub fn flooding_scenario<In: Behavior<RoutingDispatchModel>>(
                     flooding: FloodingState { ops: flooding_ops },
                     flooding_sync: flooding_sync::State::from_ops(flooding_sync_ops),
                     noop: NoopState::default(),
+                    stig: stig::State::default(),
                 };
                 Ok((n, ()))
             })
