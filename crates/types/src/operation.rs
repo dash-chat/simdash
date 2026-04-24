@@ -1,4 +1,4 @@
-use crate::{GroupId, LogId, NodeId, OpId, Seq, Size};
+use crate::{GroupId, LogId, NodeId, OpId, Seq, Size, TopicId};
 use derive_more::From;
 use serde::{Deserialize, Serialize};
 
@@ -13,7 +13,8 @@ pub struct Header {
     pub author: NodeId,
     pub payload_size: Size,
     pub seq: Seq,
-    pub log_id: LogId,
+    pub topic_id: TopicId,
+    // pub log_id: LogId,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]

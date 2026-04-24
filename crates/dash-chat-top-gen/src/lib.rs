@@ -11,6 +11,7 @@ use simdash_distribution::Distribution;
 use simdash_model_chat::ChatState;
 use simdash_types::LogId;
 use simdash_types::Seq;
+use simdash_types::TopicId;
 use simdash_types::{Body, GroupId, Header, Operation};
 use simdash_types::{NodeId, OpId, Size};
 
@@ -229,7 +230,7 @@ impl ChatStateGenerator {
                                 author,
                                 payload_size,
                                 seq: Seq::from(*seq as u32),
-                                log_id: LogId::from(group_id as u32),
+                                topic_id: TopicId::from(group_id as u32),
                             };
                             let op = Operation {
                                 id: op_id,
@@ -294,7 +295,7 @@ impl ChatStateGenerator {
                                     author: node,
                                     payload_size,
                                     seq: Seq::from(seq),
-                                    log_id: LogId::from(0),
+                                    topic_id: 0.into(),
                                 },
                                 body: Body::DirectMessage { recipient },
                             };
@@ -353,7 +354,7 @@ impl ChatStateGenerator {
                                     author: node,
                                     payload_size,
                                     seq: Seq::from(*seq as u32),
-                                    log_id: LogId::from(gid as u32),
+                                    topic_id: TopicId::from(gid as u32),
                                 };
                                 *seq += 1;
                                 (header, Body::GroupMessage { group_id: gid })
@@ -370,7 +371,7 @@ impl ChatStateGenerator {
                                     author: node,
                                     payload_size,
                                     seq: Seq::from(*seq as u32),
-                                    log_id: LogId::from(0),
+                                    topic_id: 0.into(),
                                 };
                                 *seq += 1;
                                 (header, Body::DirectMessage { recipient })

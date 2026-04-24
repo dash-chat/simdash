@@ -1,0 +1,18 @@
+[package]
+name = "simdash-protocol-stig"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = { workspace = true }
+derive_more = { workspace = true }
+maplit = { workspace = true }
+polestar = { workspace = true }
+pretty_assertions = { workspace = true }
+serde = { workspace = true }
+simdash-types = { workspace = true }
+simdash-routing-common = { workspace = true }
+tracing = { workspace = true }
+
+[lints]
+workspace = true

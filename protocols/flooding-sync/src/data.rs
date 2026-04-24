@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet};
 use derive_more::{Debug, Deref, From};
 
 use serde::{Deserialize, Serialize};
-use simdash_types::{EncryptedOp, LogHeight, LogId, Seq};
+use simdash_types::{EncryptedOp, LogHeight, LogId, Seq, TopicId};
 
 /// The data sent over the wire between nodes using the flooding-sync protocol.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -23,6 +23,7 @@ pub enum WireData {
 /// Metadata needed for flooding.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
 pub struct Metadata {
+    pub topic_id: TopicId,
     pub log_id: LogId,
     pub seq: Seq,
 }
@@ -32,7 +33,8 @@ impl Metadata {
     /// Get the metadata from an operation
     pub fn from_op(op: &simdash_types::Operation) -> Self {
         Self {
-            log_id: op.header.log_id,
+            topic_id: op.header.topic_id,
+            log_id: op.header.author.into(),
             seq: op.header.seq,
         }
     }

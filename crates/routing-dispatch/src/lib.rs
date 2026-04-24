@@ -107,9 +107,7 @@ impl RoutingDispatchModel {
             flooding: simdash_protocol_flooding::FloodingModel {
                 broadcast_interval: interval,
             },
-            flooding_sync: flooding_sync::Model {
-                sync_interval: interval,
-            },
+            flooding_sync: flooding_sync::Model::new(interval),
             noop: simdash_protocol_noop::NoopModel,
         }
     }

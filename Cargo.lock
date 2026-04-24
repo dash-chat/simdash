@@ -1614,6 +1614,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "simdash-protocol-stig"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "derive_more 2.1.1",
+ "maplit",
+ "polestar",
+ "pretty_assertions",
+ "serde",
+ "simdash-routing-common",
+ "simdash-types",
+ "tracing",
+]
+
+[[package]]
 name = "simdash-routing-common"
 version = "0.1.0"
 dependencies = [

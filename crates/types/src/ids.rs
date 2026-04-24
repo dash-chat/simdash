@@ -76,7 +76,25 @@ pub struct Size(u64);
     From,
     Deref,
 )]
-#[display("L{}", _0)]
+#[display("T{}", _0)]
+pub struct TopicId(u32);
+
+#[derive(
+    Debug,
+    Display,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    Ord,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+    From,
+    Deref,
+)]
+#[display("L()")]
 pub struct LogId(u32);
 
 #[derive(
@@ -97,6 +115,12 @@ pub struct LogId(u32);
     Display,
 )]
 pub struct LogHeight(u32);
+
+impl LogHeight {
+    pub fn from_seq(seq: Seq) -> LogHeight {
+        LogHeight::from(seq.0 + 1)
+    }
+}
 
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize, From, Deref,
@@ -119,9 +143,43 @@ pub struct Seq(u32);
     From,
     Deref,
     derive_more::Add,
+    derive_more::AddAssign,
     derive_more::Sub,
+    derive_more::SubAssign,
 )]
 pub struct Ticks(u32);
+
+/// A number of hops that a message has traveled.
+#[derive(
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    Default,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    From,
+    Deref,
+    derive_more::Add,
+    derive_more::AddAssign,
+)]
+pub struct Hops(u32);
+
+impl From<NodeId> for LogId {
+    fn from(id: NodeId) -> LogId {
+        LogId::from(id.0)
+    }
+}
+
+impl From<LogId> for NodeId {
+    fn from(id: LogId) -> NodeId {
+        NodeId::from(id.0)
+    }
+}
 
 impl From<NodeId> for petgraph::graph::NodeIndex {
     fn from(id: NodeId) -> petgraph::graph::NodeIndex {

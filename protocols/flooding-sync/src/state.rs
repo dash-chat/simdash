@@ -119,7 +119,11 @@ mod tests {
     fn make_op(log_id: LogId, seq: Seq) -> Op {
         let op = basic_op(0);
         Op {
-            metadata: Metadata { log_id, seq },
+            metadata: Metadata {
+                topic_id: 0.into(),
+                log_id,
+                seq,
+            },
             encrypted: EncryptedOp::from(op),
         }
     }
