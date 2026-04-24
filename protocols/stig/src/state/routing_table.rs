@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use serde::{Deserialize, Serialize};
 use simdash_types::*;
@@ -77,6 +77,28 @@ impl RoutingTable {
             }
         }
         result
+    }
+
+    pub fn announcements(&self) -> impl Iterator<Item = Announce> {
+        let mut by_source: HashMap<SourceId, (Hops, SourceId, BTreeMap<TopicId, StateVector>)> =
+            HashMap::new();
+        for (topic_id, peers) in &self.facts {
+            for (src, fact) in peers {
+                // TODO: check that hops increases
+                let entry = by_source
+                    .entry(*src)
+                    .or_insert_with(|| (fact.hops, fact.relay, BTreeMap::new()));
+                entry.2.insert(*topic_id, fact.state_vector.clone());
+            }
+        }
+        by_source
+            .into_iter()
+            .map(|(author, (hops, relay, topics))| Announce {
+                author,
+                relay,
+                hops,
+                topics,
+            })
     }
 
     pub fn tick(&mut self) {

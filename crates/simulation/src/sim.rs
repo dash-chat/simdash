@@ -11,7 +11,7 @@ use crate::scenarios::{flooding_scenario, no_routing, AnyScenario, AVAILABLE_BEH
 /// Snapshot of op IDs per node, used to compute deltas.
 pub type OpSnapshot = HashMap<u32, HashSet<u32>>;
 
-const DEFAULT_BEHAVIOR: &str = "naive-flooding";
+const DEFAULT_BEHAVIOR: &str = "stig";
 const DEFAULT_BROADCAST_INTERVAL: u32 = 1;
 
 pub struct Simulation {

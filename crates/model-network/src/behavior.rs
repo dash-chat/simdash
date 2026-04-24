@@ -45,8 +45,18 @@ impl<B: Behavior<NodeModel>> Behavior<NetworkModel> for RoundRobinNodeScheduler<
                 .map(|action| NetworkAction::Node(*node_id, action))
         });
 
+        let consequences = consequences.collect::<Vec<_>>();
+        let generated = generated.collect::<Vec<_>>();
+
+        println!("consequences:");
+        for c in consequences.iter() {
+            println!("  {:?}", c);
+        }
+        println!("generated: {:?}", generated.len());
+
         Ok(consequences
-            .chain(generated)
+            .into_iter()
+            .chain(generated.into_iter())
             .chain([NetworkAction::Tick, NetworkAction::EvolveTopology])
             .collect())
     }

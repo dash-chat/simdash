@@ -85,6 +85,12 @@ impl OpBuffer {
         }
     }
 
+    pub fn topics(&self) -> impl Iterator<Item = (TopicId, StateVector)> {
+        self.ops
+            .iter()
+            .map(|(topic_id, _)| (topic_id.clone(), self.state_vector(topic_id.clone())))
+    }
+
     pub fn state_vector(&self, topic_id: TopicId) -> StateVector {
         StateVector::new(
             self.ops
@@ -96,22 +102,6 @@ impl OpBuffer {
                         .map(|op| (log_id.clone(), LogHeight::from_seq(op.metadata.seq)))
                 }),
         )
-    }
-
-    pub fn announcements(&self) -> impl Iterator<Item = Announce> {
-        todo!();
-        std::iter::empty()
-        // StateVector::new(
-        //     self.ops
-        //         .get(&topic_id)
-        //         .unwrap()
-        //         .iter()
-        //         .flat_map(|(log_id, ops)| {
-        //             ops.iter()
-        //                 .map(|op| (log_id.clone(), LogHeight::from_seq(op.metadata.seq)))
-        //         })
-        //         .collect(),
-        // )
     }
 
     pub fn diff(&self, topic_id: TopicId, other: &StateVector) -> BTreeSet<Op> {

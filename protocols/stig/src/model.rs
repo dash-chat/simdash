@@ -110,8 +110,12 @@ impl polestar::Machine for Model {
                     return Ok((state, vec![]));
                 }
                 state.sync_countdown = self.sync_interval;
-                let announcements = state.op_buffer.announcements();
-                let fx = announcements
+                let topics = state.op_buffer.topics();
+                let own_announcement = Announce::new(self.mesh_id, topics.collect());
+                let relay_announcements = state.routes.announcements();
+
+                let fx = relay_announcements
+                    .chain([own_announcement])
                     .map(|a| ProtocolFx::broadcast(WireData::Announce(a)))
                     .collect();
                 (state, fx)
