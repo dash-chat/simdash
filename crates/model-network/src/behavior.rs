@@ -48,7 +48,7 @@ impl<B: Behavior<NodeModel>> Behavior<NetworkModel> for RoundRobinNodeScheduler<
         let consequences = consequences.collect::<Vec<_>>();
         let generated = generated.collect::<Vec<_>>();
 
-        println!("consequences:");
+        println!("consequences ({}):", consequences.len());
         for c in consequences.iter() {
             println!("  {:?}", c);
         }

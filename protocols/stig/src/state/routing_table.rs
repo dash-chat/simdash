@@ -9,6 +9,7 @@ use crate::{Announce, Metadata, SourceId, StateVector};
 pub struct PeerLogFact {
     pub state_vector: StateVector,
     pub age: Ticks,
+    pub since_last_broadcast: Option<Ticks>,
     pub hops: Hops,
     pub relay: SourceId,
 }
@@ -29,6 +30,7 @@ impl RoutingTable {
                 .or_insert_with(|| PeerLogFact {
                     state_vector: StateVector::new(std::iter::empty()),
                     age: 0.into(),
+                    since_last_broadcast: None,
                     hops: announce.hops,
                     relay: announce.relay,
                 });
@@ -79,16 +81,26 @@ impl RoutingTable {
         result
     }
 
-    pub fn announcements(&self) -> impl Iterator<Item = Announce> {
+    pub fn announcements_to_broadcast(
+        &mut self,
+        sync_interval: Ticks,
+    ) -> impl Iterator<Item = Announce> {
         let mut by_source: HashMap<SourceId, (Hops, SourceId, BTreeMap<TopicId, StateVector>)> =
             HashMap::new();
-        for (topic_id, peers) in &self.facts {
+        for (topic_id, peers) in &mut self.facts {
             for (src, fact) in peers {
                 // TODO: check that hops increases
-                let entry = by_source
-                    .entry(*src)
-                    .or_insert_with(|| (fact.hops, fact.relay, BTreeMap::new()));
-                entry.2.insert(*topic_id, fact.state_vector.clone());
+                if fact
+                    .since_last_broadcast
+                    .map(|s| s >= sync_interval)
+                    .unwrap_or(true)
+                {
+                    fact.since_last_broadcast = Some(0.into());
+                    let entry = by_source
+                        .entry(*src)
+                        .or_insert_with(|| (fact.hops, fact.relay, BTreeMap::new()));
+                    entry.2.insert(*topic_id, fact.state_vector.clone());
+                }
             }
         }
         by_source
@@ -96,7 +108,7 @@ impl RoutingTable {
             .map(|(author, (hops, relay, topics))| Announce {
                 author,
                 relay,
-                hops,
+                hops: hops + 1.into(),
                 topics,
             })
     }
@@ -105,6 +117,7 @@ impl RoutingTable {
         for peers in self.facts.values_mut() {
             for fact in peers.values_mut() {
                 fact.age += 1.into();
+                fact.since_last_broadcast = fact.since_last_broadcast.map(|s| s + 1.into());
             }
         }
     }
@@ -182,6 +195,45 @@ mod tests {
         let sv2 = &table2.facts[&0.into()][&alice].state_vector;
         assert_eq!(sv2[&1.into()], 5.into());
         assert_eq!(sv2[&2.into()], 7.into());
+    }
+
+    #[test]
+    fn test_announcements_to_broadcast_sync_interval() {
+        let alice = SourceId::new();
+        let bobbi = SourceId::new();
+        let sync_interval: Ticks = 3.into();
+
+        let mut table = RoutingTable::default();
+
+        // Record alice at t=0, bobbi at t=1
+        table.record(Announce::new(alice, statevec(0, [(1, 5)])));
+        table.tick();
+        table.record(Announce::new(bobbi, statevec(0, [(2, 3)])));
+
+        // Both should appear on the first call (since_last_broadcast is None for both)
+        let announced: Vec<_> = table.announcements_to_broadcast(sync_interval).collect();
+        let authors: BTreeSet<SourceId> = announced.iter().map(|a| a.author).collect();
+        assert_eq!(authors, BTreeSet::from([alice, bobbi]));
+
+        // Immediately after, neither should appear (since_last_broadcast just reset to 0)
+        let announced: Vec<_> = table.announcements_to_broadcast(sync_interval).collect();
+        assert!(announced.is_empty());
+
+        // Tick twice more (since_last_broadcast reaches 2, still < 3)
+        table.tick();
+        table.tick();
+        let announced: Vec<_> = table.announcements_to_broadcast(sync_interval).collect();
+        assert!(announced.is_empty());
+
+        // One more tick brings since_last_broadcast to 3 == sync_interval; both should appear again
+        table.tick();
+        let announced: Vec<_> = table.announcements_to_broadcast(sync_interval).collect();
+        let authors: BTreeSet<SourceId> = announced.iter().map(|a| a.author).collect();
+        assert_eq!(authors, BTreeSet::from([alice, bobbi]));
+
+        // And again immediately after: nothing
+        let announced: Vec<_> = table.announcements_to_broadcast(sync_interval).collect();
+        assert!(announced.is_empty());
     }
 
     #[test]

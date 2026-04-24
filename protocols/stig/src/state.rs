@@ -11,8 +11,6 @@ use crate::{Announce, Op, SourceId, StateVector, state::routing_table::RoutingTa
 /// The Stig protocol's state simply tracks the number of ticks since the last time it was triggered.
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct State {
-    /// The number of ticks until the next sync round may begin
-    pub sync_countdown: Ticks,
     /// The buffer of operations to sync
     pub op_buffer: OpBuffer,
     /// Cached state_vector received from other nodes
@@ -27,7 +25,6 @@ impl State {
         }
 
         Self {
-            sync_countdown: 0.into(),
             op_buffer,
             routes: Default::default(),
         }
@@ -105,10 +102,10 @@ impl OpBuffer {
     }
 
     pub fn diff(&self, topic_id: TopicId, other: &StateVector) -> BTreeSet<Op> {
-        self.ops
-            .get(&topic_id)
-            .unwrap()
-            .iter()
+        let Some(ops) = self.ops.get(&topic_id) else {
+            return BTreeSet::new();
+        };
+        ops.iter()
             .flat_map(|(log_id, ops)| {
                 let height = other.get(log_id).map(|h| **h).unwrap_or(0);
                 ops.iter()

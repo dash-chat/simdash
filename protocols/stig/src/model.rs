@@ -1,4 +1,7 @@
-use std::sync::atomic::AtomicU32;
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    sync::atomic::AtomicU32,
+};
 
 use derive_more::{Deref, From};
 use serde::{Deserialize, Serialize};
@@ -106,24 +109,20 @@ impl polestar::Machine for Model {
                 }
             },
             RoutingAction::Protocol(Action::TriggerSync) => {
-                if state.sync_countdown > 0.into() {
-                    return Ok((state, vec![]));
-                }
-                state.sync_countdown = self.sync_interval;
-                let topics = state.op_buffer.topics();
-                let own_announcement = Announce::new(self.mesh_id, topics.collect());
-                let relay_announcements = state.routes.announcements();
+                let topics = state.op_buffer.topics().collect::<BTreeMap<_, _>>();
+                let own_announcement =
+                    (!topics.is_empty()).then(|| Announce::new(self.mesh_id, topics));
+                let relay_announcements =
+                    state.routes.announcements_to_broadcast(self.sync_interval);
 
                 let fx = relay_announcements
-                    .chain([own_announcement])
+                    .chain(own_announcement)
                     .map(|a| ProtocolFx::broadcast(WireData::Announce(a)))
                     .collect();
                 (state, fx)
             }
             RoutingAction::Network(ProtocolNetworkAction::Tick) => {
-                if state.sync_countdown > 0.into() {
-                    state.sync_countdown = state.sync_countdown - 1.into();
-                }
+                state.routes.tick();
                 (state, vec![])
             }
         };

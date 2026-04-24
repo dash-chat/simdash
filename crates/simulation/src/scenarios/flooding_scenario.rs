@@ -35,11 +35,17 @@ pub fn flooding_scenario<In: Behavior<RoutingDispatchModel>>(
                     .values()
                     .map(|op| flooding_sync::Op::from_op(op))
                     .collect();
+                let stig_ops = n
+                    .chat
+                    .op_store
+                    .values()
+                    .map(|op| stig::Op::from_op(op))
+                    .collect();
                 n.routing = RoutingDispatchState {
                     flooding: FloodingState { ops: flooding_ops },
                     flooding_sync: flooding_sync::State::from_ops(flooding_sync_ops),
                     noop: NoopState::default(),
-                    stig: stig::State::default(),
+                    stig: stig::State::from_ops(stig_ops),
                 };
                 Ok((n, ()))
             })
