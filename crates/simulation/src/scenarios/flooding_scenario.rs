@@ -19,10 +19,10 @@ pub fn flooding_scenario<In: Behavior<RoutingDispatchModel>>(
     // Seed each node's routing state from its chat op_store so flooding
     // knows about the initial ops and can broadcast them.
     let node_ids: Vec<_> = initial_state.graph.node_ids().collect();
-    for node_id in node_ids {
+    for node_id in node_ids.iter() {
         initial_state
             .graph
-            .update_node(node_id, |mut n| {
+            .update_node(*node_id, |mut n| {
                 let flooding_ops = n
                     .chat
                     .op_store
@@ -46,10 +46,16 @@ pub fn flooding_scenario<In: Behavior<RoutingDispatchModel>>(
             .ok();
     }
 
-    let model = NetworkModel::new(
-        NodeModel::new(RoutingDispatchModel::standard(broadcast_interval.into())),
-        topology,
-    );
+    let node_models = node_ids
+        .iter()
+        .map(|id| {
+            (
+                *id,
+                NodeModel::new(RoutingDispatchModel::standard(broadcast_interval.into())),
+            )
+        })
+        .collect();
+    let model = NetworkModel::new(node_models, topology);
     let behavior = RoundRobinNodeScheduler::new(BasicNodeBehavior::new(behavior));
     Scenario::initial(model, initial_state, behavior)
 }

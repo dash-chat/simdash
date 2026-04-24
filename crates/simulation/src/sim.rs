@@ -12,7 +12,7 @@ use crate::scenarios::{flooding_scenario, no_routing, AnyScenario, AVAILABLE_BEH
 pub type OpSnapshot = HashMap<u32, HashSet<u32>>;
 
 const DEFAULT_BEHAVIOR: &str = "stig";
-const DEFAULT_BROADCAST_INTERVAL: u32 = 1;
+const DEFAULT_BROADCAST_INTERVAL: u32 = 10;
 
 pub struct Simulation {
     seed: u64,

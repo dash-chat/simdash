@@ -7,7 +7,7 @@ use simdash_routing_common::{ProtocolNetworkAction, RoutingAction};
 use simdash_types::Ticks;
 
 use crate::{
-    Announce, Metadata, Payload, ProtocolAction, ProtocolFx, WireData, action::Action, state::State,
+    Announce, Payload, ProtocolAction, ProtocolFx, WireData, action::Action, state::State,
 };
 
 #[derive(
@@ -79,7 +79,7 @@ impl polestar::Machine for Model {
                         }
                     }
 
-                    fx.push(ProtocolFx::broadcast(WireData::Announce(a)));
+                    // fx.push(ProtocolFx::broadcast(WireData::Announce(a)));
 
                     (state, fx)
                 }

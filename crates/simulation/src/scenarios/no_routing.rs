@@ -12,7 +12,16 @@ pub fn no_routing(
     topology: ChatTopology,
 ) -> Scenario<NetworkModel, NoRoutingBehaviorType> {
     let model = NetworkModel::new(
-        NodeModel::new(RoutingDispatchModel::standard(broadcast_interval.into())),
+        initial_state
+            .graph
+            .node_ids()
+            .map(|id| {
+                (
+                    id,
+                    NodeModel::new(RoutingDispatchModel::standard(broadcast_interval.into())),
+                )
+            })
+            .collect(),
         topology,
     );
     let behavior = RoundRobinNodeScheduler::new(BasicNodeBehavior::new(NoOpRoutingBehavior));

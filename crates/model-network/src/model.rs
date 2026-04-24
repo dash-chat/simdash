@@ -2,11 +2,12 @@
 //! - the state of each Node
 //! - the network topology (edges between nodes)
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use dash_chat_top_gen::ChatTopology;
 use rand::seq::IndexedRandom;
 use simdash_model_node::{NodeAction, NodeModel};
+use simdash_types::NodeId;
 
 use crate::{NetworkAction, NetworkFx, NetworkState};
 
@@ -14,15 +15,15 @@ use crate::{NetworkAction, NetworkFx, NetworkState};
 /// - the state of each Node
 /// - the network topology (edges between nodes)
 pub struct NetworkModel {
-    node: NodeModel,
+    nodes: HashMap<NodeId, NodeModel>,
     /// The network topology
     pub topology: ChatTopology,
 }
 
 impl NetworkModel {
     /// Constructor
-    pub fn new(node: NodeModel, topology: ChatTopology) -> Self {
-        Self { node, topology }
+    pub fn new(nodes: HashMap<NodeId, NodeModel>, topology: ChatTopology) -> Self {
+        Self { nodes, topology }
     }
 }
 
@@ -49,7 +50,10 @@ impl polestar::Machine for NetworkModel {
 
                 for node_id in all_keys {
                     let fx = state.graph.update_node(node_id, |node_state| {
-                        self.node.transition(node_state, NodeAction::Tick)
+                        self.nodes
+                            .get(&node_id)
+                            .unwrap()
+                            .transition(node_state, NodeAction::Tick)
                     })?;
                     debug_assert!(fx.is_empty());
                 }
@@ -85,7 +89,11 @@ impl polestar::Machine for NetworkModel {
 
             NetworkAction::Node(node_id, node_action) => {
                 match state.graph.update_node(node_id, |node_state| {
-                    let (node_state, node_fx) = self.node.transition(node_state, node_action)?;
+                    let (node_state, node_fx) = self
+                        .nodes
+                        .get(&node_id)
+                        .unwrap()
+                        .transition(node_state, node_action)?;
                     Ok((node_state, node_fx))
                 }) {
                     Ok(fx) => Ok((
