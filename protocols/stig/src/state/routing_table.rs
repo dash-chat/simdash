@@ -3,34 +3,34 @@ use std::collections::{BTreeSet, HashMap};
 use serde::{Deserialize, Serialize};
 use simdash_types::*;
 
-use crate::{Announce, Metadata, SourceId};
+use crate::{Announce, Metadata, SourceId, StateVector};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct PeerLogFact {
-    pub log_id: LogId,
-    pub log_height: LogHeight,
+    pub state_vector: StateVector,
     pub age: Ticks,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RoutingTable {
-    peers: HashMap<TopicId, HashMap<SourceId, PeerLogFact>>,
+    facts: HashMap<TopicId, HashMap<SourceId, PeerLogFact>>,
 }
 
 impl RoutingTable {
     pub fn record(&mut self, announce: Announce) {
-        todo!();
-        // self.peers
-        //     .entry(topic_id)
-        //     .or_insert_with(HashMap::new)
-        //     .insert(
-        //         mesh_id,
-        //         PeerLogFact {
-        //             log_id,
-        //             log_height,
-        //             age: 0.into(),
-        //         },
-        //     );
+        for (topic_id, state_vector) in announce.topics {
+            let entry = self
+                .facts
+                .entry(topic_id)
+                .or_default()
+                .entry(announce.author)
+                .or_insert_with(|| PeerLogFact {
+                    state_vector: state_vector.clone(),
+                    age: 0.into(),
+                });
+            entry.age = 0.into();
+            entry.state_vector = state_vector;
+        }
     }
 
     /// Given a set of incoming metadata, decide on the addressees for the payload to broadcast.
@@ -40,13 +40,34 @@ impl RoutingTable {
         &self,
         metadata: impl IntoIterator<Item = &'a Metadata>,
     ) -> BTreeSet<SourceId> {
-        todo!();
+        let mut result = BTreeSet::new();
+        for meta in metadata {
+            let Some(topic_peers) = self.facts.get(&meta.topic_id) else {
+                continue;
+            };
+            let threshold = LogHeight::from_seq(meta.seq);
+            let has_it = |v: &StateVector| {
+                v.get(&meta.log_id)
+                    .map(|h| *h >= threshold)
+                    .unwrap_or(false)
+            };
+            let any_has_it = topic_peers.values().any(|fact| has_it(&fact.state_vector));
+            if any_has_it {
+                result.extend(
+                    topic_peers
+                        .iter()
+                        .filter(|(_, fact)| !has_it(&fact.state_vector))
+                        .map(|(src, _)| *src),
+                );
+            }
+        }
+        result
     }
 
     pub fn tick(&mut self) {
-        for peers in self.peers.values_mut() {
-            for peer in peers.values_mut() {
-                peer.age += 1.into();
+        for peers in self.facts.values_mut() {
+            for fact in peers.values_mut() {
+                fact.age += 1.into();
             }
         }
     }
