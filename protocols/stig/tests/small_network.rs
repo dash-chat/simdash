@@ -3,7 +3,7 @@
 use simdash_model_network::RoundRobinNodeScheduler;
 use simdash_model_node::BasicNodeBehavior;
 use simdash_protocol_stig::{StateVector, util::make_stig_op};
-use simdash_routing_dispatch::{BasicStigBehavior, RoutingDispatchModel};
+use simdash_routing_dispatch::BasicStigBehavior;
 use simdash_scenario::Scenario;
 use simdash_types::{LogId, NodeId, Seq, Ticks, TopicId};
 
@@ -20,15 +20,11 @@ use named_id::{Nameable, Rename};
 fn op_propagates_to_remote_subscriber() {
     const N: u32 = 4;
     const SYNC_INTERVAL: Ticks = Ticks(10);
+    const STEPS: usize = 10;
 
     // 0 → 1 → 2 → … → N-1
-    let (model, mut state) = simdash_model_network::generate::linear_chain(
-        N,
-        RoutingDispatchModel::standard(NodeId(0).into(), SYNC_INTERVAL),
-    );
+    let (model, mut state) = simdash_model_network::generate::linear_chain(N, SYNC_INTERVAL);
     let behavior = RoundRobinNodeScheduler::new(BasicNodeBehavior::new(BasicStigBehavior));
-
-    let stig_model = model.nodes.get(&0.into()).unwrap().routing.stig.clone();
 
     state.graph.nodes.keys().for_each(|node_id| {
         node_id.with_short();
@@ -36,8 +32,11 @@ fn op_propagates_to_remote_subscriber() {
 
     let topic = TopicId(0).with_short();
 
-    let alpha = NodeId(0).with_name("Α");
-    let omega = NodeId(N - 1).with_name("Ω");
+    let alpha = NodeId(0).with_name("alpha"); // .with_name("α");
+    let omega = NodeId(N - 1).with_name("omega"); // .with_name("ω");
+
+    let alpha_model = &model.nodes.get(&alpha).unwrap().routing.stig;
+    let omega_model = &model.nodes.get(&omega).unwrap().routing.stig;
 
     let op = make_stig_op(topic, LogId(1).with_short(), Seq(0));
 
@@ -45,7 +44,7 @@ fn op_propagates_to_remote_subscriber() {
     state
         .graph
         .update_node(alpha, |mut node| {
-            node.routing.stig.store_op(&stig_model, op.clone());
+            node.routing.stig.store_op(&alpha_model, op.clone());
             Ok((node, ()))
         })
         .unwrap();
@@ -54,7 +53,7 @@ fn op_propagates_to_remote_subscriber() {
     state
         .graph
         .update_node(omega, |mut node| {
-            node.routing.stig.subscribe(&stig_model, topic);
+            node.routing.stig.subscribe(&omega_model, topic);
             Ok((node, ()))
         })
         .unwrap();
@@ -76,7 +75,7 @@ fn op_propagates_to_remote_subscriber() {
 
     // Advance the network; each tick every node broadcasts its Stig state
     // and effects from the previous tick are dispatched as consequences
-    for _ in 0..7 {
+    for _ in 0..STEPS {
         scenario.advance().unwrap();
     }
 

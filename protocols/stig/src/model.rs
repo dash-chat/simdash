@@ -53,7 +53,7 @@ impl From<u32> for SourceId {
 // }
 
 /// The Stig model implements the flooding-sync protocol.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Model {
     /// Ticks to wait between sync rounds
     pub sync_interval: Ticks,
