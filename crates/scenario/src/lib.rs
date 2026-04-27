@@ -37,21 +37,19 @@ where
     }
 
     /// Advance the Scenario by one step.
-    pub fn advance(&mut self) -> anyhow::Result<bool> {
+    pub fn advance(&mut self) -> anyhow::Result<Vec<ActionOf<B::Model>>> {
         if let Some(mut state) = self.state.take() {
             let actions = self.behavior.next_tick(&state)?;
-            let empty = actions.is_empty();
-            for action in actions {
+            for action in actions.iter() {
                 let (new_state, fx) = self.model.transition(state, action.clone())?;
                 state = new_state;
                 let unhandled = self.behavior.handle_fx(&state, fx)?;
                 if let Some(fx) = unhandled {
                     tracing::warn!("Scenario received unhandled effects: {:?}", fx);
                 }
-                self.history.push(action);
             }
             self.state = Some(state);
-            Ok(!empty)
+            Ok(actions)
         } else {
             // TODO: invalid actions would be due to a misguided behavior.
             //       ideally the behavior should be written to not produce invalid actions.

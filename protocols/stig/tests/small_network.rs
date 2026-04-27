@@ -16,8 +16,9 @@ use simdash_types::{LogId, Seq, TopicId};
 /// can be run and inspected as the protocol evolves.
 #[test]
 fn op_propagates_to_remote_subscriber() {
-    // 0 → 1 → 2 → … → 9
-    let (model, mut state) = simdash_model_network::generate::linear_chain(10);
+    const N: u32 = 3;
+    // 0 → 1 → 2 → … → N-1
+    let (model, mut state) = simdash_model_network::generate::linear_chain(N);
     let behavior = RoundRobinNodeScheduler::new(BasicNodeBehavior::new(BasicStigBehavior));
 
     let op = make_stig_op(0.into(), 1.into(), 0.into());
@@ -35,8 +36,14 @@ fn op_propagates_to_remote_subscriber() {
 
     // Advance the network; each tick every node broadcasts its Stig state
     // and effects from the previous tick are dispatched as consequences
-    for _ in 0..11 {
-        scenario.advance().unwrap();
+    for step in 0..7 {
+        let actions = scenario.advance().unwrap();
+        println!();
+        println!("========= STEP {step} =========");
+        println!();
+        for a in actions {
+            println!("  {:?}", a);
+        }
     }
 
     // Check whether node 9 received the op

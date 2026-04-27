@@ -1,6 +1,7 @@
 pub mod flooding_scenario;
 pub mod no_routing;
 
+use simdash_model_network::NetworkAction;
 use simdash_routing_dispatch::{
     BasicFloodingSyncBehavior, BasicStigBehavior, NaiveFloodingBehavior,
 };
@@ -31,7 +32,7 @@ impl AnyScenario {
         }
     }
 
-    pub fn advance(&mut self) -> anyhow::Result<bool> {
+    pub fn advance(&mut self) -> anyhow::Result<Vec<NetworkAction>> {
         match self {
             AnyScenario::NaiveFlooding(s) => s.advance(),
             AnyScenario::BasicFloodingSync(s) => s.advance(),

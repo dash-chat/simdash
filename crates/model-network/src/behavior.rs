@@ -47,14 +47,14 @@ impl<B: Behavior<Model = NodeModel>> Behavior for RoundRobinNodeScheduler<B> {
                 .map(|action| NetworkAction::Node(*node_id, action))
         });
 
-        let consequences = consequences.collect::<Vec<_>>();
-        let generated = generated.collect::<Vec<_>>();
+        // let consequences = consequences.collect::<Vec<_>>();
+        // let generated = generated.collect::<Vec<_>>();
 
-        println!("consequences ({}):", consequences.len());
-        for c in consequences.iter() {
-            println!("  {:?}", c);
-        }
-        println!("generated: {:?}", generated.len());
+        // println!("consequences ({}):", consequences.len());
+        // for c in consequences.iter() {
+        //     println!("  {:?}", c);
+        // }
+        // println!("generated: {:?}", generated.len());
 
         Ok(consequences
             .into_iter()
