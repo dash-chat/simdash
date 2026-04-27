@@ -1,8 +1,9 @@
 mod routing_table;
+pub use routing_table::PeerLogFact;
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-use derive_more::Deref;
+use derive_more::{Deref, From};
 use serde::{Deserialize, Serialize};
 use simdash_types::*;
 
@@ -18,10 +19,16 @@ pub struct State {
 }
 
 impl State {
+    pub fn store_op(&mut self, me: SourceId, op: Op) {
+        let op = StoredOp::new(op);
+        self.routes.record_stored_op(me, &op);
+        self.op_buffer.store_op(op);
+    }
+
     pub fn from_ops(ops: BTreeSet<Op>) -> Self {
         let mut op_buffer: OpBuffer = Default::default();
         for op in ops {
-            op_buffer.store_op(op);
+            op_buffer.store_op(StoredOp::new(op));
         }
 
         Self {
@@ -44,29 +51,26 @@ impl GetRoutingOpInfo for State {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Deref)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Deref, From)]
 pub struct StoredOp {
     #[deref]
     pub op: Op,
-    pub since_last_send: Ticks,
 }
 
 impl StoredOp {
     pub fn new(op: Op) -> Self {
-        Self {
-            op,
-            since_last_send: 0.into(),
-        }
+        Self { op }
     }
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct OpBuffer {
-    ops: HashMap<TopicId, HashMap<LogId, BTreeSet<StoredOp>>>,
+    pub ops: HashMap<TopicId, HashMap<LogId, BTreeSet<StoredOp>>>,
 }
 
 impl OpBuffer {
-    pub fn store_op(&mut self, op: Op) {
+    pub fn store_op(&mut self, op: impl Into<StoredOp>) {
+        let op = op.into();
         let log = self
             .ops
             .entry(op.metadata.topic_id)
@@ -74,7 +78,7 @@ impl OpBuffer {
             .entry(op.metadata.log_id)
             .or_default();
         let metadata = op.metadata.clone();
-        let existing = log.insert(StoredOp::new(op));
+        let existing = log.insert(op);
         if existing {
             tracing::warn!("Op already exists: metadata={:?}", metadata);
         } else {

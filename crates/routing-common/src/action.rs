@@ -1,6 +1,7 @@
 use std::hash::Hash;
 
-use named_id::RenameAll;
+use derive_more::Debug;
+use named_id::{Rename, RenameAll};
 
 /// The complete set of actions that be performed on a protocol model.
 ///
@@ -48,6 +49,7 @@ impl<A, D: Eq + Hash> RoutingAction<A, D> {
 #[derive(Debug, Clone, PartialEq, Eq, RenameAll)]
 pub enum ProtocolNetworkAction<D: Eq + Hash> {
     /// An action to receive data from the network
+    #[debug("Receive({:?})", data)]
     Receive {
         /// The protocol wire data received
         data: D,

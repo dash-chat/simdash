@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use derive_more::{Debug, Deref, From};
 
-use named_id::RenameAll;
+use named_id::{Nameable, Rename, RenameAll};
 use serde::{Deserialize, Serialize};
 use simdash_types::{EncryptedOp, Hops, LogHeight, LogId, Seq, TopicId};
 
@@ -12,6 +12,7 @@ use crate::SourceId;
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, RenameAll)]
 pub enum WireData {
     /// An announcement of a state vector for a topic
+    #[debug("{:?}", _0)]
     Announce(Announce),
 
     /// A list of operations in response to an announcement
@@ -19,6 +20,13 @@ pub enum WireData {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, RenameAll)]
+#[debug(
+    "Announce({author} --{hops}-> {relay} : {topics})",
+    author=author.with_short().renamed(),
+    relay=relay.with_short().renamed(),
+    topics=topics.clone().renamed(),
+    hops=hops,
+)]
 pub struct Announce {
     /// The mesh ID of the author of the announcement (immutable)
     pub author: SourceId,
@@ -100,7 +108,7 @@ impl Op {
     Deref,
     RenameAll,
 )]
-#[debug("StateVector({:?})", _0.iter().map(|(log_id, log_height)| format!("{}:{}", log_id, log_height)).collect::<Vec<String>>().join(", "))]
+#[debug("SV({})", _0.iter().map(|(log_id, log_height)| format!("{}:{}", log_id.renamed(), log_height)).collect::<Vec<String>>().join(", "))]
 pub struct StateVector(BTreeMap<LogId, LogHeight>);
 
 impl StateVector {

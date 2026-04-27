@@ -92,13 +92,13 @@ pub fn lift_fx<F, D: Eq + std::hash::Hash>(
     wrap_fx: impl Fn(F) -> AnyRoutingFx,
 ) -> RoutingDispatchFx {
     match fx {
-        RoutingFx::Network(SendFx::BroadcastData { data }) => {
-            RoutingDispatchFx::Network(SendFx::BroadcastData {
+        RoutingFx::Network(SendFx::Broadcast { data }) => {
+            RoutingDispatchFx::Network(SendFx::Broadcast {
                 data: wrap_data(data),
             })
         }
-        RoutingFx::Network(SendFx::UnicastData { to, data }) => {
-            RoutingDispatchFx::Network(SendFx::UnicastData {
+        RoutingFx::Network(SendFx::Unicast { to, data }) => {
+            RoutingDispatchFx::Network(SendFx::Unicast {
                 to,
                 data: wrap_data(data),
             })

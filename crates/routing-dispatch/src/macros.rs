@@ -54,6 +54,7 @@ macro_rules! routing_dispatch {
     ) => {
 
         /// The model composed of all user-defined routing protocols.
+        #[derive(Clone)]
         pub struct RoutingDispatchModel {
             $(
                 #[doc = concat!("The model for the `", stringify!($field), "` protocol")]

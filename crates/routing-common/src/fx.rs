@@ -1,5 +1,7 @@
 use std::hash::Hash;
 
+use derive_more::Debug;
+use named_id::{Nameable, Rename, RenameAll};
 use simdash_types::EncryptedOp;
 
 /// Effect type used by a routing protocol's model.
@@ -7,7 +9,7 @@ use simdash_types::EncryptedOp;
 /// The types are generic so that this type can be used both by the protocol model itself,
 /// using specific Fx and Data types, and also by the higher level network model,
 /// which will use enums of all possible Fx and Data types for all known routing protocols.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, RenameAll)]
 pub enum RoutingFx<Fx, D: Eq + Hash> {
     /// An effect to take place at the Network level (send data)
     Network(SendFx<D>),
@@ -21,12 +23,12 @@ pub enum RoutingFx<Fx, D: Eq + Hash> {
 impl<Fx, D: Eq + Hash> RoutingFx<Fx, D> {
     /// Convenience method to for the [`SendFx::UnicastData`] effect.
     pub fn unicast(to: simdash_types::NodeId, data: D) -> Self {
-        RoutingFx::Network(SendFx::UnicastData { to, data })
+        RoutingFx::Network(SendFx::Unicast { to, data })
     }
 
     /// Convenience method for the [`SendFx::BroadcastData`] effect.
     pub fn broadcast(data: D) -> Self {
-        RoutingFx::Network(SendFx::BroadcastData { data })
+        RoutingFx::Network(SendFx::Broadcast { data })
     }
 
     /// Convenience method for the [`StorageFx::StoreOp`] effect.
@@ -41,7 +43,7 @@ impl<Fx, D: Eq + Hash> RoutingFx<Fx, D> {
 }
 
 /// An effect which causes chat app state to change
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, RenameAll)]
 pub enum StorageFx {
     /// An effect to ask the node to decrypt and store operations in the Chat state
     StoreOp {
@@ -51,17 +53,19 @@ pub enum StorageFx {
 }
 
 /// An effect which causes data to be sent to other node(s) in the network
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, RenameAll)]
 pub enum SendFx<D: Eq + Hash> {
     /// An effect to send data to a specific node
-    UnicastData {
+    #[debug("Unicast({to:?} <- {data:?})")]
+    Unicast {
         /// The node to send the data to
         to: simdash_types::NodeId,
         /// The protocol wire data to send
         data: D,
     },
     /// An effect to send data to all current neighbors of the node
-    BroadcastData {
+    #[debug("Broadcast({data:?})")]
+    Broadcast {
         /// The protocol wire data to send
         data: D,
     },

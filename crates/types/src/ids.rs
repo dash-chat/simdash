@@ -19,8 +19,16 @@ pub type GroupId = u64;
     From,
     Deref,
 )]
-#[display("N({})", _0)]
 pub struct NodeId(u32);
+
+impl named_id::Nameable for NodeId {
+    fn shortener(&self) -> Option<named_id::Shortener> {
+        Some(named_id::Shortener {
+            length: 3,
+            prefix: "N",
+        })
+    }
+}
 
 #[derive(
     Serialize,
@@ -40,6 +48,14 @@ pub struct NodeId(u32);
 #[display("op{}", _0)]
 pub struct OpId(u32);
 
+impl named_id::Nameable for OpId {
+    fn shortener(&self) -> Option<named_id::Shortener> {
+        Some(named_id::Shortener {
+            length: 3,
+            prefix: "op",
+        })
+    }
+}
 #[derive(
     Serialize, Deserialize, PartialOrd, Ord, Debug, Clone, Copy, PartialEq, Eq, Hash, From, Deref,
 )]
@@ -77,11 +93,17 @@ pub struct Size(u64);
     Deserialize,
     From,
     Deref,
-    RenameAll,
 )]
-#[display("T{}", _0)]
-pub struct TopicId(u32);
+pub struct TopicId(pub u32);
 
+impl named_id::Nameable for TopicId {
+    fn shortener(&self) -> Option<named_id::Shortener> {
+        Some(named_id::Shortener {
+            length: 3,
+            prefix: "T",
+        })
+    }
+}
 #[derive(
     Debug,
     Display,
@@ -96,11 +118,17 @@ pub struct TopicId(u32);
     Deserialize,
     From,
     Deref,
-    RenameAll,
 )]
-#[display("L()")]
-pub struct LogId(u32);
+pub struct LogId(pub u32);
 
+impl named_id::Nameable for LogId {
+    fn shortener(&self) -> Option<named_id::Shortener> {
+        Some(named_id::Shortener {
+            length: 3,
+            prefix: "L",
+        })
+    }
+}
 #[derive(
     Debug,
     Clone,
@@ -117,9 +145,18 @@ pub struct LogId(u32);
     Deref,
     Add,
     Display,
-    RenameAll,
 )]
+#[display("{}", _0)]
 pub struct LogHeight(u32);
+
+impl named_id::Nameable for LogHeight {
+    fn shortener(&self) -> Option<named_id::Shortener> {
+        Some(named_id::Shortener {
+            length: 3,
+            prefix: "H",
+        })
+    }
+}
 
 impl LogHeight {
     pub fn from_seq(seq: Seq) -> LogHeight {
@@ -128,9 +165,21 @@ impl LogHeight {
 }
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize, From, Deref,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    Ord,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+    From,
+    Deref,
+    RenameNone,
 )]
-pub struct Seq(u32);
+pub struct Seq(pub u32);
 
 /// A number of ticks (a duration).
 #[derive(
@@ -151,6 +200,7 @@ pub struct Seq(u32);
     derive_more::AddAssign,
     derive_more::Sub,
     derive_more::SubAssign,
+    RenameNone,
 )]
 pub struct Ticks(u32);
 
@@ -171,6 +221,7 @@ pub struct Ticks(u32);
     Deref,
     derive_more::Add,
     derive_more::AddAssign,
+    Display,
 )]
 pub struct Hops(u32);
 

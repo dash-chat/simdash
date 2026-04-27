@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use serde::{Deserialize, Serialize};
 use simdash_types::*;
 
-use crate::{Announce, Metadata, SourceId, StateVector};
+use crate::{Announce, Metadata, SourceId, StateVector, StoredOp};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct PeerLogFact {
@@ -16,10 +16,30 @@ pub struct PeerLogFact {
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RoutingTable {
-    facts: HashMap<TopicId, HashMap<SourceId, PeerLogFact>>,
+    pub facts: HashMap<TopicId, HashMap<SourceId, PeerLogFact>>,
 }
 
 impl RoutingTable {
+    /// Record an op authored by this node.
+    /// This causes the Announce for this topic to be broadcast at the next tick.
+    pub fn record_stored_op(&mut self, me: SourceId, op: &StoredOp) {
+        let fact = PeerLogFact {
+            state_vector: StateVector::new([(
+                op.metadata.log_id,
+                LogHeight::from_seq(op.metadata.seq),
+            )]),
+            age: 0.into(),
+            since_last_broadcast: None,
+            hops: 0.into(),
+            relay: me,
+        };
+        self.facts
+            .entry(op.metadata.topic_id)
+            .or_default()
+            .entry(me)
+            .or_insert(fact);
+    }
+
     pub fn record(&mut self, announce: Announce) {
         for (topic_id, state_vector) in announce.topics {
             let entry = self
@@ -55,6 +75,7 @@ impl RoutingTable {
     // OPTIMIZE: send different targets different payloads based on their state vectors
     pub fn targets<'a>(
         &self,
+        me: SourceId,
         metadata: impl IntoIterator<Item = &'a Metadata>,
     ) -> BTreeSet<SourceId> {
         let mut result = BTreeSet::new();
@@ -73,8 +94,8 @@ impl RoutingTable {
                 result.extend(
                     topic_peers
                         .iter()
-                        .filter(|(_, fact)| !has_it(&fact.state_vector))
-                        .map(|(src, _)| *src),
+                        .filter(|(author, fact)| **author != me && !has_it(&fact.state_vector))
+                        .map(|(author, _)| *author),
                 );
             }
         }
@@ -108,7 +129,7 @@ impl RoutingTable {
             .map(|(author, (hops, relay, topics))| Announce {
                 author,
                 relay,
-                hops: hops + 1.into(),
+                hops,
                 topics,
             })
     }
@@ -243,28 +264,41 @@ mod tests {
         let alice = SourceId::new();
         let bobbi = SourceId::new();
         let chuck = SourceId::new();
+        let daisy = SourceId::new();
 
         let a = Announce::new(alice, statevec(0, [(1, 3), (2, 3)]));
         let b = Announce::new(bobbi, statevec(0, [(1, 3), (2, 5)]));
         let c = Announce::new(chuck, statevec(0, [(1, 5), (2, 3)]));
 
-        assert_eq!(table.targets(&[meta(0, 1, 2), meta(0, 2, 4)]), btreeset!());
+        assert_eq!(
+            table.targets(daisy, &[meta(0, 1, 2), meta(0, 2, 4)]),
+            btreeset!()
+        );
 
         table.record(a);
 
-        assert_eq!(table.targets(&[meta(0, 1, 2), meta(0, 2, 4)]), btreeset!());
+        assert_eq!(
+            table.targets(daisy, &[meta(0, 1, 2), meta(0, 2, 4)]),
+            btreeset!()
+        );
 
         table.record(b);
 
-        assert_eq!(table.targets(&[meta(0, 1, 2)]), btreeset!());
+        assert_eq!(table.targets(daisy, &[meta(0, 1, 2)]), btreeset!());
         assert_eq!(
-            table.targets(&[meta(0, 1, 2), meta(0, 2, 4)]),
+            table.targets(daisy, &[meta(0, 1, 2), meta(0, 2, 4)]),
             btreeset!(alice)
         );
 
         table.record(c);
 
-        assert_eq!(table.targets(&[meta(0, 1, 4)]), btreeset!(alice, bobbi));
-        assert_eq!(table.targets(&[meta(0, 2, 4)]), btreeset!(alice, chuck));
+        assert_eq!(
+            table.targets(daisy, &[meta(0, 1, 4)]),
+            btreeset!(alice, bobbi)
+        );
+        assert_eq!(
+            table.targets(daisy, &[meta(0, 2, 4)]),
+            btreeset!(alice, chuck)
+        );
     }
 }

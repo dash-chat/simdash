@@ -1,10 +1,6 @@
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    sync::atomic::AtomicU32,
-};
+use std::{collections::BTreeMap, sync::atomic::AtomicU32};
 
-use derive_more::{Deref, From};
-use named_id::RenameAll;
+use derive_more::{Deref, Display, From};
 use serde::{Deserialize, Serialize};
 
 use simdash_routing_common::{ProtocolNetworkAction, RoutingAction};
@@ -16,6 +12,7 @@ use crate::{
 
 #[derive(
     Debug,
+    Display,
     Clone,
     Copy,
     PartialEq,
@@ -27,9 +24,17 @@ use crate::{
     Deserialize,
     From,
     Deref,
-    RenameAll,
 )]
 pub struct SourceId(u32);
+
+impl named_id::Nameable for SourceId {
+    fn shortener(&self) -> Option<named_id::Shortener> {
+        Some(named_id::Shortener {
+            length: 3,
+            prefix: "S",
+        })
+    }
+}
 
 static NEXT_ID: AtomicU32 = AtomicU32::new(0);
 
@@ -84,8 +89,9 @@ impl polestar::Machine for Model {
                     for (topic_id, state_vector) in &a.topics {
                         let ops = state.op_buffer.diff(*topic_id, &state_vector);
                         if !ops.is_empty() {
-                            let addressees =
-                                state.routes.targets(ops.iter().map(|op| &op.metadata));
+                            let addressees = state
+                                .routes
+                                .targets(self.mesh_id, ops.iter().map(|op| &op.metadata));
                             if !addressees.is_empty() {
                                 fx.push(ProtocolFx::broadcast(WireData::Payload(Payload {
                                     addressees,
@@ -104,7 +110,7 @@ impl polestar::Machine for Model {
                     if payload.addressees.contains(&self.mesh_id) {
                         let addressees = state
                             .routes
-                            .targets(payload.ops.iter().map(|op| &op.metadata));
+                            .targets(self.mesh_id, payload.ops.iter().map(|op| &op.metadata));
                         if !addressees.is_empty() {
                             fx.push(ProtocolFx::broadcast(WireData::Payload(Payload {
                                 addressees,
@@ -122,14 +128,11 @@ impl polestar::Machine for Model {
                 }
             },
             RoutingAction::Protocol(Action::TriggerSync) => {
-                let topics = state.op_buffer.topics().collect::<BTreeMap<_, _>>();
-                let own_announcement =
-                    (!topics.is_empty()).then(|| Announce::new(self.mesh_id, topics));
+                // let topics = state.op_buffer.topics().collect::<BTreeMap<_, _>>();
                 let relay_announcements =
                     state.routes.announcements_to_broadcast(self.sync_interval);
 
                 let fx = relay_announcements
-                    .chain(own_announcement)
                     .map(|a| ProtocolFx::broadcast(WireData::Announce(a)))
                     .collect();
                 (state, fx)
@@ -143,5 +146,72 @@ impl polestar::Machine for Model {
         // println!("* FX:       {:?}", fx);
         // println!();
         Ok((state, fx))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use polestar::Machine;
+    use simdash_types::LogHeight;
+
+    use crate::{StateVector, StoredOp, util::make_stig_op};
+
+    use super::*;
+
+    #[test]
+    fn test_model() {
+        let model = Model::new(3.into());
+        let mut state = State::default();
+        let topic = 0.into();
+        let log = 0.into();
+        let seq = 0.into();
+        state.store_op(model.mesh_id, make_stig_op(topic, log, seq));
+
+        let trigger = ProtocolAction::protocol(Action::TriggerSync);
+        let broadcast = ProtocolFx::broadcast(WireData::Announce(Announce::new(
+            model.mesh_id,
+            BTreeMap::from([(topic, StateVector::new([(log, LogHeight::from_seq(seq))]))]),
+        )));
+
+        let since_last = |state: &State| -> Option<Ticks> {
+            state
+                .routes
+                .facts
+                .get(&topic)
+                .unwrap()
+                .get(&model.mesh_id)
+                .unwrap()
+                .since_last_broadcast
+        };
+        assert_eq!(since_last(&state), None);
+
+        let (state, _) = model.transition(state, ProtocolAction::tick()).unwrap();
+        assert_eq!(since_last(&state), None);
+        let (state, fx) = model.transition(state, trigger.clone()).unwrap();
+        assert_eq!(fx, vec![broadcast.clone()]);
+        assert_eq!(since_last(&state), Some(0.into()));
+
+        let (state, _) = model.transition(state, ProtocolAction::tick()).unwrap();
+        assert_eq!(since_last(&state), Some(1.into()));
+        let (state, fx) = model.transition(state, trigger.clone()).unwrap();
+        assert_eq!(fx, vec![]);
+        assert_eq!(since_last(&state), Some(1.into()));
+
+        let (state, _) = model.transition(state, ProtocolAction::tick()).unwrap();
+        assert_eq!(since_last(&state), Some(2.into()));
+        let (state, fx) = model.transition(state, trigger.clone()).unwrap();
+        assert_eq!(fx, vec![]);
+        assert_eq!(since_last(&state), Some(2.into()));
+
+        let (state, _) = model.transition(state, ProtocolAction::tick()).unwrap();
+        assert_eq!(since_last(&state), Some(3.into()));
+        let (state, fx) = model.transition(state, trigger.clone()).unwrap();
+        assert_eq!(fx, vec![broadcast]);
+        assert_eq!(since_last(&state), Some(0.into()));
+
+        let (state, _) = model.transition(state, ProtocolAction::tick()).unwrap();
+        assert_eq!(since_last(&state), Some(1.into()));
+        let (_, fx) = model.transition(state, trigger.clone()).unwrap();
+        assert_eq!(fx, vec![]);
     }
 }

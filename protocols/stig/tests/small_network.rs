@@ -2,10 +2,12 @@
 
 use simdash_model_network::RoundRobinNodeScheduler;
 use simdash_model_node::BasicNodeBehavior;
-use simdash_protocol_stig::{Op, StateVector};
-use simdash_routing_dispatch::BasicStigBehavior;
+use simdash_protocol_stig::{Op, StateVector, util::make_stig_op};
+use simdash_routing_dispatch::{BasicStigBehavior, RoutingDispatchModel};
 use simdash_scenario::Scenario;
 use simdash_types::{LogId, Seq, TopicId};
+
+use named_id::{Nameable, Rename};
 
 /// Node 0 and node 9 share topic 0, but they are only connected through a chain of
 /// intermediate nodes that are not subscribed to any topic.  The test plants an op
@@ -18,10 +20,15 @@ use simdash_types::{LogId, Seq, TopicId};
 fn op_propagates_to_remote_subscriber() {
     const N: u32 = 3;
     // 0 → 1 → 2 → … → N-1
-    let (model, mut state) = simdash_model_network::generate::linear_chain(N);
+    let (model, mut state) =
+        simdash_model_network::generate::linear_chain(N, RoutingDispatchModel::standard(3.into()));
     let behavior = RoundRobinNodeScheduler::new(BasicNodeBehavior::new(BasicStigBehavior));
 
-    let op = make_stig_op(0.into(), 1.into(), 0.into());
+    state.graph.nodes.keys().for_each(|node_id| {
+        node_id.with_short();
+    });
+
+    let op = make_stig_op(TopicId(0).with_short(), LogId(1).with_short(), Seq(0));
 
     // Node 0 "creates" an op for topic 0
     state
@@ -32,18 +39,25 @@ fn op_propagates_to_remote_subscriber() {
         })
         .unwrap();
 
-    let mut scenario = Scenario::initial(model, state, behavior);
+    let mut scenario = Scenario::initial(model, state, behavior)
+        .on_step(|s| {
+            println!();
+            println!("========= STEP {} =========", s.steps());
+            println!();
+        })
+        .on_action("actions", |action| {
+            println!("<< {:?}", action.clone().renamed());
+        })
+        .on_fx("fx", |fx| {
+            if fx.len() > 0 {
+                println!("  >> {:?}", fx.clone().renamed());
+            }
+        });
 
     // Advance the network; each tick every node broadcasts its Stig state
     // and effects from the previous tick are dispatched as consequences
-    for step in 0..7 {
-        let actions = scenario.advance().unwrap();
-        println!();
-        println!("========= STEP {step} =========");
-        println!();
-        for a in actions {
-            println!("  {:?}", a);
-        }
+    for _ in 0..7 {
+        scenario.advance().unwrap();
     }
 
     // Check whether node 9 received the op
@@ -62,17 +76,4 @@ fn op_propagates_to_remote_subscriber() {
     // TODO: uncomment once the protocol correctly propagates ops to remote subscribers
     // assert!(!received.is_empty(), "node 9 should have received the op from node 0");
     let _ = received;
-}
-
-fn make_stig_op(topic_id: TopicId, log_id: LogId, seq: Seq) -> Op {
-    use simdash_protocol_stig::Metadata;
-    use simdash_types::{EncryptedOp, util::basic_op};
-    Op {
-        metadata: Metadata {
-            topic_id,
-            log_id,
-            seq,
-        },
-        encrypted: EncryptedOp::from(basic_op(0)),
-    }
 }

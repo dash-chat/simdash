@@ -8,6 +8,7 @@ mod data;
 mod fx;
 mod model;
 mod state;
+pub mod util;
 
 pub use action::*;
 pub use behavior::*;

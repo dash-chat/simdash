@@ -7,7 +7,7 @@ use simdash_routing_dispatch::RoutingDispatchModel;
 use simdash_types::NodeId;
 
 /// Generate a linear chain of `n` nodes.
-pub fn linear_chain(n: u32) -> (NetworkModel, NetworkState) {
+pub fn linear_chain(n: u32, routing_model: RoutingDispatchModel) -> (NetworkModel, NetworkState) {
     let mut graph = Graph::new();
     for i in 0..n {
         graph.add_node(NodeId::from(i), NodeState::default());
@@ -17,12 +17,7 @@ pub fn linear_chain(n: u32) -> (NetworkModel, NetworkState) {
     }
 
     let nodes: HashMap<NodeId, NodeModel> = (0..n)
-        .map(|i| {
-            (
-                NodeId::from(i),
-                NodeModel::new(RoutingDispatchModel::standard(1.into())),
-            )
-        })
+        .map(|i| (NodeId::from(i), NodeModel::new(routing_model.clone())))
         .collect();
 
     let model = NetworkModel::new(nodes, ChatTopology::empty());

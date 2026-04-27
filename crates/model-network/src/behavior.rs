@@ -88,7 +88,7 @@ fn handle_single_fx(
     let mut actions = Vec::new();
     match fx {
         RoutingDispatchFx::Network(send) => match send {
-            SendFx::BroadcastData { data } => {
+            SendFx::Broadcast { data } => {
                 let neighbors = state.neighborhood(node_id).collect::<Vec<_>>();
                 for neighbor in neighbors {
                     let node_action = NodeAction::Routing(RoutingDispatchAction::Network(
@@ -97,7 +97,7 @@ fn handle_single_fx(
                     actions.push(NetworkAction::node(neighbor, node_action));
                 }
             }
-            SendFx::UnicastData { to, data } => {
+            SendFx::Unicast { to, data } => {
                 let node_action = NodeAction::Routing(RoutingDispatchAction::Network(
                     ProtocolNetworkAction::Receive { data },
                 ));

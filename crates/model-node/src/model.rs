@@ -1,5 +1,7 @@
 //! The Node model manages all of the state of a single node in the network.
 
+use derive_more::Debug;
+use named_id::RenameAll;
 use simdash_model_chat::ChatModel;
 use simdash_routing_common::{ProtocolNetworkAction, RoutingAction};
 use simdash_routing_dispatch::{RoutingDispatchFx, RoutingDispatchModel};
@@ -28,7 +30,8 @@ impl NodeModel {
 }
 
 /// The effects that can be produced by a Node model.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, RenameAll)]
+#[debug("{:?}", routing)]
 #[must_use]
 pub struct NodeFx {
     /// The effects produced by the contained routing protocol
@@ -142,7 +145,7 @@ mod tests {
             .unwrap();
         assert_eq!(
             fx[0].routing,
-            RoutingDispatchFx::Network(SendFx::BroadcastData {
+            RoutingDispatchFx::Network(SendFx::Broadcast {
                 data: AnyRoutingData::Flooding(data),
             })
         );

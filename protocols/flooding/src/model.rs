@@ -10,6 +10,7 @@ use crate::{
 /// The Flooding model simply broadcasts operations to all neighbors indiscriminately.
 ///
 /// It records the time of broadcast for each op, and repeats broadcast after a configurable interval.
+#[derive(Clone, PartialEq, Eq)]
 pub struct FloodingModel {
     /// Don't broadcast an op twice within this interval.
     pub broadcast_interval: Ticks,

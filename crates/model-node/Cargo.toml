@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 anyhow = { workspace = true }
+derive_more = { workspace = true }
 named-id = { workspace = true }
 petgraph = { workspace = true }
 polestar = { workspace = true }
