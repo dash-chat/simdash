@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use derive_more::{Constructor, Debug, Deref, From};
+use derive_more::{Debug, Deref, From};
 
 use serde::{Deserialize, Serialize};
 use simdash_types::{EncryptedOp, Hops, LogHeight, LogId, Seq, TopicId};

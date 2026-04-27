@@ -3,31 +3,31 @@
 //! The scenario maintains state, uses the Behavior to produce Actions to perform state transitions,
 //! and updates the state accordingly.
 
-use polestar::Machine;
+use polestar::{
+    Machine,
+    mapping::{ActionOf, FxOf, StateOf},
+};
 use simdash_types::Behavior;
 
 /// A Scenario takes an initial model State and a Behavior,
 /// and uses the Behavior to produce Actions to perform state transitions.
-pub struct Scenario<M, B>
+pub struct Scenario<B>
 where
-    M: Machine<Error = anyhow::Error>,
-    M::Fx: std::fmt::Debug,
-    B: Behavior<M>,
+    B: Behavior,
 {
-    model: M,
-    state: Option<M::State>,
-    history: Vec<M::Action>,
+    model: B::Model,
+    state: Option<StateOf<B::Model>>,
+    history: Vec<ActionOf<B::Model>>,
     behavior: B,
 }
 
-impl<M, B> Scenario<M, B>
+impl<B> Scenario<B>
 where
-    M: Machine<Error = anyhow::Error>,
-    M::Fx: std::fmt::Debug,
-    B: Behavior<M>,
+    B: Behavior,
+    FxOf<B::Model>: std::fmt::Debug,
 {
     /// Create a new Scenario with the given Model, initial state, and Behavior.
-    pub fn initial(model: M, initial_state: M::State, behavior: B) -> Self {
+    pub fn initial(model: B::Model, initial_state: StateOf<B::Model>, behavior: B) -> Self {
         Self {
             model,
             state: Some(initial_state),
@@ -61,19 +61,21 @@ where
     }
 
     /// Get the current state of the Scenario.
-    pub fn state(&self) -> Option<&M::State> {
-        self.state.as_ref()
+    pub fn state(&self) -> &StateOf<B::Model> {
+        self.state
+            .as_ref()
+            .expect("scenario encountered an error in a previous step and has no state")
     }
 
     /// Get the Model of the Scenario.
-    pub fn model(&self) -> &M {
+    pub fn model(&self) -> &B::Model {
         &self.model
     }
 
     /// Get the history of Actions performed by the Scenario so far.
     ///
     /// This can be used to replay the scenario or to analyze the behavior.
-    pub fn history(&self) -> &Vec<M::Action> {
+    pub fn history(&self) -> &Vec<ActionOf<B::Model>> {
         &self.history
     }
 }

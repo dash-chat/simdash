@@ -14,5 +14,13 @@ simdash-types = { workspace = true }
 simdash-routing-common = { workspace = true }
 tracing = { workspace = true }
 
+[dev-dependencies]
+dash-chat-top-gen = { workspace = true }
+simdash-model-chat = { workspace = true }
+simdash-model-network = { workspace = true }
+simdash-model-node = { workspace = true }
+simdash-routing-dispatch = { workspace = true }
+simdash-scenario = { workspace = true }
+
 [lints]
 workspace = true

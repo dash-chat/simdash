@@ -10,7 +10,7 @@ pub fn no_routing(
     initial_state: NetworkState,
     broadcast_interval: u32,
     topology: ChatTopology,
-) -> Scenario<NetworkModel, NoRoutingBehaviorType> {
+) -> Scenario<NoRoutingBehaviorType> {
     let model = NetworkModel::new(
         initial_state
             .graph

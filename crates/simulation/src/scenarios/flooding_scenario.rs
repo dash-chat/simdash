@@ -10,12 +10,12 @@ use simdash_types::Behavior;
 
 pub type FloodingBehaviorType<B> = RoundRobinNodeScheduler<BasicNodeBehavior<B>>;
 
-pub fn flooding_scenario<In: Behavior<RoutingDispatchModel>>(
+pub fn flooding_scenario<In: Behavior<Model = RoutingDispatchModel>>(
     mut initial_state: NetworkState,
     broadcast_interval: u32,
     topology: ChatTopology,
     behavior: In,
-) -> Scenario<NetworkModel, RoundRobinNodeScheduler<BasicNodeBehavior<In>>> {
+) -> Scenario<RoundRobinNodeScheduler<BasicNodeBehavior<In>>> {
     // Seed each node's routing state from its chat op_store so flooding
     // knows about the initial ops and can broadcast them.
     let node_ids: Vec<_> = initial_state.graph.node_ids().collect();

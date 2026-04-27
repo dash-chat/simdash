@@ -15,12 +15,12 @@ use crate::{NetworkAction, NetworkFx, NetworkModel, NetworkState};
 ///
 /// This models a uniform flow of time with nodes that are perfectly identical to each other
 /// in the rate that they take actions.
-pub struct RoundRobinNodeScheduler<B: Behavior<NodeModel>> {
+pub struct RoundRobinNodeScheduler<B: Behavior<Model = NodeModel>> {
     node_behavior: B,
     pending_actions: Vec<NetworkAction>,
 }
 
-impl<B: Behavior<NodeModel>> RoundRobinNodeScheduler<B> {
+impl<B: Behavior<Model = NodeModel>> RoundRobinNodeScheduler<B> {
     /// Constructor
     pub fn new(node_behavior: B) -> Self {
         Self {
@@ -30,7 +30,9 @@ impl<B: Behavior<NodeModel>> RoundRobinNodeScheduler<B> {
     }
 }
 
-impl<B: Behavior<NodeModel>> Behavior<NetworkModel> for RoundRobinNodeScheduler<B> {
+impl<B: Behavior<Model = NodeModel>> Behavior for RoundRobinNodeScheduler<B> {
+    type Model = NetworkModel;
+
     fn next_tick(&mut self, state: &NetworkState) -> anyhow::Result<Vec<NetworkAction>> {
         // TODO: add propagation delay here.
         let consequences = self.pending_actions.drain(..);

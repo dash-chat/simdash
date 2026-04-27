@@ -85,7 +85,7 @@ impl Simulation {
     }
 
     pub fn current_state(&self) -> &NetworkState {
-        self.scenario.state().expect("scenario should have state")
+        self.scenario.state()
     }
 
     pub fn current_step(&self) -> usize {

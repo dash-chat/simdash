@@ -89,16 +89,13 @@ impl OpBuffer {
     }
 
     pub fn state_vector(&self, topic_id: TopicId) -> StateVector {
-        StateVector::new(
-            self.ops
-                .get(&topic_id)
-                .unwrap()
-                .iter()
-                .flat_map(|(log_id, ops)| {
-                    ops.iter()
-                        .map(|op| (log_id.clone(), LogHeight::from_seq(op.metadata.seq)))
-                }),
-        )
+        let Some(ops) = self.ops.get(&topic_id) else {
+            return StateVector::new(std::iter::empty());
+        };
+        StateVector::new(ops.iter().flat_map(|(log_id, ops)| {
+            ops.iter()
+                .map(|op| (log_id.clone(), LogHeight::from_seq(op.metadata.seq)))
+        }))
     }
 
     pub fn diff(&self, topic_id: TopicId, other: &StateVector) -> BTreeSet<Op> {

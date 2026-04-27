@@ -4,6 +4,7 @@
 mod action;
 mod behavior;
 mod fx;
+pub mod generate;
 mod model;
 mod state;
 

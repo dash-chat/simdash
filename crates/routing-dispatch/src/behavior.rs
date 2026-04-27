@@ -5,7 +5,9 @@ use crate::*;
 /// A routing behavior that only generates actions for the naive Flooding protocol.
 pub struct NaiveFloodingBehavior;
 
-impl Behavior<RoutingDispatchModel> for NaiveFloodingBehavior {
+impl Behavior for NaiveFloodingBehavior {
+    type Model = RoutingDispatchModel;
+
     fn next_tick(
         &mut self,
         state: &RoutingDispatchState,
@@ -31,7 +33,9 @@ impl Behavior<RoutingDispatchModel> for NaiveFloodingBehavior {
 /// A routing behavior that only generates actions for the FloodingSync protocol.
 pub struct BasicFloodingSyncBehavior;
 
-impl Behavior<RoutingDispatchModel> for BasicFloodingSyncBehavior {
+impl Behavior for BasicFloodingSyncBehavior {
+    type Model = RoutingDispatchModel;
+
     fn next_tick(
         &mut self,
         state: &RoutingDispatchState,
@@ -55,7 +59,9 @@ impl Behavior<RoutingDispatchModel> for BasicFloodingSyncBehavior {
 /// A routing behavior that only generates actions for the FloodingSync protocol.
 pub struct BasicStigBehavior;
 
-impl Behavior<RoutingDispatchModel> for BasicStigBehavior {
+impl Behavior for BasicStigBehavior {
+    type Model = RoutingDispatchModel;
+
     fn next_tick(
         &mut self,
         state: &RoutingDispatchState,
@@ -74,7 +80,9 @@ impl Behavior<RoutingDispatchModel> for BasicStigBehavior {
 /// Useful as a baseline to observe the initial state without propagation.
 pub struct NoOpRoutingBehavior;
 
-impl Behavior<RoutingDispatchModel> for NoOpRoutingBehavior {
+impl Behavior for NoOpRoutingBehavior {
+    type Model = RoutingDispatchModel;
+
     fn next_tick(
         &mut self,
         _: &RoutingDispatchState,
