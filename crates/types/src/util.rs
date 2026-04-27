@@ -1,4 +1,4 @@
-use crate::{Body, Header, LogId, NodeId, OpId, Operation, Seq, Size, TopicId};
+use crate::{Body, Header, NodeId, OpId, Operation, Seq, Size, TopicId};
 
 pub fn basic_op(id: impl Into<OpId>) -> Operation {
     Operation {

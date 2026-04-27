@@ -18,7 +18,10 @@ pub fn no_routing(
             .map(|id| {
                 (
                     id,
-                    NodeModel::new(RoutingDispatchModel::standard(broadcast_interval.into())),
+                    NodeModel::new(RoutingDispatchModel::standard(
+                        id,
+                        broadcast_interval.into(),
+                    )),
                 )
             })
             .collect(),

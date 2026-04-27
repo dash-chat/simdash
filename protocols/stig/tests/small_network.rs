@@ -2,7 +2,7 @@
 
 use simdash_model_network::RoundRobinNodeScheduler;
 use simdash_model_node::BasicNodeBehavior;
-use simdash_protocol_stig::{Op, StateVector, util::make_stig_op};
+use simdash_protocol_stig::{StateVector, util::make_stig_op};
 use simdash_routing_dispatch::{BasicStigBehavior, RoutingDispatchModel};
 use simdash_scenario::Scenario;
 use simdash_types::{LogId, NodeId, Seq, Ticks, TopicId};
@@ -24,7 +24,7 @@ fn op_propagates_to_remote_subscriber() {
     // 0 → 1 → 2 → … → N-1
     let (model, mut state) = simdash_model_network::generate::linear_chain(
         N,
-        RoutingDispatchModel::standard(SYNC_INTERVAL),
+        RoutingDispatchModel::standard(NodeId(0).into(), SYNC_INTERVAL),
     );
     let behavior = RoundRobinNodeScheduler::new(BasicNodeBehavior::new(BasicStigBehavior));
 

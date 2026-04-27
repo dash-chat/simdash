@@ -1,3 +1,5 @@
+//! Functions for generating models and initial states for testing.
+
 use std::collections::HashMap;
 
 use crate::{NetworkModel, NetworkState};

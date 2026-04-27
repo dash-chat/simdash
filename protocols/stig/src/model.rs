@@ -1,15 +1,16 @@
-use std::{collections::BTreeMap, sync::atomic::AtomicU32};
-
 use derive_more::{Deref, Display, From};
+use named_id::RenameAll;
 use serde::{Deserialize, Serialize};
 
 use simdash_routing_common::{ProtocolNetworkAction, RoutingAction};
-use simdash_types::Ticks;
+use simdash_types::{NodeId, Ticks};
 
-use crate::{
-    Announce, Payload, ProtocolAction, ProtocolFx, WireData, action::Action, state::State,
-};
+use crate::{Payload, ProtocolAction, ProtocolFx, WireData, action::Action, state::State};
 
+/// An ephemeral identifier for a node in the mesh.
+///
+/// For now, it's just the same as NodeId for ease of debugging.
+/// When we want to model SourceId changing, then this can become decoupled from NodeId.
 #[derive(
     Debug,
     Display,
@@ -24,25 +25,32 @@ use crate::{
     Deserialize,
     From,
     Deref,
+    RenameAll,
 )]
-pub struct SourceId(u32);
+pub struct SourceId(pub NodeId);
 
-impl named_id::Nameable for SourceId {
-    fn shortener(&self) -> Option<named_id::Shortener> {
-        Some(named_id::Shortener {
-            length: 3,
-            prefix: "S",
-        })
+impl From<u32> for SourceId {
+    fn from(id: u32) -> Self {
+        Self(NodeId::from(id))
     }
 }
 
-static NEXT_ID: AtomicU32 = AtomicU32::new(0);
+// impl named_id::Nameable for SourceId {
+//     fn shortener(&self) -> Option<named_id::Shortener> {
+//         Some(named_id::Shortener {
+//             length: 3,
+//             prefix: "S",
+//         })
+//     }
+// }
 
-impl SourceId {
-    pub fn new() -> Self {
-        Self(NEXT_ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed))
-    }
-}
+// static NEXT_ID: AtomicU32 = AtomicU32::new(0);
+
+// impl SourceId {
+//     pub fn new() -> Self {
+//         Self(NEXT_ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed))
+//     }
+// }
 
 /// The Stig model implements the flooding-sync protocol.
 #[derive(Debug, Clone)]
@@ -56,10 +64,10 @@ pub struct Model {
 
 impl Model {
     /// Constructor
-    pub fn new(sync_interval: Ticks) -> Self {
+    pub fn new(mesh_id: SourceId, sync_interval: Ticks) -> Self {
         Self {
             sync_interval,
-            mesh_id: SourceId::new(),
+            mesh_id,
         }
     }
 }
@@ -150,16 +158,18 @@ impl polestar::Machine for Model {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::BTreeMap;
+
     use polestar::Machine;
     use simdash_types::LogHeight;
 
-    use crate::{StateVector, StoredOp, util::make_stig_op};
+    use crate::{Announce, StateVector, util::make_stig_op};
 
     use super::*;
 
     #[test]
     fn test_subscribe() {
-        let model = Model::new(3.into());
+        let model = Model::new(NodeId(0).into(), 3.into());
         let mut state = State::default();
         let topic = 0.into();
         state.subscribe(&model, topic);
@@ -188,7 +198,7 @@ mod tests {
 
     #[test]
     fn test_sync_interval() {
-        let model = Model::new(3.into());
+        let model = Model::new(NodeId(0).into(), 3.into());
         let mut state = State::default();
         let topic = 0.into();
         let log = 0.into();

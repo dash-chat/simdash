@@ -1,5 +1,3 @@
-use named_id::RenameAll;
-
 use super::*;
 
 pub type GroupId = u64;

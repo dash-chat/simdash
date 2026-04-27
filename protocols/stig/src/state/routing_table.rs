@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use serde::{Deserialize, Serialize};
 use simdash_types::*;
 
-use crate::{Announce, Metadata, Model, SourceId, StateVector, StoredOp};
+use crate::{Announce, Metadata, Model, SourceId, StateVector};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct PeerLogFact {
@@ -184,9 +184,9 @@ mod tests {
 
     #[test]
     fn test_record_merge() {
-        let alice = SourceId::new();
-        let relay1 = SourceId::new();
-        let relay2 = SourceId::new();
+        let alice = SourceId(NodeId(0).into());
+        let relay1 = SourceId(NodeId(1).into());
+        let relay2 = SourceId(NodeId(2).into());
 
         // state vectors are always unioned regardless of hop count
         let mut table = RoutingTable::default();
@@ -222,11 +222,12 @@ mod tests {
 
     #[test]
     fn test_announcements_to_broadcast_sync_interval() {
-        let alice = SourceId::new();
-        let bobbi = SourceId::new();
+        let me = SourceId::from(0);
+        let alice = SourceId::from(1);
+        let bobbi = SourceId::from(2);
         let sync_interval: Ticks = 3.into();
 
-        let model = Model::new(sync_interval);
+        let model = Model::new(me, sync_interval);
         let mut table = RoutingTable::default();
 
         // Record alice at t=0, bobbi at t=1
@@ -264,11 +265,12 @@ mod tests {
     fn test_targets() {
         let mut table = RoutingTable::default();
 
-        let alice = SourceId::new();
-        let bobbi = SourceId::new();
-        let chuck = SourceId::new();
+        let me = SourceId::from(0);
+        let alice = SourceId::from(1);
+        let bobbi = SourceId::from(2);
+        let chuck = SourceId::from(3);
 
-        let model = Model::new(3.into());
+        let model = Model::new(me, 3.into());
 
         let a = Announce::new(alice, statevec(0, [(1, 3), (2, 3)]));
         let b = Announce::new(bobbi, statevec(0, [(1, 3), (2, 5)]));

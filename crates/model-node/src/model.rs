@@ -93,7 +93,7 @@ mod tests {
     use super::*;
 
     fn model() -> NodeModel {
-        NodeModel::new(RoutingDispatchModel::standard(3.into()))
+        NodeModel::new(RoutingDispatchModel::standard(0.into(), 3.into()))
     }
 
     /// Routing used to be synced when ops were stored. Not anymore, for now.

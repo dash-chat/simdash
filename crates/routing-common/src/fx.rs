@@ -1,7 +1,7 @@
 use std::hash::Hash;
 
 use derive_more::Debug;
-use named_id::{Nameable, Rename, RenameAll};
+use named_id::RenameAll;
 use simdash_types::EncryptedOp;
 
 /// Effect type used by a routing protocol's model.

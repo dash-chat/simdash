@@ -23,7 +23,7 @@ where
     handlers: ScenarioHandlers<B>,
 }
 
-pub struct ScenarioHandlers<B>
+struct ScenarioHandlers<B>
 where
     B: Behavior,
 {
@@ -143,6 +143,7 @@ where
         &self.history
     }
 
+    /// Get the number of steps taken by the Scenario so far.
     pub fn steps(&self) -> usize {
         self.steps
     }

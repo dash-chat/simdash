@@ -1,13 +1,13 @@
 mod routing_table;
 pub use routing_table::PeerLogFact;
 
-use std::collections::{BTreeMap, BTreeSet, HashMap};
+use std::collections::{BTreeSet, HashMap};
 
 use derive_more::{Deref, From};
 use serde::{Deserialize, Serialize};
 use simdash_types::*;
 
-use crate::{Announce, Model, Op, SourceId, StateVector, state::routing_table::RoutingTable};
+use crate::{Model, Op, StateVector, state::routing_table::RoutingTable};
 
 /// The Stig protocol's state simply tracks the number of ticks since the last time it was triggered.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]

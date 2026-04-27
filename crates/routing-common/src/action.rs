@@ -1,7 +1,7 @@
 use std::hash::Hash;
 
 use derive_more::Debug;
-use named_id::{Rename, RenameAll};
+use named_id::RenameAll;
 
 /// The complete set of actions that be performed on a protocol model.
 ///
