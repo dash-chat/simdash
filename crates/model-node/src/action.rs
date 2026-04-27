@@ -1,8 +1,9 @@
+use named_id::RenameAll;
 use simdash_model_chat::ChatAction;
 use simdash_routing_dispatch::RoutingDispatchAction;
 
 /// Actions for the node model.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, RenameAll)]
 pub enum NodeAction {
     /// A chat-level action
     Chat(ChatAction),

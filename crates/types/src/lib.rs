@@ -5,6 +5,8 @@ pub use behavior::*;
 pub use ids::*;
 pub use operation::*;
 
+pub use named_id::{Rename, RenameAll, RenameNone};
+
 pub mod util;
 
 use derive_more::{Add, Deref, Display, From};

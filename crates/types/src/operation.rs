@@ -1,14 +1,15 @@
-use crate::{GroupId, LogId, NodeId, OpId, Seq, Size, TopicId};
+use crate::{GroupId, NodeId, OpId, Seq, Size, TopicId};
 use derive_more::From;
+use named_id::RenameAll;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, RenameAll)]
 pub enum Body {
     GroupMessage { group_id: GroupId },
     DirectMessage { recipient: NodeId },
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, RenameAll)]
 pub struct Header {
     pub author: NodeId,
     pub payload_size: Size,
@@ -17,14 +18,14 @@ pub struct Header {
     // pub log_id: LogId,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, RenameAll)]
 pub struct Operation {
     pub id: OpId,
     pub header: Header,
     pub body: Body,
 }
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, From)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, From, RenameAll)]
 pub struct EncryptedOp(Operation);
 
 impl std::fmt::Debug for EncryptedOp {

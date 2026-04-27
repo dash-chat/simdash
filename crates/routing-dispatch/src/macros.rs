@@ -80,7 +80,7 @@ macro_rules! routing_dispatch {
 
 
         /// An enum that unifies all possible routing wire data types.
-        #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+        #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, named_id::RenameAll)]
         pub enum AnyRoutingData {
             $(
                 #[doc = concat!("The wire data type for the `", stringify!($Variant), "` protocol")]
@@ -89,7 +89,7 @@ macro_rules! routing_dispatch {
         }
 
         /// An enum that unifies all possible routing action types.
-        #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+        #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, named_id::RenameAll)]
         pub enum AnyRoutingAction {
             $(
                 #[doc = concat!("The action type for the `", stringify!($Variant), "` protocol")]
@@ -98,7 +98,7 @@ macro_rules! routing_dispatch {
         }
 
         /// An enum that unifies all possible routing effect types.
-        #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+        #[derive(Debug, Clone, PartialEq, Eq, Hash, named_id::RenameAll)]
         pub enum AnyRoutingFx {
             $(
                 #[doc = concat!("The effect type for the `", stringify!($Variant), "` protocol")]

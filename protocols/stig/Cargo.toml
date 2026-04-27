@@ -7,6 +7,7 @@ edition = "2024"
 anyhow = { workspace = true }
 derive_more = { workspace = true }
 maplit = { workspace = true }
+named-id = { workspace = true }
 polestar = { workspace = true }
 pretty_assertions = { workspace = true }
 serde = { workspace = true }

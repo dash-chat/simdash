@@ -1,3 +1,5 @@
+use named_id::RenameAll;
+
 use super::*;
 
 pub type GroupId = u64;
@@ -75,6 +77,7 @@ pub struct Size(u64);
     Deserialize,
     From,
     Deref,
+    RenameAll,
 )]
 #[display("T{}", _0)]
 pub struct TopicId(u32);
@@ -93,6 +96,7 @@ pub struct TopicId(u32);
     Deserialize,
     From,
     Deref,
+    RenameAll,
 )]
 #[display("L()")]
 pub struct LogId(u32);
@@ -113,6 +117,7 @@ pub struct LogId(u32);
     Deref,
     Add,
     Display,
+    RenameAll,
 )]
 pub struct LogHeight(u32);
 

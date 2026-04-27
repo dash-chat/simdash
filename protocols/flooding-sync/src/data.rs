@@ -2,11 +2,12 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use derive_more::{Debug, Deref, From};
 
+use named_id::RenameAll;
 use serde::{Deserialize, Serialize};
 use simdash_types::{EncryptedOp, LogHeight, LogId, Seq, TopicId};
 
 /// The data sent over the wire between nodes using the flooding-sync protocol.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, RenameAll)]
 pub enum WireData {
     /// An announcement of the state vector
     Announce(
@@ -21,7 +22,7 @@ pub enum WireData {
 }
 
 /// Metadata needed for flooding.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize, RenameAll)]
 pub struct Metadata {
     pub topic_id: TopicId,
     pub log_id: LogId,
@@ -40,7 +41,7 @@ impl Metadata {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize, RenameAll)]
 #[debug("Op({:?})", metadata)]
 pub struct Op {
     pub metadata: Metadata,
@@ -57,7 +58,18 @@ impl Op {
 }
 
 #[derive(
-    Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize, From, Deref,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    Ord,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+    From,
+    Deref,
+    RenameAll,
 )]
 #[debug("StateVector({:?})", _0.iter().map(|(log_id, log_height)| format!("{}:{}", log_id, log_height)).collect::<Vec<String>>().join(", "))]
 pub struct StateVector(BTreeMap<LogId, LogHeight>);

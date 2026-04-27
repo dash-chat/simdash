@@ -1,8 +1,9 @@
+use named_id::RenameAll;
 use simdash_model_node::NodeAction;
 use simdash_types::NodeId;
 
 /// Actions for the network model.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, RenameAll)]
 pub enum NetworkAction {
     /// Tick every node
     Tick,

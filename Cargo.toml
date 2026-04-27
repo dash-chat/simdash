@@ -11,6 +11,7 @@ anyhow = "1"
 derive_more = { version = "2", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
 maplit = { version = "1" }
+named-id = { git = "https://github.com/maackle/named-id.git" }
 pretty_assertions = { version = "1" }
 petgraph = { version = "0.8", features = ["serde-1"] }
 postcard = { version = "1", features = ["use-std"] }

@@ -13,6 +13,7 @@ simdash-protocol-stig = { workspace = true }
 
 anyhow = { workspace = true }
 maplit = { workspace = true }
+named-id = { workspace = true }
 polestar = { workspace = true }
 serde = { workspace = true }
 

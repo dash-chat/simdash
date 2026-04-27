@@ -4,6 +4,7 @@ use std::{
 };
 
 use derive_more::{Deref, From};
+use named_id::RenameAll;
 use serde::{Deserialize, Serialize};
 
 use simdash_routing_common::{ProtocolNetworkAction, RoutingAction};
@@ -14,7 +15,19 @@ use crate::{
 };
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, From, Deref,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    Serialize,
+    Deserialize,
+    From,
+    Deref,
+    RenameAll,
 )]
 pub struct SourceId(u32);
 

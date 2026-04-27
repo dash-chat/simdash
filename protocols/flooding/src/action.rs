@@ -1,7 +1,9 @@
+use named_id::RenameAll;
+
 use crate::FloodingWireData;
 
 /// Actions specific to the Flooding protocol.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, RenameAll)]
 pub enum FloodingAction {
     /// An action to begin tracking an operation in the flooding state
     StoreOp(FloodingWireData),
