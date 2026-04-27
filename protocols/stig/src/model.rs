@@ -79,7 +79,7 @@ impl polestar::Machine for Model {
         let (state, fx) = match action {
             RoutingAction::Network(ProtocolNetworkAction::Receive { data }) => match data {
                 WireData::Announce(mut a) => {
-                    state.routes.record(a.clone());
+                    state.routes.record_peer_announcement(a.clone());
                     a.hops += 1.into();
                     a.relay = self.mesh_id;
 
@@ -91,7 +91,7 @@ impl polestar::Machine for Model {
                         if !ops.is_empty() {
                             let addressees = state
                                 .routes
-                                .targets(self.mesh_id, ops.iter().map(|op| &op.metadata));
+                                .targets(self, ops.iter().map(|op| &op.metadata));
                             if !addressees.is_empty() {
                                 fx.push(ProtocolFx::broadcast(WireData::Payload(Payload {
                                     addressees,
@@ -110,7 +110,7 @@ impl polestar::Machine for Model {
                     if payload.addressees.contains(&self.mesh_id) {
                         let addressees = state
                             .routes
-                            .targets(self.mesh_id, payload.ops.iter().map(|op| &op.metadata));
+                            .targets(self, payload.ops.iter().map(|op| &op.metadata));
                         if !addressees.is_empty() {
                             fx.push(ProtocolFx::broadcast(WireData::Payload(Payload {
                                 addressees,
@@ -129,8 +129,7 @@ impl polestar::Machine for Model {
             },
             RoutingAction::Protocol(Action::TriggerSync) => {
                 // let topics = state.op_buffer.topics().collect::<BTreeMap<_, _>>();
-                let relay_announcements =
-                    state.routes.announcements_to_broadcast(self.sync_interval);
+                let relay_announcements = state.routes.announcements_to_broadcast(self);
 
                 let fx = relay_announcements
                     .map(|a| ProtocolFx::broadcast(WireData::Announce(a)))
@@ -159,13 +158,42 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_model() {
+    fn test_subscribe() {
+        let model = Model::new(3.into());
+        let mut state = State::default();
+        let topic = 0.into();
+        state.subscribe(&model, topic);
+        assert_eq!(
+            state
+                .routes
+                .facts
+                .get(&topic)
+                .unwrap()
+                .get(&model.mesh_id)
+                .unwrap()
+                .state_vector,
+            StateVector::new(None)
+        );
+
+        let trigger = ProtocolAction::protocol(Action::TriggerSync);
+        let broadcast = ProtocolFx::broadcast(WireData::Announce(Announce::new(
+            model.mesh_id,
+            BTreeMap::from([(topic, StateVector::new([]))]),
+        )));
+
+        // let (state, _) = model.transition(state, ProtocolAction::tick()).unwrap();
+        let (_, fx) = model.transition(state, trigger.clone()).unwrap();
+        assert_eq!(fx, vec![broadcast]);
+    }
+
+    #[test]
+    fn test_sync_interval() {
         let model = Model::new(3.into());
         let mut state = State::default();
         let topic = 0.into();
         let log = 0.into();
         let seq = 0.into();
-        state.store_op(model.mesh_id, make_stig_op(topic, log, seq));
+        state.store_op(&model, make_stig_op(topic, log, seq));
 
         let trigger = ProtocolAction::protocol(Action::TriggerSync);
         let broadcast = ProtocolFx::broadcast(WireData::Announce(Announce::new(

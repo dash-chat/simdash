@@ -15,7 +15,7 @@ use crate::{NetworkAction, NetworkFx, NetworkState};
 /// - the state of each Node
 /// - the network topology (edges between nodes)
 pub struct NetworkModel {
-    nodes: HashMap<NodeId, NodeModel>,
+    pub nodes: HashMap<NodeId, NodeModel>,
     /// The network topology
     pub topology: ChatTopology,
 }

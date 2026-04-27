@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use serde::{Deserialize, Serialize};
 use simdash_types::*;
 
-use crate::{Announce, Metadata, SourceId, StateVector, StoredOp};
+use crate::{Announce, Metadata, Model, SourceId, StateVector, StoredOp};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct PeerLogFact {
@@ -14,7 +14,7 @@ pub struct PeerLogFact {
     pub relay: SourceId,
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RoutingTable {
     pub facts: HashMap<TopicId, HashMap<SourceId, PeerLogFact>>,
 }
@@ -22,25 +22,28 @@ pub struct RoutingTable {
 impl RoutingTable {
     /// Record an op authored by this node.
     /// This causes the Announce for this topic to be broadcast at the next tick.
-    pub fn record_stored_op(&mut self, me: SourceId, op: &StoredOp) {
-        let fact = PeerLogFact {
-            state_vector: StateVector::new([(
-                op.metadata.log_id,
-                LogHeight::from_seq(op.metadata.seq),
-            )]),
-            age: 0.into(),
-            since_last_broadcast: None,
-            hops: 0.into(),
-            relay: me,
-        };
+    pub fn record_local_topic_update(
+        &mut self,
+        model: &Model,
+        topic_id: TopicId,
+        item: Option<(LogId, LogHeight)>,
+    ) {
         self.facts
-            .entry(op.metadata.topic_id)
+            .entry(topic_id)
             .or_default()
-            .entry(me)
-            .or_insert(fact);
+            .entry(model.mesh_id)
+            .and_modify(|f| f.state_vector = f.state_vector.merge(&StateVector::new(item)))
+            .or_insert(PeerLogFact {
+                state_vector: StateVector::new(item),
+                age: 0.into(),
+                since_last_broadcast: None,
+                hops: 0.into(),
+                relay: model.mesh_id,
+            });
     }
 
-    pub fn record(&mut self, announce: Announce) {
+    pub fn record_peer_announcement(&mut self, mut announce: Announce) {
+        announce.hops += 1.into();
         for (topic_id, state_vector) in announce.topics {
             let entry = self
                 .facts
@@ -75,7 +78,7 @@ impl RoutingTable {
     // OPTIMIZE: send different targets different payloads based on their state vectors
     pub fn targets<'a>(
         &self,
-        me: SourceId,
+        model: &Model,
         metadata: impl IntoIterator<Item = &'a Metadata>,
     ) -> BTreeSet<SourceId> {
         let mut result = BTreeSet::new();
@@ -94,7 +97,9 @@ impl RoutingTable {
                 result.extend(
                     topic_peers
                         .iter()
-                        .filter(|(author, fact)| **author != me && !has_it(&fact.state_vector))
+                        .filter(|(author, fact)| {
+                            **author != model.mesh_id && !has_it(&fact.state_vector)
+                        })
                         .map(|(author, _)| *author),
                 );
             }
@@ -102,10 +107,7 @@ impl RoutingTable {
         result
     }
 
-    pub fn announcements_to_broadcast(
-        &mut self,
-        sync_interval: Ticks,
-    ) -> impl Iterator<Item = Announce> {
+    pub fn announcements_to_broadcast(&mut self, model: &Model) -> impl Iterator<Item = Announce> {
         let mut by_source: HashMap<SourceId, (Hops, SourceId, BTreeMap<TopicId, StateVector>)> =
             HashMap::new();
         for (topic_id, peers) in &mut self.facts {
@@ -113,7 +115,7 @@ impl RoutingTable {
                 // TODO: check that hops increases
                 if fact
                     .since_last_broadcast
-                    .map(|s| s >= sync_interval)
+                    .map(|s| s >= model.sync_interval)
                     .unwrap_or(true)
                 {
                     fact.since_last_broadcast = Some(0.into());
@@ -126,9 +128,9 @@ impl RoutingTable {
         }
         by_source
             .into_iter()
-            .map(|(author, (hops, relay, topics))| Announce {
+            .map(move |(author, (hops, _, topics))| Announce {
                 author,
-                relay,
+                relay: model.mesh_id,
                 hops,
                 topics,
             })
@@ -195,11 +197,11 @@ mod tests {
         a2.hops = 2.into();
         a2.relay = relay2;
 
-        table.record(a1.clone());
+        table.record_peer_announcement(a1.clone());
         // relay1 stored (only route)
         assert_eq!(relay_of(&table, 0, alice), relay1);
 
-        table.record(a2.clone());
+        table.record_peer_announcement(a2.clone());
         // relay stays relay1 (lower hops); state vector is merged: log1=max(5,3)=5, log2=max(3,7)=7
         assert_eq!(relay_of(&table, 0, alice), relay1);
         let sv = &table.facts[&0.into()][&alice].state_vector;
@@ -208,9 +210,9 @@ mod tests {
 
         // reverse: higher-hop route arrives first, lower-hop route updates relay
         let mut table2 = RoutingTable::default();
-        table2.record(a2);
+        table2.record_peer_announcement(a2);
         assert_eq!(relay_of(&table2, 0, alice), relay2);
-        table2.record(a1);
+        table2.record_peer_announcement(a1);
         // relay updates to relay1 (fewer hops); state vector still merged
         assert_eq!(relay_of(&table2, 0, alice), relay1);
         let sv2 = &table2.facts[&0.into()][&alice].state_vector;
@@ -224,36 +226,37 @@ mod tests {
         let bobbi = SourceId::new();
         let sync_interval: Ticks = 3.into();
 
+        let model = Model::new(sync_interval);
         let mut table = RoutingTable::default();
 
         // Record alice at t=0, bobbi at t=1
-        table.record(Announce::new(alice, statevec(0, [(1, 5)])));
+        table.record_peer_announcement(Announce::new(alice, statevec(0, [(1, 5)])));
         table.tick();
-        table.record(Announce::new(bobbi, statevec(0, [(2, 3)])));
+        table.record_peer_announcement(Announce::new(bobbi, statevec(0, [(2, 3)])));
 
         // Both should appear on the first call (since_last_broadcast is None for both)
-        let announced: Vec<_> = table.announcements_to_broadcast(sync_interval).collect();
+        let announced: Vec<_> = table.announcements_to_broadcast(&model).collect();
         let authors: BTreeSet<SourceId> = announced.iter().map(|a| a.author).collect();
         assert_eq!(authors, BTreeSet::from([alice, bobbi]));
 
         // Immediately after, neither should appear (since_last_broadcast just reset to 0)
-        let announced: Vec<_> = table.announcements_to_broadcast(sync_interval).collect();
+        let announced: Vec<_> = table.announcements_to_broadcast(&model).collect();
         assert!(announced.is_empty());
 
         // Tick twice more (since_last_broadcast reaches 2, still < 3)
         table.tick();
         table.tick();
-        let announced: Vec<_> = table.announcements_to_broadcast(sync_interval).collect();
+        let announced: Vec<_> = table.announcements_to_broadcast(&model).collect();
         assert!(announced.is_empty());
 
         // One more tick brings since_last_broadcast to 3 == sync_interval; both should appear again
         table.tick();
-        let announced: Vec<_> = table.announcements_to_broadcast(sync_interval).collect();
+        let announced: Vec<_> = table.announcements_to_broadcast(&model).collect();
         let authors: BTreeSet<SourceId> = announced.iter().map(|a| a.author).collect();
         assert_eq!(authors, BTreeSet::from([alice, bobbi]));
 
         // And again immediately after: nothing
-        let announced: Vec<_> = table.announcements_to_broadcast(sync_interval).collect();
+        let announced: Vec<_> = table.announcements_to_broadcast(&model).collect();
         assert!(announced.is_empty());
     }
 
@@ -264,40 +267,41 @@ mod tests {
         let alice = SourceId::new();
         let bobbi = SourceId::new();
         let chuck = SourceId::new();
-        let daisy = SourceId::new();
+
+        let model = Model::new(3.into());
 
         let a = Announce::new(alice, statevec(0, [(1, 3), (2, 3)]));
         let b = Announce::new(bobbi, statevec(0, [(1, 3), (2, 5)]));
         let c = Announce::new(chuck, statevec(0, [(1, 5), (2, 3)]));
 
         assert_eq!(
-            table.targets(daisy, &[meta(0, 1, 2), meta(0, 2, 4)]),
+            table.targets(&model, &[meta(0, 1, 2), meta(0, 2, 4)]),
             btreeset!()
         );
 
-        table.record(a);
+        table.record_peer_announcement(a);
 
         assert_eq!(
-            table.targets(daisy, &[meta(0, 1, 2), meta(0, 2, 4)]),
+            table.targets(&model, &[meta(0, 1, 2), meta(0, 2, 4)]),
             btreeset!()
         );
 
-        table.record(b);
+        table.record_peer_announcement(b);
 
-        assert_eq!(table.targets(daisy, &[meta(0, 1, 2)]), btreeset!());
+        assert_eq!(table.targets(&model, &[meta(0, 1, 2)]), btreeset!());
         assert_eq!(
-            table.targets(daisy, &[meta(0, 1, 2), meta(0, 2, 4)]),
+            table.targets(&model, &[meta(0, 1, 2), meta(0, 2, 4)]),
             btreeset!(alice)
         );
 
-        table.record(c);
+        table.record_peer_announcement(c);
 
         assert_eq!(
-            table.targets(daisy, &[meta(0, 1, 4)]),
+            table.targets(&model, &[meta(0, 1, 4)]),
             btreeset!(alice, bobbi)
         );
         assert_eq!(
-            table.targets(daisy, &[meta(0, 2, 4)]),
+            table.targets(&model, &[meta(0, 2, 4)]),
             btreeset!(alice, chuck)
         );
     }

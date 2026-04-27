@@ -7,10 +7,10 @@ use derive_more::{Deref, From};
 use serde::{Deserialize, Serialize};
 use simdash_types::*;
 
-use crate::{Announce, Op, SourceId, StateVector, state::routing_table::RoutingTable};
+use crate::{Announce, Model, Op, SourceId, StateVector, state::routing_table::RoutingTable};
 
 /// The Stig protocol's state simply tracks the number of ticks since the last time it was triggered.
-#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct State {
     /// The buffer of operations to sync
     pub op_buffer: OpBuffer,
@@ -19,9 +19,17 @@ pub struct State {
 }
 
 impl State {
-    pub fn store_op(&mut self, me: SourceId, op: Op) {
+    pub fn subscribe(&mut self, model: &Model, topic_id: TopicId) {
+        self.routes.record_local_topic_update(model, topic_id, None);
+    }
+
+    pub fn store_op(&mut self, model: &Model, op: Op) {
         let op = StoredOp::new(op);
-        self.routes.record_stored_op(me, &op);
+        self.routes.record_local_topic_update(
+            model,
+            op.metadata.topic_id,
+            Some((op.metadata.log_id, LogHeight::from_seq(op.metadata.seq))),
+        );
         self.op_buffer.store_op(op);
     }
 

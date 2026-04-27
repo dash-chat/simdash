@@ -5,7 +5,7 @@ use simdash_model_node::BasicNodeBehavior;
 use simdash_protocol_stig::{Op, StateVector, util::make_stig_op};
 use simdash_routing_dispatch::{BasicStigBehavior, RoutingDispatchModel};
 use simdash_scenario::Scenario;
-use simdash_types::{LogId, Seq, TopicId};
+use simdash_types::{LogId, NodeId, Seq, Ticks, TopicId};
 
 use named_id::{Nameable, Rename};
 
@@ -18,23 +18,43 @@ use named_id::{Nameable, Rename};
 /// can be run and inspected as the protocol evolves.
 #[test]
 fn op_propagates_to_remote_subscriber() {
-    const N: u32 = 3;
+    const N: u32 = 4;
+    const SYNC_INTERVAL: Ticks = Ticks(10);
+
     // 0 → 1 → 2 → … → N-1
-    let (model, mut state) =
-        simdash_model_network::generate::linear_chain(N, RoutingDispatchModel::standard(3.into()));
+    let (model, mut state) = simdash_model_network::generate::linear_chain(
+        N,
+        RoutingDispatchModel::standard(SYNC_INTERVAL),
+    );
     let behavior = RoundRobinNodeScheduler::new(BasicNodeBehavior::new(BasicStigBehavior));
+
+    let stig_model = model.nodes.get(&0.into()).unwrap().routing.stig.clone();
 
     state.graph.nodes.keys().for_each(|node_id| {
         node_id.with_short();
     });
 
-    let op = make_stig_op(TopicId(0).with_short(), LogId(1).with_short(), Seq(0));
+    let topic = TopicId(0).with_short();
+
+    let alpha = NodeId(0).with_name("Α");
+    let omega = NodeId(N - 1).with_name("Ω");
+
+    let op = make_stig_op(topic, LogId(1).with_short(), Seq(0));
 
     // Node 0 "creates" an op for topic 0
     state
         .graph
-        .update_node(0.into(), |mut node| {
-            node.routing.stig.op_buffer.store_op(op.clone());
+        .update_node(alpha, |mut node| {
+            node.routing.stig.store_op(&stig_model, op.clone());
+            Ok((node, ()))
+        })
+        .unwrap();
+
+    // Node N-1 subscribes to topic 0
+    state
+        .graph
+        .update_node(omega, |mut node| {
+            node.routing.stig.subscribe(&stig_model, topic);
             Ok((node, ()))
         })
         .unwrap();

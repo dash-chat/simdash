@@ -19,7 +19,7 @@ pub type GroupId = u64;
     From,
     Deref,
 )]
-pub struct NodeId(u32);
+pub struct NodeId(pub u32);
 
 impl named_id::Nameable for NodeId {
     fn shortener(&self) -> Option<named_id::Shortener> {
@@ -202,7 +202,7 @@ pub struct Seq(pub u32);
     derive_more::SubAssign,
     RenameNone,
 )]
-pub struct Ticks(u32);
+pub struct Ticks(pub u32);
 
 /// A number of hops that a message has traveled.
 #[derive(
