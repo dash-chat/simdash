@@ -18,7 +18,7 @@ use named_id::{Nameable, Rename};
 /// propagate ops to non-originating subscribers.  The test is here so the scenario
 /// can be run and inspected as the protocol evolves.
 #[test]
-fn op_propagates_to_remote_subscriber() {
+fn linear_chain_scenario() {
     const N: u32 = 4;
     const SYNC_INTERVAL: Ticks = Ticks(10);
     const STEPS: usize = 10;

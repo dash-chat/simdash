@@ -3,6 +3,7 @@ use simdash_types::Behavior;
 use crate::{Action, Model, ProtocolAction, ProtocolFx, State};
 
 /// A behavior that never triggers any actions
+#[derive(Default)]
 pub struct StandardBehavior;
 
 impl Behavior for StandardBehavior {

@@ -221,7 +221,7 @@ pub struct Ticks(pub u32);
     derive_more::AddAssign,
     Display,
 )]
-pub struct Hops(u32);
+pub struct Hops(pub u32);
 
 impl From<NodeId> for LogId {
     fn from(id: NodeId) -> LogId {

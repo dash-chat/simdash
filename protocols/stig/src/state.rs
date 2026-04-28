@@ -73,7 +73,7 @@ pub struct OpBuffer {
 }
 
 impl OpBuffer {
-    pub fn store_op(&mut self, op: impl Into<StoredOp>) {
+    pub(super) fn store_op(&mut self, op: impl Into<StoredOp>) {
         let op = op.into();
         let log = self
             .ops

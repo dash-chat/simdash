@@ -19,7 +19,7 @@ pub fn linear_chain(n: u32, sync_interval: Ticks) -> (NetworkModel, NetworkState
         graph.add_edge(NodeId::from(i + 1), NodeId::from(i), Default::default());
     }
 
-    let nodes: HashMap<NodeId, NodeModel> = (0..n)
+    let models: HashMap<NodeId, NodeModel> = (0..n)
         .map(|i| {
             (
                 NodeId::from(i),
@@ -31,7 +31,7 @@ pub fn linear_chain(n: u32, sync_interval: Ticks) -> (NetworkModel, NetworkState
         })
         .collect();
 
-    let model = NetworkModel::new(nodes, ChatTopology::empty());
+    let model = NetworkModel::new(models, ChatTopology::empty());
     let state = NetworkState {
         graph,
         topology: Default::default(),

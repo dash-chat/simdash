@@ -3,23 +3,25 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use serde::{Deserialize, Serialize};
 use simdash_types::*;
 
-use crate::{Announce, Metadata, Model, SourceId, StateVector};
+use crate::{Announce, HopCount, HopTracker, HopsImpl, Metadata, Model, SourceId, StateVector};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
-pub struct PeerLogFact {
+#[serde(bound(deserialize = "H: HopTracker"))]
+pub struct PeerLogFact<H: HopTracker> {
     pub state_vector: StateVector,
     pub age: Ticks,
     pub since_last_broadcast: Option<Ticks>,
-    pub hops: Hops,
+    pub hops: H,
     pub relay: SourceId,
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
-pub struct RoutingTable {
-    pub facts: HashMap<TopicId, HashMap<SourceId, PeerLogFact>>,
+#[serde(bound(deserialize = "H: HopTracker"))]
+pub struct RoutingTable<H: HopTracker = HopsImpl> {
+    pub facts: HashMap<TopicId, HashMap<SourceId, PeerLogFact<H>>>,
 }
 
-impl RoutingTable {
+impl<H: HopTracker> RoutingTable<H> {
     /// Record an op authored by this node.
     /// This causes the Announce for this topic to be broadcast at the next tick.
     pub fn record_local_topic_update(
@@ -37,13 +39,13 @@ impl RoutingTable {
                 state_vector: StateVector::new(item),
                 age: 0.into(),
                 since_last_broadcast: None,
-                hops: 0.into(),
+                hops: H::default(),
                 relay: model.mesh_id,
             });
     }
 
-    pub fn record_peer_announcement(&mut self, mut announce: Announce) {
-        announce.hops += 1.into();
+    pub fn record_peer_announcement(&mut self, model: &Model, mut announce: Announce<H>) {
+        announce.hops = announce.hops.relay(model.mesh_id);
         for (topic_id, state_vector) in announce.topics {
             let entry = self
                 .facts
@@ -54,7 +56,7 @@ impl RoutingTable {
                     state_vector: StateVector::new(std::iter::empty()),
                     age: 0.into(),
                     since_last_broadcast: None,
-                    hops: announce.hops,
+                    hops: announce.hops.clone(),
                     relay: announce.relay,
                 });
 
@@ -66,8 +68,8 @@ impl RoutingTable {
             entry.age = 0.into();
 
             // Only update the relay when this route has fewer hops.
-            if announce.hops < entry.hops {
-                entry.hops = announce.hops;
+            if announce.hops.hops() < entry.hops.hops() {
+                entry.hops = announce.hops.clone();
                 entry.relay = announce.relay;
             }
         }
@@ -107,8 +109,11 @@ impl RoutingTable {
         result
     }
 
-    pub fn announcements_to_broadcast(&mut self, model: &Model) -> impl Iterator<Item = Announce> {
-        let mut by_source: HashMap<SourceId, (Hops, SourceId, BTreeMap<TopicId, StateVector>)> =
+    pub fn announcements_to_broadcast(
+        &mut self,
+        model: &Model,
+    ) -> impl Iterator<Item = Announce<H>> {
+        let mut by_source: HashMap<SourceId, (H, SourceId, BTreeMap<TopicId, StateVector>)> =
             HashMap::new();
         for (topic_id, peers) in &mut self.facts {
             for (src, fact) in peers {
@@ -121,7 +126,7 @@ impl RoutingTable {
                     fact.since_last_broadcast = Some(0.into());
                     let entry = by_source
                         .entry(*src)
-                        .or_insert_with(|| (fact.hops, fact.relay, BTreeMap::new()));
+                        .or_insert_with(|| (fact.hops.clone(), fact.relay, BTreeMap::new()));
                     entry.2.insert(*topic_id, fact.state_vector.clone());
                 }
             }
@@ -178,7 +183,7 @@ mod tests {
         }
     }
 
-    fn relay_of(table: &RoutingTable, topic: u32, src: SourceId) -> SourceId {
+    fn relay_of<H: HopTracker>(table: &RoutingTable<H>, topic: u32, src: SourceId) -> SourceId {
         table.facts[&topic.into()][&src].relay
     }
 
@@ -188,20 +193,22 @@ mod tests {
         let relay1 = SourceId(NodeId(1).into());
         let relay2 = SourceId(NodeId(2).into());
 
+        let model = Model::new(alice, 0.into());
+
         // state vectors are always unioned regardless of hop count
-        let mut table = RoutingTable::default();
+        let mut table = RoutingTable::<HopCount>::default();
         let mut a1 = Announce::new(alice, statevec(0, [(1, 5), (2, 3)]));
-        a1.hops = 1.into();
+        a1.hops = Hops(1).into();
         a1.relay = relay1;
         let mut a2 = Announce::new(alice, statevec(0, [(1, 3), (2, 7)]));
-        a2.hops = 2.into();
+        a2.hops = Hops(2).into();
         a2.relay = relay2;
 
-        table.record_peer_announcement(a1.clone());
+        table.record_peer_announcement(&model, a1.clone());
         // relay1 stored (only route)
         assert_eq!(relay_of(&table, 0, alice), relay1);
 
-        table.record_peer_announcement(a2.clone());
+        table.record_peer_announcement(&model, a2.clone());
         // relay stays relay1 (lower hops); state vector is merged: log1=max(5,3)=5, log2=max(3,7)=7
         assert_eq!(relay_of(&table, 0, alice), relay1);
         let sv = &table.facts[&0.into()][&alice].state_vector;
@@ -210,9 +217,9 @@ mod tests {
 
         // reverse: higher-hop route arrives first, lower-hop route updates relay
         let mut table2 = RoutingTable::default();
-        table2.record_peer_announcement(a2);
+        table2.record_peer_announcement(&model, a2);
         assert_eq!(relay_of(&table2, 0, alice), relay2);
-        table2.record_peer_announcement(a1);
+        table2.record_peer_announcement(&model, a1);
         // relay updates to relay1 (fewer hops); state vector still merged
         assert_eq!(relay_of(&table2, 0, alice), relay1);
         let sv2 = &table2.facts[&0.into()][&alice].state_vector;
@@ -228,12 +235,12 @@ mod tests {
         let sync_interval: Ticks = 3.into();
 
         let model = Model::new(me, sync_interval);
-        let mut table = RoutingTable::default();
+        let mut table = RoutingTable::<HopCount>::default();
 
         // Record alice at t=0, bobbi at t=1
-        table.record_peer_announcement(Announce::new(alice, statevec(0, [(1, 5)])));
+        table.record_peer_announcement(&model, Announce::new(alice, statevec(0, [(1, 5)])));
         table.tick();
-        table.record_peer_announcement(Announce::new(bobbi, statevec(0, [(2, 3)])));
+        table.record_peer_announcement(&model, Announce::new(bobbi, statevec(0, [(2, 3)])));
 
         // Both should appear on the first call (since_last_broadcast is None for both)
         let announced: Vec<_> = table.announcements_to_broadcast(&model).collect();
@@ -263,7 +270,7 @@ mod tests {
 
     #[test]
     fn test_targets() {
-        let mut table = RoutingTable::default();
+        let mut table = RoutingTable::<HopCount>::default();
 
         let me = SourceId::from(0);
         let alice = SourceId::from(1);
@@ -281,14 +288,14 @@ mod tests {
             btreeset!()
         );
 
-        table.record_peer_announcement(a);
+        table.record_peer_announcement(&model, a);
 
         assert_eq!(
             table.targets(&model, &[meta(0, 1, 2), meta(0, 2, 4)]),
             btreeset!()
         );
 
-        table.record_peer_announcement(b);
+        table.record_peer_announcement(&model, b);
 
         assert_eq!(table.targets(&model, &[meta(0, 1, 2)]), btreeset!());
         assert_eq!(
@@ -296,7 +303,7 @@ mod tests {
             btreeset!(alice)
         );
 
-        table.record_peer_announcement(c);
+        table.record_peer_announcement(&model, c);
 
         assert_eq!(
             table.targets(&model, &[meta(0, 1, 4)]),

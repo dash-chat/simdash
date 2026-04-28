@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use derive_more::{Deref, Display, From};
 use named_id::RenameAll;
 use serde::{Deserialize, Serialize};
@@ -5,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use simdash_routing_common::{ProtocolNetworkAction, RoutingAction};
 use simdash_types::{NodeId, Ticks};
 
+use crate::data::HopTracker;
 use crate::{Payload, ProtocolAction, ProtocolFx, WireData, action::Action, state::State};
 
 /// An ephemeral identifier for a node in the mesh.
@@ -70,8 +73,8 @@ impl polestar::Machine for Model {
         let (state, fx) = match action {
             RoutingAction::Network(ProtocolNetworkAction::Receive { data }) => match data {
                 WireData::Announce(mut a) => {
-                    state.routes.record_peer_announcement(a.clone());
-                    a.hops += 1.into();
+                    state.routes.record_peer_announcement(self, a.clone());
+                    a.hops = a.hops.relay(self.mesh_id);
                     a.relay = self.mesh_id;
 
                     let mut fx = vec![];

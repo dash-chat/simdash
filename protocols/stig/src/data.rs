@@ -1,21 +1,25 @@
+mod hops;
+pub use hops::{HopCount, HopTracker, Route};
+
 use std::collections::{BTreeMap, BTreeSet};
 
 use derive_more::{Debug, Deref, Display, From};
 
 use named_id::{Nameable, Rename, RenameAll};
 use serde::{Deserialize, Serialize};
-use simdash_types::{EncryptedOp, Hops, LogHeight, LogId, Seq, TopicId};
+use simdash_types::{EncryptedOp, LogHeight, LogId, Seq, TopicId};
 
-use crate::SourceId;
+use crate::{HopsImpl, SourceId};
 
 /// The data sent over the wire between nodes using the flooding-sync protocol.
 #[derive(
     Debug, Display, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, RenameAll,
 )]
-pub enum WireData {
+#[serde(bound(deserialize = "H: HopTracker"))]
+pub enum WireData<H: HopTracker = HopsImpl> {
     /// An announcement of a state vector for a topic
     #[debug("{:?}", _0)]
-    Announce(Announce),
+    Announce(Announce<H>),
 
     /// A list of operations in response to an announcement
     Payload(Payload),
@@ -32,7 +36,8 @@ pub enum WireData {
     hops=hops,
 )]
 #[debug("{self}")]
-pub struct Announce {
+#[serde(bound(deserialize = "H: HopTracker"))]
+pub struct Announce<H: HopTracker = HopsImpl> {
     /// The mesh ID of the author of the announcement (immutable)
     pub author: SourceId,
 
@@ -40,7 +45,7 @@ pub struct Announce {
     pub relay: SourceId,
 
     /// The number of hops that the announcement has traveled
-    pub hops: Hops,
+    pub hops: H,
 
     /// The state vectors
     pub topics: BTreeMap<TopicId, StateVector>,
@@ -55,12 +60,12 @@ pub struct Payload {
     pub addressees: BTreeSet<SourceId>,
 }
 
-impl Announce {
+impl<H: HopTracker> Announce<H> {
     pub fn new(author: SourceId, topics: BTreeMap<TopicId, StateVector>) -> Self {
         Self {
             author,
             relay: author,
-            hops: 0.into(),
+            hops: H::default(),
             topics,
         }
     }

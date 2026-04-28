@@ -1,3 +1,4 @@
+use simdash_protocol_stig::HopTracker;
 use simdash_types::Behavior;
 
 use crate::*;
@@ -66,7 +67,7 @@ impl Behavior for BasicStigBehavior {
         &mut self,
         state: &RoutingDispatchState,
     ) -> anyhow::Result<Vec<RoutingDispatchAction>> {
-        let mut b = crate::stig::StandardBehavior;
+        let mut b = crate::stig::StandardBehavior::default();
         let actions = b
             .next_tick(&state.stig)?
             .into_iter()

@@ -19,7 +19,10 @@ pub use state::*;
 
 use simdash_routing_common::{RoutingAction, RoutingFx};
 
+/// Change to Route to let nodes track full routes
+pub type HopsImpl = Route;
+
 /// The action type for the Stig protocol (including network-level actions)
-pub type ProtocolAction = RoutingAction<Action, WireData>;
+pub type ProtocolAction = RoutingAction<Action, WireData<HopsImpl>>;
 /// The effect type for the Stig protocol (including network- and node-level effects)
-pub type ProtocolFx = RoutingFx<Fx, WireData>;
+pub type ProtocolFx = RoutingFx<Fx, WireData<HopsImpl>>;

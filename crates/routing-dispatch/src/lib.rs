@@ -20,6 +20,7 @@ pub use behavior::*;
 
 use derive_more::Debug;
 use polestar::Machine;
+use simdash_protocol_stig::HopCount;
 use simdash_routing_common::{ProtocolNetworkAction, RoutingAction, RoutingFx, SendFx};
 use simdash_types::{GetRoutingOpInfo, NodeId, RoutingOpInfo, Ticks};
 
