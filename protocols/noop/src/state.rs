@@ -1,3 +1,4 @@
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
 use simdash_types::*;
 
@@ -34,5 +35,7 @@ impl NoopMetadata {
 }
 
 /// The data sent over the wire between nodes using the flooding protocol.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize, RenameAll)]
+#[derive(
+    Debug, Display, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize, RenameAll,
+)]
 pub struct NoopWireData;

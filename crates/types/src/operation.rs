@@ -1,6 +1,6 @@
 use crate::{GroupId, NodeId, OpId, Seq, Size, TopicId};
-use derive_more::From;
-use named_id::RenameAll;
+use derive_more::{Debug, Display, From};
+use named_id::{Rename, RenameAll};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, RenameAll)]
@@ -18,10 +18,14 @@ pub struct Header {
     // pub log_id: LogId,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, RenameAll)]
+#[derive(
+    Serialize, Deserialize, Debug, Display, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, RenameAll,
+)]
+#[display("Op({id})", id=id.renamed())]
 pub struct Operation {
     pub id: OpId,
     pub header: Header,
+    #[debug(skip)]
     pub body: Body,
 }
 

@@ -18,6 +18,7 @@ use crate::{NetworkAction, NetworkFx, NetworkModel, NetworkState};
 pub struct RoundRobinNodeScheduler<B: Behavior<Model = NodeModel>> {
     node_behavior: B,
     pending_actions: Vec<NetworkAction>,
+    sorted: bool,
 }
 
 impl<B: Behavior<Model = NodeModel>> RoundRobinNodeScheduler<B> {
@@ -26,7 +27,19 @@ impl<B: Behavior<Model = NodeModel>> RoundRobinNodeScheduler<B> {
         Self {
             node_behavior,
             pending_actions: Vec::new(),
+            sorted: false,
         }
+    }
+
+    /// Sort the actions by node ID.
+    ///
+    /// This is NOT wise to use in in general, only if:
+    /// - the Node actions are guaranteed to be independent of each other
+    /// - the non-Node actions come after the Node actions
+    #[cfg(any(test, feature = "testing"))]
+    pub fn sorted(mut self) -> Self {
+        self.sorted = true;
+        self
     }
 }
 
@@ -34,18 +47,38 @@ impl<B: Behavior<Model = NodeModel>> Behavior for RoundRobinNodeScheduler<B> {
     type Model = NetworkModel;
 
     fn next_tick(&mut self, state: &NetworkState) -> anyhow::Result<Vec<NetworkAction>> {
-        // TODO: add propagation delay here.
-        let consequences = self.pending_actions.drain(..);
+        use owo_colors::OwoColorize;
 
-        let generated = state.graph.nodes.iter().flat_map(|(node_id, node_state)| {
-            let actions = self
-                .node_behavior
-                .next_tick(node_state)
-                .expect("todo, what to do on errors?");
-            actions
-                .into_iter()
-                .map(|action| NetworkAction::Node(*node_id, action))
-        });
+        // TODO: add propagation delay here.
+        let mut consequences = self.pending_actions.drain(..).collect::<Vec<_>>();
+        if self.sorted {
+            consequences.sort_by_key(|action| match action {
+                NetworkAction::Node(node_id, _) => *node_id,
+                _ => NodeId::from(u32::MAX),
+            });
+        }
+
+        let mut generated = state
+            .graph
+            .nodes
+            .iter()
+            .flat_map(|(node_id, node_state)| {
+                let actions = self
+                    .node_behavior
+                    .next_tick(node_state)
+                    .expect("todo, what to do on errors?");
+                actions
+                    .into_iter()
+                    .map(|action| NetworkAction::Node(*node_id, action))
+            })
+            .collect::<Vec<_>>();
+
+        if self.sorted {
+            generated.sort_by_key(|action| match action {
+                NetworkAction::Node(node_id, _) => *node_id,
+                _ => NodeId::from(u32::MAX),
+            });
+        }
 
         // let consequences = consequences.collect::<Vec<_>>();
         // let generated = generated.collect::<Vec<_>>();
@@ -56,8 +89,12 @@ impl<B: Behavior<Model = NodeModel>> Behavior for RoundRobinNodeScheduler<B> {
         // }
         // println!("generated: {:?}", generated.len());
 
-        Ok(consequences
-            .into_iter()
+        Ok(std::iter::empty()
+            .chain([NetworkAction::trace("   vvvvvvvv CONSEQUENCES vvvvvvvv   ")])
+            .chain(consequences.into_iter())
+            .chain([NetworkAction::trace(
+                "   vvvvvvvvvv GENERATED vvvvvvvvvv   ",
+            )])
             .chain(generated.into_iter())
             .chain([NetworkAction::Tick, NetworkAction::EvolveTopology])
             .collect())

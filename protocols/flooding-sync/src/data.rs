@@ -1,13 +1,15 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use derive_more::{Debug, Deref, From};
+use derive_more::{Debug, Deref, Display, From};
 
 use named_id::RenameAll;
 use serde::{Deserialize, Serialize};
 use simdash_types::{EncryptedOp, LogHeight, LogId, Seq, TopicId};
 
 /// The data sent over the wire between nodes using the flooding-sync protocol.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, RenameAll)]
+#[derive(
+    Debug, Display, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, RenameAll,
+)]
 pub enum WireData {
     /// An announcement of the state vector
     Announce(
@@ -15,6 +17,7 @@ pub enum WireData {
         StateVector,
     ),
     /// A list of operations in response to an announcement
+    #[display("Ops({:?})", ops)]
     Ops {
         /// The operations
         ops: BTreeSet<Op>,
@@ -59,6 +62,7 @@ impl Op {
 
 #[derive(
     Debug,
+    Display,
     Clone,
     PartialEq,
     Eq,
@@ -71,5 +75,5 @@ impl Op {
     Deref,
     RenameAll,
 )]
-#[debug("StateVector({:?})", _0.iter().map(|(log_id, log_height)| format!("{}:{}", log_id, log_height)).collect::<Vec<String>>().join(", "))]
+#[display("StateVector({:?})", _0.iter().map(|(log_id, log_height)| format!("{}:{}", log_id, log_height)).collect::<Vec<String>>().join(", "))]
 pub struct StateVector(BTreeMap<LogId, LogHeight>);

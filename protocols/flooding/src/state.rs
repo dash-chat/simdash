@@ -1,5 +1,6 @@
 use std::collections::{BTreeSet, HashMap};
 
+use derive_more::Display;
 use named_id::RenameAll;
 use serde::{Deserialize, Serialize};
 use simdash_types::*;
@@ -51,7 +52,10 @@ impl ExtractMetadata<FloodingMetadata> for Operation {
 }
 
 /// The data sent over the wire between nodes using the flooding protocol.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize, RenameAll)]
+#[derive(
+    Debug, Display, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize, RenameAll,
+)]
+#[display("{self:?}")]
 pub struct FloodingWireData {
     /// The ID of the operation
     pub id: OpId,

@@ -18,6 +18,7 @@ mod macros;
 
 pub use behavior::*;
 
+use derive_more::{Debug, Display};
 use polestar::Machine;
 use simdash_routing_common::{ProtocolNetworkAction, RoutingAction, RoutingFx, SendFx};
 use simdash_types::{GetRoutingOpInfo, NodeId, RoutingOpInfo, Ticks};

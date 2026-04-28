@@ -5,6 +5,8 @@ edition = "2024"
 
 [dependencies]
 anyhow = { workspace = true }
+derive_more = { workspace = true }
+owo-colors = { workspace = true }
 polestar = { workspace = true }
 postcard = { workspace = true }
 rand = "0.9"
@@ -19,6 +21,11 @@ simdash-model-node = { workspace = true }
 simdash-routing-common = { workspace = true }
 simdash-routing-dispatch = { workspace = true }
 simdash-types = { workspace = true }
+
+[dev-dependencies]
+
+[features]
+testing = []
 
 [lints]
 workspace = true

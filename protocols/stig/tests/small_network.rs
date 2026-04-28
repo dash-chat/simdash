@@ -1,6 +1,7 @@
 //! Integration test of data propagation across a small contrived network
 
-use simdash_model_network::RoundRobinNodeScheduler;
+use rainbow_brackets::{RainbowBrackets, RainbowBracketsConfig};
+use simdash_model_network::{NetworkAction, RoundRobinNodeScheduler};
 use simdash_model_node::BasicNodeBehavior;
 use simdash_protocol_stig::{StateVector, util::make_stig_op};
 use simdash_routing_dispatch::BasicStigBehavior;
@@ -24,7 +25,7 @@ fn op_propagates_to_remote_subscriber() {
 
     // 0 → 1 → 2 → … → N-1
     let (model, mut state) = simdash_model_network::generate::linear_chain(N, SYNC_INTERVAL);
-    let behavior = RoundRobinNodeScheduler::new(BasicNodeBehavior::new(BasicStigBehavior));
+    let behavior = RoundRobinNodeScheduler::new(BasicNodeBehavior::new(BasicStigBehavior)).sorted();
 
     state.graph.nodes.keys().for_each(|node_id| {
         node_id.with_short();
@@ -65,11 +66,32 @@ fn op_propagates_to_remote_subscriber() {
             println!();
         })
         .on_action("actions", |action| {
-            println!("<< {:?}", action.clone().renamed());
+            let rb = RainbowBracketsConfig::default()
+                .colors(vec![
+                    rainbow_brackets::Color::Blue,
+                    // rainbow_brackets::Color::Cyan,
+                    rainbow_brackets::Color::White,
+                ])
+                .mode(rainbow_brackets::Mode::OuterText);
+            match action {
+                NetworkAction::Trace(message) => {
+                    println!("\n{:?}", message);
+                }
+                action => {
+                    println!("⟵ {}", action.renamed_ref().rainbow_brackets_with(&rb));
+                }
+            }
         })
         .on_fx("fx", |fx| {
+            let rb = RainbowBracketsConfig::default()
+                .colors(vec![
+                    rainbow_brackets::Color::Blue,
+                    // rainbow_brackets::Color::Cyan,
+                    rainbow_brackets::Color::White,
+                ])
+                .mode(rainbow_brackets::Mode::OuterText);
             if fx.len() > 0 {
-                println!("  >> {:?}", fx.clone().renamed());
+                println!("  ⤷ {}\n", fx.renamed_ref().rainbow_brackets_with(&rb));
             }
         });
 
@@ -80,19 +102,22 @@ fn op_propagates_to_remote_subscriber() {
     }
 
     // Check whether node 9 received the op
-    let node0 = scenario.state().graph.node_state(0.into()).unwrap();
-    let node9 = scenario.state().graph.node_state(9.into()).unwrap();
-    let sv0 = node0.routing.stig.op_buffer.state_vector(0.into());
-    let sv9 = node9.routing.stig.op_buffer.state_vector(0.into());
-    assert_eq!(sv0.len(), 1);
-    assert_eq!(sv0, sv9);
-    let received = node9
+    let node_alpha = scenario.state().graph.node_state(alpha).unwrap();
+    let node_omega = scenario.state().graph.node_state(omega).unwrap();
+    let sv_alpha = node_alpha.routing.stig.op_buffer.state_vector(topic);
+    let sv_omega = node_omega.routing.stig.op_buffer.state_vector(topic);
+    assert_eq!(sv_alpha.len(), 1);
+    assert_eq!(sv_alpha, sv_omega);
+    let received = node_omega
         .routing
         .stig
         .op_buffer
         .diff(0.into(), &StateVector::new([]));
 
     // TODO: uncomment once the protocol correctly propagates ops to remote subscribers
-    // assert!(!received.is_empty(), "node 9 should have received the op from node 0");
+    assert!(
+        !received.is_empty(),
+        "node N-1 should have received the op from node 0"
+    );
     let _ = received;
 }

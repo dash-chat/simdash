@@ -12,6 +12,7 @@ simdash-protocol-noop = { workspace = true }
 simdash-protocol-stig = { workspace = true }
 
 anyhow = { workspace = true }
+derive_more = { workspace = true }
 maplit = { workspace = true }
 named-id = { workspace = true }
 polestar = { workspace = true }

@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use derive_more::{Debug, Deref, From};
+use derive_more::{Debug, Deref, Display, From};
 
 use named_id::{Nameable, Rename, RenameAll};
 use serde::{Deserialize, Serialize};
@@ -9,7 +9,9 @@ use simdash_types::{EncryptedOp, Hops, LogHeight, LogId, Seq, TopicId};
 use crate::SourceId;
 
 /// The data sent over the wire between nodes using the flooding-sync protocol.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, RenameAll)]
+#[derive(
+    Debug, Display, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, RenameAll,
+)]
 pub enum WireData {
     /// An announcement of a state vector for a topic
     #[debug("{:?}", _0)]
@@ -19,14 +21,17 @@ pub enum WireData {
     Payload(Payload),
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, RenameAll)]
-#[debug(
+#[derive(
+    Debug, Display, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, RenameAll,
+)]
+#[display(
     "Announce({author} --{hops}-> {relay} : {topics})",
     author=author.with_short().renamed(),
     relay=relay.with_short().renamed(),
     topics=topics.clone().renamed(),
     hops=hops,
 )]
+#[debug("{self}")]
 pub struct Announce {
     /// The mesh ID of the author of the announcement (immutable)
     pub author: SourceId,
@@ -41,7 +46,10 @@ pub struct Announce {
     pub topics: BTreeMap<TopicId, StateVector>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, RenameAll)]
+#[derive(
+    Debug, Display, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, RenameAll,
+)]
+#[display("Payload({ops}, {addressees})", ops=ops.clone().renamed(), addressees=addressees.clone().renamed())]
 pub struct Payload {
     pub ops: BTreeSet<Op>,
     pub addressees: BTreeSet<SourceId>,
@@ -78,8 +86,9 @@ impl Metadata {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize, RenameAll)]
+#[derive(Debug, Display, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
 #[debug("Op({:?})", metadata)]
+#[display("{:?}", self)]
 pub struct Op {
     pub metadata: Metadata,
     pub encrypted: EncryptedOp,
@@ -91,6 +100,15 @@ impl Op {
             metadata: Metadata::from_op(op),
             encrypted: EncryptedOp::from(op.clone()),
         }
+    }
+}
+
+impl named_id::Nameable for Op {
+    fn shortener(&self) -> Option<named_id::Shortener> {
+        Some(named_id::Shortener {
+            length: 3,
+            prefix: "op",
+        })
     }
 }
 

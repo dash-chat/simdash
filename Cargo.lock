@@ -1046,6 +1046,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "384b8ab6d37215f3c5301a95a4accb5d64aa607f1fcb26a11b5303878451b4fe"
 
 [[package]]
+name = "owo-colors"
+version = "4.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d211803b9b6b570f68772237e415a029d5a50c65d382910b879fb19d3271f94d"
+
+[[package]]
 name = "parking_lot"
 version = "0.12.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1239,6 +1245,10 @@ name = "r-efi"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8dcc9c7d52a811697d2151c701e0d08956f92b0e24136cf4cf27b57a6a0d9bf"
+
+[[package]]
+name = "rainbow-brackets"
+version = "0.1.0"
 
 [[package]]
 name = "rand"
@@ -1549,6 +1559,7 @@ name = "simdash-model-chat"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "derive_more 2.1.1",
  "named-id",
  "polestar",
  "serde",
@@ -1562,8 +1573,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "dash-chat-top-gen",
+ "derive_more 2.1.1",
  "named-id",
  "net-topology",
+ "owo-colors",
  "polestar",
  "postcard",
  "rand",
@@ -1600,6 +1613,7 @@ name = "simdash-protocol-flooding"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "derive_more 2.1.1",
  "maplit",
  "named-id",
  "polestar",
@@ -1631,6 +1645,7 @@ name = "simdash-protocol-noop"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "derive_more 2.1.1",
  "maplit",
  "named-id",
  "polestar",
@@ -1650,8 +1665,10 @@ dependencies = [
  "derive_more 2.1.1",
  "maplit",
  "named-id",
+ "owo-colors",
  "polestar",
  "pretty_assertions",
+ "rainbow-brackets",
  "serde",
  "simdash-model-chat",
  "simdash-model-network",
@@ -1677,6 +1694,7 @@ name = "simdash-routing-dispatch"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "derive_more 2.1.1",
  "maplit",
  "named-id",
  "polestar",

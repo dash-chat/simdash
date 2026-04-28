@@ -109,6 +109,11 @@ impl polestar::Machine for NetworkModel {
                     }
                 }
             }
+
+            NetworkAction::Trace(message) => {
+                tracing::trace!("{:?}", message);
+                Ok((state, vec![]))
+            }
         }
     }
 }

@@ -100,7 +100,7 @@ impl RoutingTable {
                         .filter(|(author, fact)| {
                             **author != model.mesh_id && !has_it(&fact.state_vector)
                         })
-                        .map(|(author, _)| *author),
+                        .map(|(_, fact)| fact.relay),
                 );
             }
         }

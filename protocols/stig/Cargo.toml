@@ -10,6 +10,7 @@ maplit = { workspace = true }
 named-id = { workspace = true }
 polestar = { workspace = true }
 pretty_assertions = { workspace = true }
+rainbow-brackets = { workspace = true }
 serde = { workspace = true }
 simdash-types = { workspace = true }
 simdash-routing-common = { workspace = true }
@@ -17,8 +18,9 @@ tracing = { workspace = true }
 
 [dev-dependencies]
 dash-chat-top-gen = { workspace = true }
+owo-colors = { workspace = true }
 simdash-model-chat = { workspace = true }
-simdash-model-network = { workspace = true }
+simdash-model-network = { workspace = true, features = ["testing"] }
 simdash-model-node = { workspace = true }
 simdash-routing-dispatch = { workspace = true }
 simdash-scenario = { workspace = true }

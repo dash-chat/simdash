@@ -35,23 +35,6 @@ impl From<u32> for SourceId {
     }
 }
 
-// impl named_id::Nameable for SourceId {
-//     fn shortener(&self) -> Option<named_id::Shortener> {
-//         Some(named_id::Shortener {
-//             length: 3,
-//             prefix: "S",
-//         })
-//     }
-// }
-
-// static NEXT_ID: AtomicU32 = AtomicU32::new(0);
-
-// impl SourceId {
-//     pub fn new() -> Self {
-//         Self(NEXT_ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed))
-//     }
-// }
-
 /// The Stig model implements the flooding-sync protocol.
 #[derive(Debug)]
 pub struct Model {
