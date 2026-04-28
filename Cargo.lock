@@ -1761,6 +1761,7 @@ dependencies = [
  "petgraph 0.8.3",
  "polestar",
  "postcard",
+ "rainbow-brackets",
  "serde",
  "serde_json",
  "serde_yml",

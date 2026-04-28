@@ -47,8 +47,6 @@ impl<B: Behavior<Model = NodeModel>> Behavior for RoundRobinNodeScheduler<B> {
     type Model = NetworkModel;
 
     fn next_tick(&mut self, state: &NetworkState) -> anyhow::Result<Vec<NetworkAction>> {
-        use owo_colors::OwoColorize;
-
         // TODO: add propagation delay here.
         let mut consequences = self.pending_actions.drain(..).collect::<Vec<_>>();
         if self.sorted {

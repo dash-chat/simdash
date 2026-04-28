@@ -1,12 +1,12 @@
 use std::path::Path;
 
 use anyhow::{Context, Result};
-use dash_chat_top_gen::{ChatStateGenerator, ChatTopologyConfig};
 pub use dash_chat_top_gen::ChatTopology;
+use dash_chat_top_gen::{ChatStateGenerator, ChatTopologyConfig};
 use net_topology::{TopologyConfig, TopologyGenerator};
 use serde::Deserialize;
-pub use simdash_model_node::Graph;
 use simdash_model_network::{NetworkState, NetworkTopologyState};
+pub use simdash_model_node::Graph;
 
 /// Top-level config struct that mirrors the full config file format.
 #[derive(Debug, Deserialize)]
@@ -22,14 +22,13 @@ pub struct SimConfig {
 /// Parses a `SimConfig` from a file, selecting JSON or YAML based on the file extension.
 pub fn parse_sim_config(config_path: &Path) -> Result<SimConfig> {
     let contents = std::fs::read_to_string(config_path).context("Failed to read config file")?;
-    let ext = config_path.extension().and_then(|e| e.to_str()).unwrap_or("");
+    let ext = config_path
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("");
     match ext {
-        "yaml" | "yml" => {
-            serde_yml::from_str(&contents).context("Failed to parse config as YAML")
-        }
-        _ => {
-            serde_json::from_str(&contents).context("Failed to parse config as JSON")
-        }
+        "yaml" | "yml" => serde_yml::from_str(&contents).context("Failed to parse config as YAML"),
+        _ => serde_json::from_str(&contents).context("Failed to parse config as JSON"),
     }
 }
 
@@ -41,10 +40,16 @@ pub fn generate_topology(config_path: &Path) -> Result<(ChatTopology, u64)> {
 
 /// Generates the chat topology from an already-parsed config.
 pub fn generate_topology_from_config(config: SimConfig) -> (ChatTopology, u64) {
-    let SimConfig { seed, net_top, dash_chat_top } = config;
+    let SimConfig {
+        seed,
+        net_top,
+        dash_chat_top,
+    } = config;
 
     let topology = TopologyGenerator::new(net_top).generate(seed);
-    let chat_gen = ChatStateGenerator { config: dash_chat_top };
+    let chat_gen = ChatStateGenerator {
+        config: dash_chat_top,
+    };
     let dash_topology = chat_gen.generate(seed, topology);
 
     (dash_topology, seed)

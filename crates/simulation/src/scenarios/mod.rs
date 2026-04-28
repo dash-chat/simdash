@@ -1,5 +1,5 @@
-pub mod flooding_scenario;
 pub mod no_routing;
+pub mod sim_scenario;
 
 use simdash_model_network::NetworkAction;
 use simdash_routing_dispatch::{
@@ -7,12 +7,12 @@ use simdash_routing_dispatch::{
 };
 use simdash_scenario::Scenario;
 
-use self::flooding_scenario::FloodingBehaviorType;
 use self::no_routing::NoRoutingBehaviorType;
+use self::sim_scenario::SimBehaviorType;
 
-pub type NaiveFloodingScenario = Scenario<FloodingBehaviorType<NaiveFloodingBehavior>>;
-pub type BasicFloodingSyncScenario = Scenario<FloodingBehaviorType<BasicFloodingSyncBehavior>>;
-pub type StigScenario = Scenario<FloodingBehaviorType<BasicStigBehavior>>;
+pub type NaiveFloodingScenario = Scenario<SimBehaviorType<NaiveFloodingBehavior>>;
+pub type BasicFloodingSyncScenario = Scenario<SimBehaviorType<BasicFloodingSyncBehavior>>;
+pub type StigScenario = Scenario<SimBehaviorType<BasicStigBehavior>>;
 pub type NoRoutingScenario = Scenario<NoRoutingBehaviorType>;
 
 pub enum AnyScenario {

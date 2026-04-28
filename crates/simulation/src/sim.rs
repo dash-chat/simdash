@@ -1,12 +1,14 @@
 use std::collections::{HashMap, HashSet};
 
 use dash_chat_top_gen::ChatTopology;
-use simdash_model_network::{NetworkState, NetworkTopologyState};
+use simdash_model_network::{NetworkModel, NetworkState, NetworkTopologyState};
 use simdash_routing_dispatch::{
     BasicFloodingSyncBehavior, BasicStigBehavior, NaiveFloodingBehavior,
 };
+use simdash_scenario::Scenario;
+use simdash_types::Behavior;
 
-use crate::scenarios::{flooding_scenario, no_routing, AnyScenario, AVAILABLE_BEHAVIORS};
+use crate::scenarios::{no_routing, sim_scenario, AnyScenario, AVAILABLE_BEHAVIORS};
 
 /// Snapshot of op IDs per node, used to compute deltas.
 pub type OpSnapshot = HashMap<u32, HashSet<u32>>;
@@ -48,28 +50,30 @@ impl Simulation {
         state: &NetworkState,
         topology: &ChatTopology,
     ) -> anyhow::Result<AnyScenario> {
+        let yes = std::env::var("SIMDASH_CUSTOM_OUTPUT").is_ok();
         match behavior {
-            "naive-flooding" => Ok(AnyScenario::NaiveFlooding(
-                flooding_scenario::flooding_scenario(
-                    state.clone(),
-                    DEFAULT_BROADCAST_INTERVAL,
-                    topology.clone(),
-                    NaiveFloodingBehavior,
-                ),
-            )),
-            "basic-flooding-sync" => Ok(AnyScenario::BasicFloodingSync(
-                flooding_scenario::flooding_scenario(
+            "naive-flooding" => Ok(AnyScenario::NaiveFlooding(sim_scenario::sim_scenario(
+                state.clone(),
+                DEFAULT_BROADCAST_INTERVAL,
+                topology.clone(),
+                NaiveFloodingBehavior,
+            ))),
+            "basic-flooding-sync" => {
+                Ok(AnyScenario::BasicFloodingSync(sim_scenario::sim_scenario(
                     state.clone(),
                     DEFAULT_BROADCAST_INTERVAL,
                     topology.clone(),
                     BasicFloodingSyncBehavior,
+                )))
+            }
+            "stig" => Ok(AnyScenario::Stig(decorate_scenario(
+                yes,
+                sim_scenario::sim_scenario(
+                    state.clone(),
+                    DEFAULT_BROADCAST_INTERVAL,
+                    topology.clone(),
+                    BasicStigBehavior,
                 ),
-            )),
-            "stig" => Ok(AnyScenario::Stig(flooding_scenario::flooding_scenario(
-                state.clone(),
-                DEFAULT_BROADCAST_INTERVAL,
-                topology.clone(),
-                BasicStigBehavior,
             ))),
             "no-routing" => Ok(AnyScenario::NoRouting(no_routing::no_routing(
                 state.clone(),
@@ -166,4 +170,53 @@ impl Simulation {
             .expect("scenario was valid at creation");
         self.current_step = 0;
     }
+}
+
+fn decorate_scenario<B: Behavior<Model = NetworkModel>>(
+    yes: bool,
+    scenario: Scenario<B>,
+) -> Scenario<B> {
+    use rainbow_brackets::{RainbowBrackets, RainbowBracketsConfig};
+    use simdash_model_network::NetworkAction;
+    use simdash_types::Rename;
+
+    if !yes {
+        return scenario;
+    }
+
+    scenario
+        .on_step(|s| {
+            println!();
+            println!("========= STEP {} =========", s.steps());
+            println!();
+        })
+        .on_action("actions", |action| {
+            let rb = RainbowBracketsConfig::default()
+                .colors(vec![
+                    rainbow_brackets::Color::Blue,
+                    // rainbow_brackets::Color::Cyan,
+                    rainbow_brackets::Color::White,
+                ])
+                .mode(rainbow_brackets::Mode::OuterText);
+            match action {
+                NetworkAction::Trace(message) => {
+                    println!("\n{:?}", message);
+                }
+                action => {
+                    println!("⟵ {}", action.renamed_ref().rainbow_brackets_with(&rb));
+                }
+            }
+        })
+        .on_fx("fx", |fx| {
+            let rb = RainbowBracketsConfig::default()
+                .colors(vec![
+                    rainbow_brackets::Color::Blue,
+                    // rainbow_brackets::Color::Cyan,
+                    rainbow_brackets::Color::White,
+                ])
+                .mode(rainbow_brackets::Mode::OuterText);
+            if fx.len() > 0 {
+                println!("  ⤷ {}\n", fx.renamed_ref().rainbow_brackets_with(&rb));
+            }
+        })
 }

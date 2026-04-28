@@ -33,16 +33,12 @@ impl State {
         self.op_buffer.store_op(op);
     }
 
-    pub fn from_ops(ops: BTreeSet<Op>) -> Self {
-        let mut op_buffer: OpBuffer = Default::default();
+    pub fn from_ops(model: &Model, ops: BTreeSet<Op>) -> Self {
+        let mut state = Self::default();
         for op in ops {
-            op_buffer.store_op(StoredOp::new(op));
+            state.store_op(model, op);
         }
-
-        Self {
-            op_buffer,
-            routes: Default::default(),
-        }
+        state
     }
 }
 
