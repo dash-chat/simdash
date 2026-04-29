@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use dash_chat_top_gen::ChatTopology;
+use simdash_model_network::ChatTopology;
 use simdash_model_network::{NetworkModel, NetworkState, NetworkTopologyState};
 use simdash_routing_dispatch::{
     BasicFloodingSyncBehavior, BasicStigBehavior, NaiveFloodingBehavior,

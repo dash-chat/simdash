@@ -1,12 +1,12 @@
 use std::path::Path;
 
 use anyhow::{Context, Result};
-pub use dash_chat_top_gen::ChatTopology;
 use dash_chat_top_gen::{ChatStateGenerator, ChatTopologyConfig};
 use net_topology::{TopologyConfig, TopologyGenerator};
 use serde::Deserialize;
+use simdash_model_network::ChatTopology;
+pub use simdash_model_network::Graph;
 use simdash_model_network::{NetworkState, NetworkTopologyState};
-pub use simdash_model_node::Graph;
 
 /// Top-level config struct that mirrors the full config file format.
 #[derive(Debug, Deserialize)]

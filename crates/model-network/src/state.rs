@@ -1,8 +1,10 @@
+mod graph;
+pub use graph::*;
+
 use std::path::Path;
 
 use rand::{SeedableRng, rngs::StdRng};
 use serde::{Deserialize, Serialize};
-use simdash_model_node::Graph;
 use simdash_types::NodeId;
 
 // ── NetworkTopologyState ───────────────────────────────────────────────────

@@ -7,6 +7,7 @@ edition = "2024"
 anyhow = { workspace = true }
 derive_more = { workspace = true }
 owo-colors = { workspace = true }
+petgraph = { workspace = true }
 polestar = { workspace = true }
 postcard = { workspace = true }
 rand = "0.9"
@@ -14,8 +15,6 @@ named-id = { workspace = true }
 serde = { workspace = true }
 tracing = { workspace = true }
 
-dash-chat-top-gen = { workspace = true }
-net-topology = { workspace = true }
 simdash-model-chat = { workspace = true }
 simdash-model-node = { workspace = true }
 simdash-routing-common = { workspace = true }

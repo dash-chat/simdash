@@ -1,9 +1,11 @@
+#![allow(missing_docs)]
+
 use std::collections::BTreeMap;
 
-use net_topology::NetTopology;
-use simdash_types::NodeId;
+use crate::net_topology::NetTopology;
+use crate::state::Graph;
 use simdash_model_chat::ChatState;
-use simdash_model_node::Graph;
+use simdash_types::NodeId;
 
 /// Intermediate representation of a network topology with dash-chat state added.
 #[derive(Clone)]

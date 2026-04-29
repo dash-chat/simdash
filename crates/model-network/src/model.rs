@@ -4,7 +4,7 @@
 
 use std::collections::{HashMap, HashSet};
 
-use dash_chat_top_gen::ChatTopology;
+use crate::ChatTopology;
 use rand::seq::IndexedRandom;
 use simdash_model_node::{NodeAction, NodeModel};
 use simdash_types::NodeId;
@@ -122,7 +122,7 @@ impl NetworkModel {
     fn unspawned_edge_topos<'a>(
         &'a self,
         existing_ids: &'a HashSet<u32>,
-    ) -> impl Iterator<Item = &'a net_topology::net_topology::EdgeTopology> {
+    ) -> impl Iterator<Item = &'a crate::net_topology::EdgeTopology> {
         self.topology
             .net
             .edges

@@ -1,14 +1,12 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-pub mod chat_topology;
-pub use chat_topology::ChatTopology;
-
-use net_topology::NetTopology;
 use rand::prelude::*;
 use serde::Deserialize;
 use serde::Serialize;
 use simdash_distribution::Distribution;
 use simdash_model_chat::ChatState;
+use simdash_model_network::ChatTopology;
+use simdash_model_network::net_topology::NetTopology;
 use simdash_types::Seq;
 use simdash_types::TopicId;
 use simdash_types::{Body, GroupId, Header, Operation};
@@ -403,7 +401,7 @@ impl ChatStateGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use net_topology::net_topology::NodeTopology;
+    use simdash_model_network::net_topology::NodeTopology;
     use std::collections::BTreeMap;
 
     fn make_topology(n: u32) -> NetTopology {

@@ -2,9 +2,10 @@
 
 use std::collections::HashMap;
 
+use crate::ChatTopology;
+use crate::state::Graph;
 use crate::{NetworkModel, NetworkState};
-use dash_chat_top_gen::ChatTopology;
-use simdash_model_node::{Graph, NodeModel, NodeState};
+use simdash_model_node::{NodeModel, NodeState};
 use simdash_routing_dispatch::RoutingDispatchModel;
 use simdash_types::{NodeId, Ticks};
 

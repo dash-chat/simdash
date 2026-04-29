@@ -41,7 +41,7 @@ impl AnyScenario {
         }
     }
 
-    pub fn topology(&self) -> &dash_chat_top_gen::ChatTopology {
+    pub fn topology(&self) -> &simdash_model_network::ChatTopology {
         match self {
             AnyScenario::NaiveFlooding(s) => &s.model().topology,
             AnyScenario::BasicFloodingSync(s) => &s.model().topology,

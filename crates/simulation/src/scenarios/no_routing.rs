@@ -1,4 +1,4 @@
-use dash_chat_top_gen::ChatTopology;
+use simdash_model_network::ChatTopology;
 use simdash_model_network::{NetworkModel, NetworkState, RoundRobinNodeScheduler};
 use simdash_model_node::{BasicNodeBehavior, NodeModel};
 use simdash_routing_dispatch::{NoOpRoutingBehavior, RoutingDispatchModel};
