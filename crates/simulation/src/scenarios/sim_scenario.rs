@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use simdash_model_network::ChatTopology;
 use simdash_model_network::NetworkState;
@@ -8,38 +9,40 @@ use simdash_routing_dispatch::flooding::{FloodingOp, FloodingState};
 use simdash_routing_dispatch::{flooding_sync, stig};
 use simdash_routing_dispatch::{noop::NoopState, RoutingDispatchModel, RoutingDispatchState};
 use simdash_scenario::Scenario;
-use simdash_types::{Behavior, NodeId};
+use simdash_types::{Behavior, NodeId, Ticks};
 
 pub type SimBehaviorType<B> = RoundRobinNodeScheduler<BasicNodeBehavior<B>>;
 
-pub fn sim_scenario<In: Behavior<Model = RoutingDispatchModel>>(
-    mut initial_state: NetworkState,
-    broadcast_interval: u32,
+/// Build a `NetworkModel` from the node IDs in `state`, using `broadcast_interval` and `topology`.
+pub fn create_model(
+    state: &NetworkState,
+    broadcast_interval: Ticks,
     topology: ChatTopology,
-    behavior: In,
-) -> Scenario<RoundRobinNodeScheduler<BasicNodeBehavior<In>>> {
-    // Seed each node's routing state from its chat op_store so flooding
-    // knows about the initial ops and can broadcast them.
-    let node_ids: Vec<_> = initial_state.graph.node_ids().collect();
-
-    let node_models: HashMap<NodeId, NodeModel> = node_ids
-        .iter()
+) -> NetworkModel {
+    let nodes: HashMap<NodeId, NodeModel> = state
+        .graph
+        .node_ids()
         .map(|id| {
             (
-                *id,
-                NodeModel::new(RoutingDispatchModel::standard(
-                    *id,
-                    broadcast_interval.into(),
-                )),
+                id,
+                NodeModel::new(RoutingDispatchModel::standard(id, broadcast_interval)),
             )
         })
         .collect();
+    NetworkModel::new(nodes, topology)
+}
 
-    for node_id in node_ids.iter() {
-        let model = node_models.get(node_id).unwrap();
-        initial_state
+/// Seed each node's routing state from its `chat.op_store`.
+///
+/// Call once after constructing model + initial state. Do NOT call again on reset —
+/// `Simulation` stores the post-seeded state as `initial_state`.
+pub fn seed_routing(model: &NetworkModel, state: &mut NetworkState) {
+    let node_ids: Vec<NodeId> = state.graph.node_ids().collect();
+    for node_id in node_ids {
+        let node_model = model.nodes.get(&node_id).unwrap();
+        state
             .graph
-            .update_node(*node_id, |mut n| {
+            .update_node(node_id, |mut n| {
                 let flooding_ops = n
                     .chat
                     .op_store
@@ -62,14 +65,20 @@ pub fn sim_scenario<In: Behavior<Model = RoutingDispatchModel>>(
                     flooding: FloodingState { ops: flooding_ops },
                     flooding_sync: flooding_sync::State::from_ops(flooding_sync_ops),
                     noop: NoopState::default(),
-                    stig: stig::State::from_ops(&model.routing.stig, stig_ops),
+                    stig: stig::State::from_ops(&node_model.routing.stig, stig_ops),
                 };
                 Ok((n, ()))
             })
             .ok();
     }
+}
 
-    let model = NetworkModel::new(node_models, topology);
+/// Create a scenario from a pre-built (and pre-seeded) model and state.
+pub fn sim_scenario<In: Behavior<Model = RoutingDispatchModel>>(
+    model: NetworkModel,
+    initial_state: NetworkState,
+    behavior: In,
+) -> Scenario<RoundRobinNodeScheduler<BasicNodeBehavior<In>>> {
     let behavior = RoundRobinNodeScheduler::new(BasicNodeBehavior::new(behavior));
     Scenario::initial(model, initial_state, behavior)
 }

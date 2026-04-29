@@ -17,6 +17,7 @@ simdash-routing-common = { workspace = true }
 tracing = { workspace = true }
 
 [dev-dependencies]
+axum = "0.8"
 dash-chat-top-gen = { workspace = true }
 owo-colors = { workspace = true }
 simdash-model-chat = { workspace = true }
@@ -24,6 +25,10 @@ simdash-model-network = { workspace = true, features = ["testing"] }
 simdash-model-node = { workspace = true }
 simdash-routing-dispatch = { workspace = true }
 simdash-scenario = { workspace = true }
+simdash-simulation = { workspace = true }
+tokio = { workspace = true }
+tower-http = { version = "0.6", features = ["cors"] }
+tracing-subscriber = "0.3"
 
 [lints]
 workspace = true

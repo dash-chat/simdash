@@ -1,6 +1,7 @@
 //! Functions for generating models and initial states for testing.
 
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use crate::ChatTopology;
 use crate::NetworkModel;
@@ -37,22 +38,19 @@ pub fn n_paths(hops: impl IntoIterator<Item = u32>) -> (Graph, (NodeId, NodeId),
     // let max_len = lengths.iter().max().unwrap();
     let alpha = NodeId::from(0).with_name("alpha");
     graph.add_node(alpha, NodeState::default());
-    let mut num_nodes = 1;
     let mut paths = vec![];
 
     for length in hops {
         let mut path = vec![];
         for _ in 0..length - 1 {
-            let id = NodeId::from(num_nodes);
+            let id = NodeId::from(graph.node_ids().count() as u32);
             graph.add_node(id, NodeState::default());
-            num_nodes += 1;
             path.push(id);
         }
         paths.push(path);
     }
-    let omega = NodeId::from(num_nodes).with_name("omega");
+    let omega = NodeId::from(graph.node_ids().count() as u32).with_name("omega");
     graph.add_node(omega, NodeState::default());
-    num_nodes += 1;
 
     for path in paths.iter() {
         for i in 0..path.len() - 1 {

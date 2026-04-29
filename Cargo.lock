@@ -1646,6 +1646,7 @@ name = "simdash-protocol-stig"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "axum",
  "dash-chat-top-gen",
  "derive_more 2.1.1",
  "maplit",
@@ -1661,8 +1662,12 @@ dependencies = [
  "simdash-routing-common",
  "simdash-routing-dispatch",
  "simdash-scenario",
+ "simdash-simulation",
  "simdash-types",
+ "tokio",
+ "tower-http",
  "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -1699,6 +1704,7 @@ dependencies = [
  "anyhow",
  "clap",
  "ctrlc",
+ "rainbow-brackets",
  "serde_json",
  "simdash-simulation",
  "tokio",
@@ -1723,7 +1729,6 @@ name = "simdash-server-runner"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "axum",
  "clap",
  "serde",
  "serde_json",
@@ -1741,6 +1746,7 @@ name = "simdash-simulation"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "axum",
  "dash-chat-top-gen",
  "net-topology",
  "petgraph",
@@ -1757,6 +1763,8 @@ dependencies = [
  "simdash-routing-dispatch",
  "simdash-scenario",
  "simdash-types",
+ "tokio",
+ "tower-http",
  "tracing",
 ]
 
@@ -1770,6 +1778,32 @@ dependencies = [
  "petgraph",
  "polestar",
  "serde",
+]
+
+[[package]]
+name = "simulations"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "derive_more 2.1.1",
+ "maplit",
+ "named-id",
+ "polestar",
+ "pretty_assertions",
+ "rainbow-brackets",
+ "serde",
+ "simdash-model-chat",
+ "simdash-model-network",
+ "simdash-model-node",
+ "simdash-protocol-stig",
+ "simdash-routing-common",
+ "simdash-routing-dispatch",
+ "simdash-scenario",
+ "simdash-simulation",
+ "simdash-types",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]

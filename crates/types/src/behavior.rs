@@ -77,3 +77,25 @@ where
         Ok(((behavior, state), ()))
     }
 }
+
+impl<B> Behavior for Box<B>
+where
+    B: Behavior + 'static,
+{
+    type Model = B::Model;
+
+    fn next_tick(
+        &mut self,
+        state: &StateOf<Self::Model>,
+    ) -> anyhow::Result<Vec<ActionOf<Self::Model>>> {
+        self.as_mut().next_tick(state)
+    }
+
+    fn handle_fx(
+        &mut self,
+        state: &StateOf<Self::Model>,
+        fx: FxOf<Self::Model>,
+    ) -> anyhow::Result<Option<FxOf<Self::Model>>> {
+        self.as_mut().handle_fx(state, fx)
+    }
+}

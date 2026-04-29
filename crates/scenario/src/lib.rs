@@ -17,7 +17,7 @@ where
 {
     model: B::Model,
     state: Option<StateOf<B::Model>>,
-    history: Vec<ActionOf<B::Model>>,
+    initial_state: StateOf<B::Model>,
     behavior: B,
     steps: usize,
     handlers: ScenarioHandlers<B>,
@@ -57,13 +57,18 @@ where
     pub fn initial(model: B::Model, initial_state: StateOf<B::Model>, behavior: B) -> Self {
         Self {
             model,
-            state: Some(initial_state),
-            history: Vec::new(),
+            state: Some(initial_state.clone()),
+            initial_state,
             behavior,
             steps: 0,
 
             handlers: ScenarioHandlers::default(),
         }
+    }
+
+    pub fn reset(&mut self) {
+        self.state = Some(self.initial_state.clone());
+        self.steps = 0;
     }
 
     /// Add a handler for each step of the Scenario.
@@ -134,13 +139,6 @@ where
     /// Get the Model of the Scenario.
     pub fn model(&self) -> &B::Model {
         &self.model
-    }
-
-    /// Get the history of Actions performed by the Scenario so far.
-    ///
-    /// This can be used to replay the scenario or to analyze the behavior.
-    pub fn history(&self) -> &Vec<ActionOf<B::Model>> {
-        &self.history
     }
 
     /// Get the number of steps taken by the Scenario so far.

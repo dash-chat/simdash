@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+axum = { workspace = true }
 anyhow = { workspace = true }
 dash-chat-top-gen = { path = "../dash-chat-top-gen" }
 net-topology = { path = "../net-topology" }
@@ -21,4 +22,6 @@ simdash-model-node = { workspace = true }
 simdash-model-network = { workspace = true }
 simdash-scenario = { workspace = true }
 simdash-routing-dispatch = { workspace = true }
+tokio = { workspace = true }
+tower-http = { version = "0.6", features = ["cors"] }
 tracing = "0.1"

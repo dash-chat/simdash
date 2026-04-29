@@ -1,0 +1,29 @@
+[package]
+name = "simulations"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = { workspace = true }
+derive_more = { workspace = true }
+maplit = { workspace = true }
+named-id = { workspace = true }
+polestar = { workspace = true }
+pretty_assertions = { workspace = true }
+rainbow-brackets = { workspace = true }
+serde = { workspace = true }
+simdash-model-chat = { workspace = true }
+simdash-model-node = { workspace = true }
+simdash-model-network = { workspace = true }
+simdash-types = { workspace = true }
+simdash-protocol-stig = { workspace = true }
+simdash-routing-common = { workspace = true }
+simdash-routing-dispatch = { workspace = true }
+simdash-scenario = { workspace = true }
+simdash-simulation = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+[lints]
+workspace = true

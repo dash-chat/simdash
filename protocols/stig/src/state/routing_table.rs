@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use serde::{Deserialize, Serialize};
 use simdash_types::*;
 
-use crate::{Announce, HopCount, HopTracker, HopsImpl, Metadata, Model, SourceId, StateVector};
+use crate::{Announce, HopTracker, HopsImpl, Metadata, Model, SourceId, StateVector};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(bound(deserialize = "H: HopTracker"))]
@@ -157,7 +157,7 @@ mod tests {
 
     use maplit::btreeset;
 
-    use crate::StateVector;
+    use crate::{HopCount, StateVector};
 
     use super::*;
 

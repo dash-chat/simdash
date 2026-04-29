@@ -1,4 +1,3 @@
-use simdash_protocol_stig::HopTracker;
 use simdash_types::Behavior;
 
 use crate::*;

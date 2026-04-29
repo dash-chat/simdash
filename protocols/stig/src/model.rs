@@ -1,4 +1,3 @@
-use std::marker::PhantomData;
 
 use derive_more::{Debug, Deref, Display, From};
 use named_id::RenameAll;

@@ -12,24 +12,26 @@ use simdash_model_network::NetworkState;
 use simdash_types::{Body, GetRoutingOpInfo, NodeId, Operation, RoutingOpInfo};
 use tokio::sync::Mutex;
 
-use simdash_simulation::sim::{OpSnapshot, Simulation};
+use crate::sim::{OpSnapshot, Simulation};
 
-pub type AppState = Arc<Mutex<Simulation>>;
+pub type PlaybackState = Arc<Mutex<Simulation>>;
 
-pub async fn get_state(State(sim): State<AppState>) -> Json<SimResponse> {
+pub(super) async fn get_state(State(sim): State<PlaybackState>) -> Json<SimResponse> {
     let mut sim = sim.lock().await;
     Json(build_full_response(&mut sim))
 }
 
-pub async fn step_forward(State(sim): State<AppState>) -> Result<Json<SimResponse>, AppError> {
+pub(super) async fn step_forward(
+    State(sim): State<PlaybackState>,
+) -> Result<Json<SimResponse>, AppError> {
     let mut sim = sim.lock().await;
-    let prev_seq = sim.seq();
+    let prev_seq = sim.current_step() as u64;
     let prev_ops = sim.snapshot_ops();
     let prev_edges = snapshot_edges(sim.current_state());
     let t = std::time::Instant::now();
     sim.step_forward()?;
+    let seq = sim.current_step() as u64;
     tracing::info!("{:>6}ms", t.elapsed().as_millis());
-    let seq = sim.bump_seq();
     Ok(Json(build_delta_response(
         &sim,
         prev_seq,
@@ -39,59 +41,62 @@ pub async fn step_forward(State(sim): State<AppState>) -> Result<Json<SimRespons
     )))
 }
 
-pub async fn step_back(State(sim): State<AppState>) -> Result<Json<SimResponse>, AppError> {
+pub(super) async fn step_back(
+    State(sim): State<PlaybackState>,
+) -> Result<Json<SimResponse>, AppError> {
     let mut sim = sim.lock().await;
     sim.step_back()?;
     Ok(Json(build_full_response(&mut sim)))
 }
 
-pub async fn reset(State(sim): State<AppState>) -> Json<SimResponse> {
+pub(super) async fn reset(State(sim): State<PlaybackState>) -> Json<SimResponse> {
     let mut sim = sim.lock().await;
     sim.reset();
     Json(build_full_response(&mut sim))
 }
 
-pub async fn get_behaviors(State(sim): State<AppState>) -> Json<BehaviorsResponse> {
-    let sim = sim.lock().await;
-    Json(BehaviorsResponse {
-        current: sim.behavior_name().to_string(),
-        available: sim
-            .available_behaviors()
-            .iter()
-            .map(|s| s.to_string())
-            .collect(),
-    })
+pub(super) async fn get_behaviors(State(sim): State<PlaybackState>) -> Json<BehaviorsResponse> {
+    unimplemented!();
+    // let sim = sim.lock().await;
+    // Json(BehaviorsResponse {
+    //     current: sim.behavior_name().to_string(),
+    //     available: sim
+    //         .available_behaviors()
+    //         .iter()
+    //         .map(|s| s.to_string())
+    //         .collect(),
+    // })
 }
 
-pub async fn set_behavior(
-    State(sim): State<AppState>,
+pub(super) async fn set_behavior(
+    State(sim): State<PlaybackState>,
     Json(body): Json<SetBehaviorRequest>,
 ) -> Result<Json<SimResponse>, AppError> {
-    let mut sim = sim.lock().await;
-    sim.set_behavior(&body.behavior)?;
-    Ok(Json(build_full_response(&mut sim)))
+    unimplemented!();
+    // let mut sim = sim.lock().await;
+    // sim.set_behavior(&body.behavior)?;
+    // Ok(Json(build_full_response(&mut sim)))
 }
 
 // --- Response building ---
 
-fn build_full_response(sim: &mut Simulation) -> SimResponse {
-    let seq = sim.bump_seq();
+pub(super) fn build_full_response(sim: &mut Simulation) -> SimResponse {
     let state = sim.current_state();
     SimResponse::Full(SimSnapshot {
-        seq,
+        // seq,
         step: sim.current_step(),
-        behavior: sim.behavior_name().to_string(),
-        available_behaviors: sim
-            .available_behaviors()
-            .iter()
-            .map(|s| s.to_string())
-            .collect(),
+        // behavior: sim.behavior_name().to_string(),
+        // available_behaviors: sim
+        //     .available_behaviors()
+        //     .iter()
+        //     .map(|s| s.to_string())
+        //     .collect(),
         graph: build_graph_structure(state),
         nodes: build_node_infos(state),
     })
 }
 
-fn snapshot_edges(state: &NetworkState) -> HashSet<(u32, u32)> {
+pub(super) fn snapshot_edges(state: &NetworkState) -> HashSet<(u32, u32)> {
     state
         .graph
         .graph()
@@ -103,7 +108,7 @@ fn snapshot_edges(state: &NetworkState) -> HashSet<(u32, u32)> {
         .collect()
 }
 
-fn build_delta_response(
+pub(super) fn build_delta_response(
     sim: &Simulation,
     prev_seq: u64,
     seq: u64,
@@ -171,8 +176,8 @@ fn build_delta_response(
         .collect();
 
     SimResponse::Delta(SimDelta {
-        seq,
-        prev_seq,
+        // seq,
+        // prev_seq,
         step: sim.current_step(),
         node_deltas,
         edges_added,
@@ -180,7 +185,7 @@ fn build_delta_response(
     })
 }
 
-fn build_graph_structure(state: &NetworkState) -> GraphStructure {
+pub(super) fn build_graph_structure(state: &NetworkState) -> GraphStructure {
     let nodes: Vec<GraphNode> = state
         .graph
         .node_ids()
@@ -214,7 +219,7 @@ fn build_graph_structure(state: &NetworkState) -> GraphStructure {
     }
 }
 
-fn build_node_infos(state: &NetworkState) -> Vec<NodeInfo> {
+pub(super) fn build_node_infos(state: &NetworkState) -> Vec<NodeInfo> {
     let mut node_ids: Vec<NodeId> = state.graph.node_ids().collect();
     node_ids.sort();
 
@@ -252,7 +257,7 @@ fn build_node_infos(state: &NetworkState) -> Vec<NodeInfo> {
         .collect()
 }
 
-fn build_op_info(op: &Operation) -> OpInfo {
+pub(super) fn build_op_info(op: &Operation) -> OpInfo {
     OpInfo {
         id: *op.id,
         author: *op.header.author,
@@ -279,18 +284,18 @@ pub enum SimResponse {
 
 #[derive(Serialize)]
 pub struct SimSnapshot {
-    pub seq: u64,
+    // pub seq: u64,
     pub step: usize,
-    pub behavior: String,
-    pub available_behaviors: Vec<String>,
+    // pub behavior: String,
+    // pub available_behaviors: Vec<String>,
     pub graph: GraphStructure,
     pub nodes: Vec<NodeInfo>,
 }
 
 #[derive(Serialize)]
 pub struct SimDelta {
-    pub seq: u64,
-    pub prev_seq: u64,
+    // pub seq: u64,
+    // pub prev_seq: u64,
     pub step: usize,
     pub node_deltas: Vec<NodeDelta>,
     pub edges_added: Vec<GraphEdge>,

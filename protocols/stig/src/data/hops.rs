@@ -1,5 +1,5 @@
 use derive_more::{Display, From};
-use named_id::{Nameable, Rename, RenameAll, RenameNone};
+use named_id::{Rename, RenameAll, RenameNone};
 use serde::{Deserialize, Serialize};
 use simdash_types::Hops;
 

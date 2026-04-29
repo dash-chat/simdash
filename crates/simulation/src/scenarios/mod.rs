@@ -1,7 +1,9 @@
 pub mod no_routing;
 pub mod sim_scenario;
 
-use simdash_model_network::NetworkAction;
+use std::sync::Arc;
+
+use simdash_model_network::{NetworkAction, NetworkModel};
 use simdash_routing_dispatch::{
     BasicFloodingSyncBehavior, BasicStigBehavior, NaiveFloodingBehavior,
 };
@@ -29,6 +31,15 @@ impl AnyScenario {
             AnyScenario::BasicFloodingSync(s) => s.state(),
             AnyScenario::Stig(s) => s.state(),
             AnyScenario::NoRouting(s) => s.state(),
+        }
+    }
+
+    pub fn model(&self) -> &NetworkModel {
+        match self {
+            AnyScenario::NaiveFlooding(s) => s.model(),
+            AnyScenario::BasicFloodingSync(s) => s.model(),
+            AnyScenario::Stig(s) => s.model(),
+            AnyScenario::NoRouting(s) => s.model(),
         }
     }
 
