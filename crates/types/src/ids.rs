@@ -28,6 +28,27 @@ impl named_id::Nameable for NodeId {
     }
 }
 
+impl std::iter::Step for NodeId {
+    fn steps_between(start: &Self, end: &Self) -> (usize, Option<usize>) {
+        if start.0 > end.0 {
+            return (0, None);
+        } else {
+            (
+                end.0 as usize - start.0 as usize,
+                Some(end.0 as usize - start.0 as usize),
+            )
+        }
+    }
+
+    fn forward_checked(start: Self, count: usize) -> Option<Self> {
+        Some(Self(start.0.checked_add(count as u32)?))
+    }
+
+    fn backward_checked(start: Self, count: usize) -> Option<Self> {
+        Some(Self(start.0.checked_sub(count as u32)?))
+    }
+}
+
 #[derive(
     Serialize,
     Deserialize,

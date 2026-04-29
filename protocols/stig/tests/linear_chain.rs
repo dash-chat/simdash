@@ -24,7 +24,8 @@ fn linear_chain_scenario() {
     const STEPS: usize = 10;
 
     // 0 → 1 → 2 → … → N-1
-    let (model, mut state) = simdash_model_network::generate::linear_chain(N, SYNC_INTERVAL);
+    let graph = simdash_model_network::generate::linear_chain(N);
+    let (model, mut state) = simdash_model_network::generate::make_model(graph, SYNC_INTERVAL);
     let behavior = RoundRobinNodeScheduler::new(BasicNodeBehavior::new(BasicStigBehavior)).sorted();
 
     state.graph.nodes.keys().for_each(|node_id| {

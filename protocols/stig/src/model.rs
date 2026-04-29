@@ -1,6 +1,6 @@
 use std::marker::PhantomData;
 
-use derive_more::{Deref, Display, From};
+use derive_more::{Debug, Deref, Display, From};
 use named_id::RenameAll;
 use serde::{Deserialize, Serialize};
 
@@ -30,6 +30,7 @@ use crate::{Payload, ProtocolAction, ProtocolFx, WireData, action::Action, state
     Deref,
     RenameAll,
 )]
+#[debug("{_0:?}")]
 pub struct SourceId(pub NodeId);
 
 impl From<u32> for SourceId {

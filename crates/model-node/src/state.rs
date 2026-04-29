@@ -5,6 +5,7 @@
 //! so that topology generators can depend on them without creating a circular
 //! dependency with the network model.
 
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
 use simdash_model_chat::ChatState;
 use simdash_routing_dispatch::RoutingDispatchState;
@@ -30,7 +31,8 @@ impl NodeState<RoutingDispatchState> {
 // ── EdgeState ──────────────────────────────────────────────────────────────
 
 /// The state of an edge in the graph.
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Display, Clone, Default, Serialize, Deserialize)]
+#[display("{topology_id}")]
 pub struct EdgeState {
     /// The ID of the topology this edge is part of
     pub topology_id: u32,

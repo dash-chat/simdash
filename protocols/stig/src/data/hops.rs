@@ -79,9 +79,9 @@ impl std::fmt::Display for Route {
         let path = self
             .path
             .iter()
-            .map(|p| p.to_string())
+            .map(|p| p.renamed().to_string())
             .collect::<Vec<_>>()
-            .join("->");
+            .join(" ⟶ ");
         write!(f, "({})", path)
     }
 }

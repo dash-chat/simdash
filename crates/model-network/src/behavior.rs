@@ -88,10 +88,12 @@ impl<B: Behavior<Model = NodeModel>> Behavior for RoundRobinNodeScheduler<B> {
         // println!("generated: {:?}", generated.len());
 
         Ok(std::iter::empty()
-            .chain([NetworkAction::trace("   vvvvvvvv CONSEQUENCES vvvvvvvv   ")])
+            .chain([NetworkAction::trace(
+                "---------------- CONSEQUENCES ----------------",
+            )])
             .chain(consequences.into_iter())
             .chain([NetworkAction::trace(
-                "   vvvvvvvvvv GENERATED vvvvvvvvvv   ",
+                "----------------- GENERATED ------------------",
             )])
             .chain(generated.into_iter())
             .chain([NetworkAction::Tick, NetworkAction::EvolveTopology])

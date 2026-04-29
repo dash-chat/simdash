@@ -1,3 +1,5 @@
+#![feature(step_trait)]
+
 mod behavior;
 mod ids;
 mod operation;
