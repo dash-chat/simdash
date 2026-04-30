@@ -1,4 +1,3 @@
-
 use derive_more::{Debug, Deref, Display, From};
 use named_id::RenameAll;
 use serde::{Deserialize, Serialize};
@@ -187,14 +186,17 @@ mod tests {
         let model = Model::new(NodeId(0).into(), 3.into());
         let mut state = State::default();
         let topic = 0.into();
-        let log = 0.into();
+        let author = 0.into();
         let seq = 0.into();
-        state.store_op(&model, make_stig_op(topic, log, seq));
+        state.store_op(&model, make_stig_op(author, topic));
 
         let trigger = ProtocolAction::protocol(Action::TriggerSync);
         let broadcast = ProtocolFx::broadcast(WireData::Announce(Announce::new(
             model.mesh_id,
-            BTreeMap::from([(topic, StateVector::new([(log, LogHeight::from_seq(seq))]))]),
+            BTreeMap::from([(
+                topic,
+                StateVector::new([(author, LogHeight::from_seq(seq))]),
+            )]),
         )));
 
         let since_last = |state: &State| -> Option<Ticks> {

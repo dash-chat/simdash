@@ -14,7 +14,7 @@ use simdash_protocol_stig::util::make_stig_op;
 use simdash_routing_dispatch::BasicStigBehavior;
 use simdash_scenario::Scenario;
 use simdash_simulation::sim::{NetworkBehavior, Simulation};
-use simdash_types::{LogId, Seq, Ticks, TopicId};
+use simdash_types::{Ticks, TopicId};
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
@@ -22,7 +22,7 @@ async fn main() {
     const SYNC_INTERVAL: Ticks = Ticks(10);
 
     // Set up the n_paths scenario exactly as in protocols/stig/tests/n_paths.rs
-    let (graph, (alpha, omega), _paths) = simdash_model_network::generate::n_paths([2, 3, 4]);
+    let (graph, (alpha, omega), _paths) = simdash_model_network::generate::n_paths([2, 3]);
     let (model, mut state) = simdash_model_network::generate::make_model(graph, SYNC_INTERVAL);
 
     let mut node_ids = state.graph.nodes.keys().collect::<Vec<_>>();
@@ -37,7 +37,7 @@ async fn main() {
     let alpha_model = &model.nodes.get(&alpha).unwrap().routing.stig;
     let omega_model = &model.nodes.get(&omega).unwrap().routing.stig;
 
-    let op = make_stig_op(topic, LogId(1).with_short(), Seq(0));
+    let op = make_stig_op(alpha, topic);
 
     // Node alpha "creates" an op for topic 0
     state

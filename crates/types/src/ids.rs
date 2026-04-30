@@ -123,31 +123,34 @@ impl named_id::Nameable for TopicId {
         })
     }
 }
-#[derive(
-    Debug,
-    Display,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    Hash,
-    Ord,
-    PartialOrd,
-    Serialize,
-    Deserialize,
-    From,
-    Deref,
-)]
-pub struct LogId(pub u32);
 
-impl named_id::Nameable for LogId {
-    fn shortener(&self) -> Option<named_id::Shortener> {
-        Some(named_id::Shortener {
-            length: 3,
-            prefix: "L",
-        })
-    }
-}
+pub type LogId = NodeId;
+
+// #[derive(
+//     Debug,
+//     Display,
+//     Clone,
+//     Copy,
+//     PartialEq,
+//     Eq,
+//     Hash,
+//     Ord,
+//     PartialOrd,
+//     Serialize,
+//     Deserialize,
+//     From,
+//     Deref,
+// )]
+// pub struct LogId(pub u32);
+
+// impl named_id::Nameable for LogId {
+//     fn shortener(&self) -> Option<named_id::Shortener> {
+//         Some(named_id::Shortener {
+//             length: 3,
+//             prefix: "L",
+//         })
+//     }
+// }
 #[derive(
     Debug,
     Clone,
@@ -197,6 +200,8 @@ impl LogHeight {
     From,
     Deref,
     RenameNone,
+    derive_more::Add,
+    derive_more::AddAssign,
 )]
 pub struct Seq(pub u32);
 
@@ -244,17 +249,17 @@ pub struct Ticks(pub u32);
 )]
 pub struct Hops(pub u32);
 
-impl From<NodeId> for LogId {
-    fn from(id: NodeId) -> LogId {
-        LogId::from(id.0)
-    }
-}
+// impl From<NodeId> for LogId {
+//     fn from(id: NodeId) -> LogId {
+//         LogId::from(id.0)
+//     }
+// }
 
-impl From<LogId> for NodeId {
-    fn from(id: LogId) -> NodeId {
-        NodeId::from(id.0)
-    }
-}
+// impl From<LogId> for NodeId {
+//     fn from(id: LogId) -> NodeId {
+//         NodeId::from(id.0)
+//     }
+// }
 
 impl From<NodeId> for petgraph::graph::NodeIndex {
     fn from(id: NodeId) -> petgraph::graph::NodeIndex {

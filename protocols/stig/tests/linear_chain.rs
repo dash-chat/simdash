@@ -40,7 +40,7 @@ fn linear_chain_scenario() {
     let alpha_model = &model.nodes.get(&alpha).unwrap().routing.stig;
     let omega_model = &model.nodes.get(&omega).unwrap().routing.stig;
 
-    let op = make_stig_op(topic, LogId(1).with_short(), Seq(0));
+    let op = make_stig_op(alpha, topic);
 
     // Node 0 "creates" an op for topic 0
     state

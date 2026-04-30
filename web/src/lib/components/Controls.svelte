@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onDestroy, onMount } from 'svelte';
+	import { onDestroy, onMount } from "svelte";
 
 	interface Props {
 		step: number;
@@ -13,7 +13,17 @@
 		onspeedchange: (intervalMs: number) => void;
 	}
 
-	let { step, loading, behavior, availableBehaviors, onforward, onback, onreset, onbehaviorchange, onspeedchange }: Props = $props();
+	let {
+		step,
+		loading,
+		behavior,
+		availableBehaviors,
+		onforward,
+		onback,
+		onreset,
+		onbehaviorchange,
+		onspeedchange,
+	}: Props = $props();
 
 	let playing = $state(false);
 	let sliderValue = $state(1810);
@@ -55,15 +65,21 @@
 	});
 
 	function handleKeydown(e: KeyboardEvent) {
-		if (e.code === 'Space' && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement)) {
+		if (
+			e.code === "Space" &&
+			!(
+				e.target instanceof HTMLInputElement ||
+				e.target instanceof HTMLSelectElement
+			)
+		) {
 			e.preventDefault();
 			playing ? stop() : play();
 		}
 	}
 
 	onMount(() => {
-		window.addEventListener('keydown', handleKeydown);
-		return () => window.removeEventListener('keydown', handleKeydown);
+		window.addEventListener("keydown", handleKeydown);
+		return () => window.removeEventListener("keydown", handleKeydown);
 	});
 
 	onDestroy(() => stopTimer());
@@ -73,14 +89,27 @@
 	<span class="step">Step {step}</span>
 
 	<div class="button-row">
-		<button onclick={onback} disabled={loading || playing || step === 0}>←</button>
+		<button onclick={onback} disabled={loading || playing || step === 0}
+			>←</button
+		>
 		{#if playing}
 			<button class="stop" onclick={stop}>
-				<svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><rect x="2" y="2" width="12" height="12" rx="1" /></svg>
+				<svg
+					viewBox="0 0 16 16"
+					width="14"
+					height="14"
+					fill="currentColor"
+					><rect x="2" y="2" width="12" height="12" rx="1" /></svg
+				>
 			</button>
 		{:else}
 			<button class="play" onclick={play} disabled={loading}>
-				<svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor"><polygon points="3,1 14,8 3,15" /></svg>
+				<svg
+					viewBox="0 0 16 16"
+					width="14"
+					height="14"
+					fill="currentColor"><polygon points="3,1 14,8 3,15" /></svg
+				>
 			</button>
 		{/if}
 		<button onclick={onforward} disabled={loading || playing}>→</button>
@@ -88,11 +117,23 @@
 
 	<div class="speed-row">
 		<span class="speed-label">Speed</span>
-		<input class="speed" type="range" min="10" max="2000" step="10" bind:value={sliderValue} />
+		<input
+			class="speed"
+			type="range"
+			min="10"
+			max="2000"
+			step="10"
+			bind:value={sliderValue}
+		/>
 	</div>
 
-	<button class="reset" onclick={onreset} disabled={loading || playing || step === 0}>Reset</button>
+	<button
+		class="reset"
+		onclick={onreset}
+		disabled={loading || playing || step === 0}>Reset</button
+	>
 
+	<!--
 	<div class="behavior-row">
 		<span class="behavior-label">Behavior</span>
 		<select
@@ -106,6 +147,7 @@
 			{/each}
 		</select>
 	</div>
+	-->
 </div>
 
 <style>
@@ -141,7 +183,8 @@
 		opacity: 0.4;
 		cursor: not-allowed;
 	}
-	.play, .stop {
+	.play,
+	.stop {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
