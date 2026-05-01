@@ -27,10 +27,10 @@ dash-chat-top:
   rules:
     - type: groups
       subnets: all
-      group_amount: 10
+      group_amount: 1
       group_size:
         type: fixed
-        value: 10
+        value: 3
       operations_count:
         type: fixed
-        value: 10
+        value: 1

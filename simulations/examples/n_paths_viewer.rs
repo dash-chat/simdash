@@ -21,7 +21,7 @@ async fn main() {
     const SYNC_INTERVAL: Ticks = Ticks(10);
 
     // Set up the n_paths scenario exactly as in protocols/stig/tests/n_paths.rs
-    let (graph, (alpha, omega), _paths) = simdash_model_network::generate::n_paths([2, 3]);
+    let (graph, (alpha, omega), _paths) = simdash_model_network::generate::n_paths([3, 3, 5, 7]);
     let (model, mut state) = simdash_model_network::generate::make_model(graph, SYNC_INTERVAL);
 
     let mut node_ids = state.graph.nodes.keys().collect::<Vec<_>>();

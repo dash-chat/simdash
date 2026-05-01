@@ -1,7 +1,7 @@
 mod routing_table;
 pub use routing_table::PeerLogFact;
 
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeSet, HashMap, HashSet};
 
 use derive_more::{Deref, From};
 use serde::{Deserialize, Serialize};
@@ -51,8 +51,15 @@ impl State {
         self.op_buffer.store_op(op);
     }
 
-    pub fn from_ops(model: &Model, ops: BTreeSet<Op>) -> Self {
+    pub fn initialize(
+        model: &Model,
+        ops: BTreeSet<Op>,
+        groups: impl IntoIterator<Item = GroupId>,
+    ) -> Self {
         let mut state = Self::default();
+        for group in groups {
+            state.subscribe(model, group);
+        }
         for op in ops {
             state.store_op(model, op);
         }

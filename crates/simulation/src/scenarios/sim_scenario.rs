@@ -61,11 +61,17 @@ pub fn seed_routing(model: &NetworkModel, state: &mut NetworkState) {
                     .values()
                     .map(|op| stig::Op::from_op(op))
                     .collect();
+                let groups = model
+                    .topology
+                    .chat_states
+                    .get(&node_id)
+                    .map(|s| s.groups.clone())
+                    .unwrap_or_default();
                 n.routing = RoutingDispatchState {
                     flooding: FloodingState { ops: flooding_ops },
                     flooding_sync: flooding_sync::State::from_ops(flooding_sync_ops),
                     noop: NoopState::default(),
-                    stig: stig::State::from_ops(&node_model.routing.stig, stig_ops),
+                    stig: stig::State::initialize(&node_model.routing.stig, stig_ops, groups),
                 };
                 Ok((n, ()))
             })
