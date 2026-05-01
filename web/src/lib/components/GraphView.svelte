@@ -192,7 +192,7 @@
 		}
 
 		cy.batch(() => {
-		cy!.nodes().forEach((ele) => {
+		cy!.nodes().not(':parent').forEach((ele) => {
 			const id = parseInt(ele.id().slice(1));
 			const node = nodeMap.get(id);
 
