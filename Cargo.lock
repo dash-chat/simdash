@@ -1533,6 +1533,7 @@ dependencies = [
  "dash-chat-top-gen",
  "net-topology",
  "postcard",
+ "rand",
  "serde",
  "serde_json",
  "serde_yml",

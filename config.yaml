@@ -1,16 +1,15 @@
 name: simdash
-seed: 7
 behavior: stig
 net-top:
   - element: node
     subnet: mesh
-    number: 10
+    number: 100
     rules:
       - element: link
         strategy: per_node
         count:
           min: 0
-          max: 4
+          max: 2
         destination:
           selection: random
           subnet: mesh
@@ -30,7 +29,7 @@ dash-chat-top:
       group_amount: 1
       group_size:
         type: fixed
-        value: 3
+        value: 5
       operations_count:
         type: fixed
         value: 1

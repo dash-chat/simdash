@@ -68,6 +68,7 @@ where
         }
     }
 
+    /// Bring the Scenario back to its initial state.
     pub fn reset(&mut self) {
         self.state = Some(self.initial_state.clone());
         self.steps = 0;

@@ -18,6 +18,7 @@ pretty_assertions = { version = "1" }
 petgraph = { version = "0.8", features = ["serde-1"] }
 postcard = { version = "1", features = ["use-std"] }
 rainbow-brackets = { git = "https://github.com/maackle/rainbow-brackets.git" }
+rand = "0.9"
 tokio = { version = "1", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

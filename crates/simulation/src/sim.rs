@@ -115,6 +115,7 @@ impl Simulation {
         Ok(())
     }
 
+    /// Bring the Simulation back to its initial state.
     pub fn reset(&mut self) {
         self.scenario.reset();
     }

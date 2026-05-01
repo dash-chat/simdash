@@ -12,7 +12,7 @@ use simdash_model_network::{NetworkState, NetworkTopologyState};
 #[derive(Debug, Deserialize)]
 pub struct SimConfig {
     #[serde(default)]
-    pub seed: u64,
+    pub seed: Option<u64>,
     #[serde(rename = "net-top")]
     pub net_top: TopologyConfig,
     #[serde(rename = "dash-chat-top")]
@@ -45,6 +45,8 @@ pub fn generate_topology_from_config(config: SimConfig) -> (ChatTopology, u64) {
         net_top,
         dash_chat_top,
     } = config;
+
+    let seed = seed.unwrap_or_else(|| rand::random());
 
     let topology = TopologyGenerator::new(net_top).generate(seed);
     let chat_gen = ChatStateGenerator {
