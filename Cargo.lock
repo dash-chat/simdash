@@ -1595,6 +1595,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "simdash-protocol-ecco"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "dash-chat-top-gen",
+ "derive_more 2.1.1",
+ "maplit",
+ "named-id",
+ "owo-colors",
+ "polestar",
+ "pretty_assertions",
+ "rainbow-brackets",
+ "serde",
+ "simdash-model-chat",
+ "simdash-model-network",
+ "simdash-model-node",
+ "simdash-routing-common",
+ "simdash-routing-dispatch",
+ "simdash-scenario",
+ "simdash-simulation",
+ "simdash-types",
+ "tokio",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "simdash-protocol-flooding"
 version = "0.1.0"
 dependencies = [
@@ -1643,35 +1672,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "simdash-protocol-stig"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "axum",
- "dash-chat-top-gen",
- "derive_more 2.1.1",
- "maplit",
- "named-id",
- "owo-colors",
- "polestar",
- "pretty_assertions",
- "rainbow-brackets",
- "serde",
- "simdash-model-chat",
- "simdash-model-network",
- "simdash-model-node",
- "simdash-routing-common",
- "simdash-routing-dispatch",
- "simdash-scenario",
- "simdash-simulation",
- "simdash-types",
- "tokio",
- "tower-http",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "simdash-routing-common"
 version = "0.1.0"
 dependencies = [
@@ -1690,10 +1690,10 @@ dependencies = [
  "named-id",
  "polestar",
  "serde",
+ "simdash-protocol-ecco",
  "simdash-protocol-flooding",
  "simdash-protocol-flooding-sync",
  "simdash-protocol-noop",
- "simdash-protocol-stig",
  "simdash-routing-common",
  "simdash-types",
 ]
@@ -1798,7 +1798,7 @@ dependencies = [
  "simdash-model-chat",
  "simdash-model-network",
  "simdash-model-node",
- "simdash-protocol-stig",
+ "simdash-protocol-ecco",
  "simdash-routing-common",
  "simdash-routing-dispatch",
  "simdash-scenario",

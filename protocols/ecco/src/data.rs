@@ -79,7 +79,7 @@ pub struct Metadata {
     pub seq: Seq,
 }
 
-/// Metadata needed for Stig.
+/// Metadata needed for Ecco.
 impl Metadata {
     /// Get the metadata from an operation
     pub fn from_op(op: &simdash_types::Operation) -> Self {

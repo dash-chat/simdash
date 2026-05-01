@@ -57,20 +57,20 @@ impl Behavior for BasicFloodingSyncBehavior {
 }
 
 /// A routing behavior that only generates actions for the FloodingSync protocol.
-pub struct BasicStigBehavior;
+pub struct BasicEccoBehavior;
 
-impl Behavior for BasicStigBehavior {
+impl Behavior for BasicEccoBehavior {
     type Model = RoutingDispatchModel;
 
     fn next_tick(
         &mut self,
         state: &RoutingDispatchState,
     ) -> anyhow::Result<Vec<RoutingDispatchAction>> {
-        let mut b = crate::stig::StandardBehavior::default();
+        let mut b = crate::ecco::StandardBehavior::default();
         let actions = b
-            .next_tick(&state.stig)?
+            .next_tick(&state.ecco)?
             .into_iter()
-            .map(|a| crate::lift_action(a, AnyRoutingData::Stig, AnyRoutingAction::Stig))
+            .map(|a| crate::lift_action(a, AnyRoutingData::Ecco, AnyRoutingAction::Ecco))
             .collect();
         Ok(actions)
     }

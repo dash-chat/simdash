@@ -5,7 +5,7 @@ use polestar::mapping::{ActionOf, FxOf, StateOf};
 use simdash_model_network::{NetworkModel, NetworkState, RoundRobinNodeScheduler};
 use simdash_model_node::BasicNodeBehavior;
 use simdash_routing_dispatch::{
-    BasicFloodingSyncBehavior, BasicStigBehavior, NaiveFloodingBehavior,
+    BasicEccoBehavior, BasicFloodingSyncBehavior, NaiveFloodingBehavior,
 };
 use simdash_scenario::Scenario;
 use simdash_types::Behavior;
@@ -25,7 +25,7 @@ impl NetworkBehavior {
 
     pub fn standard() -> Self {
         Self::new(RoundRobinNodeScheduler::new(BasicNodeBehavior::new(
-            BasicStigBehavior,
+            BasicEccoBehavior,
         )))
     }
 }

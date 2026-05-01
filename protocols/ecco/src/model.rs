@@ -37,7 +37,7 @@ impl From<u32> for SourceId {
     }
 }
 
-/// The Stig model implements the flooding-sync protocol.
+/// The Ecco model implements the flooding-sync protocol.
 #[derive(Debug)]
 pub struct Model {
     /// Ticks to wait between sync rounds
@@ -162,7 +162,7 @@ mod tests {
     use polestar::Machine;
     use simdash_types::LogHeight;
 
-    use crate::{Announce, StateVector, util::make_stig_op};
+    use crate::{Announce, StateVector, util::make_ecco_op};
 
     use super::*;
 
@@ -202,7 +202,7 @@ mod tests {
         let topic = 0.into();
         let author = 0.into();
         let seq = 0.into();
-        state.store_op(&model, make_stig_op(author, topic));
+        state.store_op(&model, make_ecco_op(author, topic));
 
         let trigger = ProtocolAction::protocol(Action::TriggerSync);
         let broadcast = ProtocolFx::broadcast(WireData::Announce(Announce::new(

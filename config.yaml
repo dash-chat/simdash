@@ -1,5 +1,5 @@
 name: simdash
-behavior: stig
+behavior: ecco
 net-top:
   - element: node
     subnet: mesh

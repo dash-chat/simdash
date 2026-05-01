@@ -9,7 +9,7 @@ use simdash_types::*;
 
 use crate::{Model, Op, SourceId, StateVector, state::routing_table::RoutingTable};
 
-/// The Stig protocol's state simply tracks the number of ticks since the last time it was triggered.
+/// The Ecco protocol's state simply tracks the number of ticks since the last time it was triggered.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct State {
     /// The buffer of operations to sync

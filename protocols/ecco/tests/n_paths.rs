@@ -3,10 +3,10 @@
 use rainbow_brackets::{RainbowBrackets, RainbowBracketsConfig};
 use simdash_model_network::{NetworkAction, RoundRobinNodeScheduler};
 use simdash_model_node::BasicNodeBehavior;
-use simdash_protocol_stig::{StateVector, util::make_stig_op};
-use simdash_routing_dispatch::BasicStigBehavior;
+use simdash_protocol_ecco::{StateVector, util::make_ecco_op};
+use simdash_routing_dispatch::BasicEccoBehavior;
 use simdash_scenario::Scenario;
-use simdash_types::{NodeId, Ticks, TopicId};
+use simdash_types::{LogId, Seq, Ticks, TopicId};
 
 use named_id::{Nameable, Rename};
 
@@ -18,15 +18,14 @@ use named_id::{Nameable, Rename};
 /// propagate ops to non-originating subscribers.  The test is here so the scenario
 /// can be run and inspected as the protocol evolves.
 #[test]
-fn linear_chain_scenario() {
-    const N: u32 = 4;
+fn n_paths_scenario() {
     const SYNC_INTERVAL: Ticks = Ticks(10);
     const STEPS: usize = 10;
 
-    // 0 → 1 → 2 → … → N-1
-    let graph = simdash_model_network::generate::linear_chain(N);
-    let (model, mut state) = simdash_model_network::generate::make_model(graph, SYNC_INTERVAL);
-    let behavior = RoundRobinNodeScheduler::new(BasicNodeBehavior::new(BasicStigBehavior)).sorted();
+    let (graph, (alpha, omega), paths) = simdash_model_network::generate::n_paths([2, 3, 4]);
+    let (model, mut state) =
+        simdash_model_network::generate::make_model(graph.clone(), SYNC_INTERVAL);
+    let behavior = RoundRobinNodeScheduler::new(BasicNodeBehavior::new(BasicEccoBehavior)).sorted();
 
     state.graph.nodes.keys().for_each(|node_id| {
         node_id.with_short();
@@ -34,19 +33,16 @@ fn linear_chain_scenario() {
 
     let topic = TopicId(0).with_short();
 
-    let alpha = NodeId(0).with_name("alpha"); // .with_name("α");
-    let omega = NodeId(N - 1).with_name("omega"); // .with_name("ω");
+    let alpha_model = &model.nodes.get(&alpha).unwrap().routing.ecco;
+    let omega_model = &model.nodes.get(&omega).unwrap().routing.ecco;
 
-    let alpha_model = &model.nodes.get(&alpha).unwrap().routing.stig;
-    let omega_model = &model.nodes.get(&omega).unwrap().routing.stig;
-
-    let op = make_stig_op(alpha, topic);
+    let op = make_ecco_op(alpha, topic);
 
     // Node 0 "creates" an op for topic 0
     state
         .graph
         .update_node(alpha, |mut node| {
-            node.routing.stig.store_op(&alpha_model, op.clone());
+            node.routing.ecco.store_op(&alpha_model, op.clone());
             Ok((node, ()))
         })
         .unwrap();
@@ -55,7 +51,7 @@ fn linear_chain_scenario() {
     state
         .graph
         .update_node(omega, |mut node| {
-            node.routing.stig.subscribe(&omega_model, topic);
+            node.routing.ecco.subscribe(&omega_model, topic);
             Ok((node, ()))
         })
         .unwrap();
@@ -63,7 +59,10 @@ fn linear_chain_scenario() {
     let mut scenario = Scenario::initial(model, state, behavior)
         .on_step(|s| {
             println!();
-            println!("========= STEP {} =========", s.steps());
+            println!(
+                "######################## STEP {} ########################",
+                s.steps()
+            );
             println!();
         })
         .on_action("actions", |action| {
@@ -76,7 +75,7 @@ fn linear_chain_scenario() {
                 .mode(rainbow_brackets::Mode::OuterText);
             match action {
                 NetworkAction::Trace(message) => {
-                    println!("\n{:?}", message);
+                    println!("{:?}", message);
                 }
                 action => {
                     println!("⟵ {}", action.renamed_ref().rainbow_brackets_with(&rb));
@@ -96,7 +95,7 @@ fn linear_chain_scenario() {
             }
         });
 
-    // Advance the network; each tick every node broadcasts its Stig state
+    // Advance the network; each tick every node broadcasts its Ecco state
     // and effects from the previous tick are dispatched as consequences
     for _ in 0..STEPS {
         scenario.advance().unwrap();
@@ -105,13 +104,13 @@ fn linear_chain_scenario() {
     // Check whether node 9 received the op
     let node_alpha = scenario.state().graph.node_state(alpha).unwrap();
     let node_omega = scenario.state().graph.node_state(omega).unwrap();
-    let sv_alpha = node_alpha.routing.stig.op_buffer.state_vector(topic);
-    let sv_omega = node_omega.routing.stig.op_buffer.state_vector(topic);
+    let sv_alpha = node_alpha.routing.ecco.op_buffer.state_vector(topic);
+    let sv_omega = node_omega.routing.ecco.op_buffer.state_vector(topic);
     assert_eq!(sv_alpha.len(), 1);
     assert_eq!(sv_alpha, sv_omega);
     let received = node_omega
         .routing
-        .stig
+        .ecco
         .op_buffer
         .diff(0.into(), &StateVector::new([]));
 
@@ -120,5 +119,30 @@ fn linear_chain_scenario() {
         !received.is_empty(),
         "node N-1 should have received the op from node 0"
     );
-    let _ = received;
+
+    let op_counts = (alpha..omega)
+        .map(|node| {
+            scenario
+                .state()
+                .graph
+                .node_state(node)
+                .unwrap()
+                .routing
+                .ecco
+                .op_buffer
+                .ops
+                .get(&topic)
+                .unwrap()
+                .len()
+        })
+        .collect::<Vec<_>>();
+
+    let mut expected_op_counts = vec![0; op_counts.len()];
+    expected_op_counts[*alpha as usize] = 1;
+    expected_op_counts[*omega as usize - 1] = 1;
+    for path in &paths[0] {
+        expected_op_counts[**path as usize] = 1;
+    }
+
+    assert_eq!(op_counts, expected_op_counts);
 }

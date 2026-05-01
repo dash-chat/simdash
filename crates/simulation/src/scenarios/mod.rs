@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use simdash_model_network::{NetworkAction, NetworkModel};
 use simdash_routing_dispatch::{
-    BasicFloodingSyncBehavior, BasicStigBehavior, NaiveFloodingBehavior,
+    BasicFloodingSyncBehavior, BasicEccoBehavior, NaiveFloodingBehavior,
 };
 use simdash_scenario::Scenario;
 
@@ -14,13 +14,13 @@ use self::sim_scenario::SimBehaviorType;
 
 pub type NaiveFloodingScenario = Scenario<SimBehaviorType<NaiveFloodingBehavior>>;
 pub type BasicFloodingSyncScenario = Scenario<SimBehaviorType<BasicFloodingSyncBehavior>>;
-pub type StigScenario = Scenario<SimBehaviorType<BasicStigBehavior>>;
+pub type EccoScenario = Scenario<SimBehaviorType<BasicEccoBehavior>>;
 pub type NoRoutingScenario = Scenario<NoRoutingBehaviorType>;
 
 pub enum AnyScenario {
     NaiveFlooding(NaiveFloodingScenario),
     BasicFloodingSync(BasicFloodingSyncScenario),
-    Stig(StigScenario),
+    Ecco(EccoScenario),
     NoRouting(NoRoutingScenario),
 }
 
@@ -29,7 +29,7 @@ impl AnyScenario {
         match self {
             AnyScenario::NaiveFlooding(s) => s.state(),
             AnyScenario::BasicFloodingSync(s) => s.state(),
-            AnyScenario::Stig(s) => s.state(),
+            AnyScenario::Ecco(s) => s.state(),
             AnyScenario::NoRouting(s) => s.state(),
         }
     }
@@ -38,7 +38,7 @@ impl AnyScenario {
         match self {
             AnyScenario::NaiveFlooding(s) => s.model(),
             AnyScenario::BasicFloodingSync(s) => s.model(),
-            AnyScenario::Stig(s) => s.model(),
+            AnyScenario::Ecco(s) => s.model(),
             AnyScenario::NoRouting(s) => s.model(),
         }
     }
@@ -47,7 +47,7 @@ impl AnyScenario {
         match self {
             AnyScenario::NaiveFlooding(s) => s.advance(),
             AnyScenario::BasicFloodingSync(s) => s.advance(),
-            AnyScenario::Stig(s) => s.advance(),
+            AnyScenario::Ecco(s) => s.advance(),
             AnyScenario::NoRouting(s) => s.advance(),
         }
     }
@@ -56,7 +56,7 @@ impl AnyScenario {
         match self {
             AnyScenario::NaiveFlooding(s) => &s.model().topology,
             AnyScenario::BasicFloodingSync(s) => &s.model().topology,
-            AnyScenario::Stig(s) => &s.model().topology,
+            AnyScenario::Ecco(s) => &s.model().topology,
             AnyScenario::NoRouting(s) => &s.model().topology,
         }
     }
@@ -65,6 +65,6 @@ impl AnyScenario {
 pub const AVAILABLE_BEHAVIORS: &[&str] = &[
     "naive-flooding",
     "basic-flooding-sync",
-    "stig",
+    "ecco",
     "no-routing",
 ];

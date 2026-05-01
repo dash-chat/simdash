@@ -1,4 +1,4 @@
-# stig routing protocol
+# ecco routing protocol
 
 
 

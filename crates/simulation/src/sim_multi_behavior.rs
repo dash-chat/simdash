@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use simdash_model_network::{NetworkModel, NetworkState};
 use simdash_routing_dispatch::{
-    BasicFloodingSyncBehavior, BasicStigBehavior, NaiveFloodingBehavior,
+    BasicEccoBehavior, BasicFloodingSyncBehavior, NaiveFloodingBehavior,
 };
 use simdash_types::Behavior;
 
@@ -13,7 +13,7 @@ use crate::scenarios::{no_routing, AnyScenario, AVAILABLE_BEHAVIORS};
 /// Snapshot of op IDs per node, used to compute deltas.
 pub type OpSnapshot = HashMap<u32, HashSet<u32>>;
 
-const DEFAULT_BEHAVIOR: &str = "stig";
+const DEFAULT_BEHAVIOR: &str = "ecco";
 
 pub struct Simulation {
     model: NetworkModel,
@@ -69,9 +69,9 @@ impl Simulation {
                 state,
                 BasicFloodingSyncBehavior,
             ))),
-            "stig" => Ok(AnyScenario::Stig(decorate_scenario(
+            "ecco" => Ok(AnyScenario::Ecco(decorate_scenario(
                 verbose,
-                make_sim_scenario(model, state, BasicStigBehavior),
+                make_sim_scenario(model, state, BasicEccoBehavior),
             ))),
             "no-routing" => Ok(AnyScenario::NoRouting(no_routing::no_routing(model, state))),
             other => anyhow::bail!("Unknown behavior: {other}"),

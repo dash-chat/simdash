@@ -6,7 +6,7 @@ use simdash_model_network::NetworkState;
 use simdash_model_network::{NetworkModel, RoundRobinNodeScheduler};
 use simdash_model_node::{BasicNodeBehavior, NodeModel};
 use simdash_routing_dispatch::flooding::{FloodingOp, FloodingState};
-use simdash_routing_dispatch::{flooding_sync, stig};
+use simdash_routing_dispatch::{ecco, flooding_sync};
 use simdash_routing_dispatch::{noop::NoopState, RoutingDispatchModel, RoutingDispatchState};
 use simdash_scenario::Scenario;
 use simdash_types::{Behavior, NodeId, Ticks};
@@ -55,11 +55,11 @@ pub fn seed_routing(model: &NetworkModel, state: &mut NetworkState) {
                     .values()
                     .map(|op| flooding_sync::Op::from_op(op))
                     .collect();
-                let stig_ops = n
+                let ecco_ops = n
                     .chat
                     .op_store
                     .values()
-                    .map(|op| stig::Op::from_op(op))
+                    .map(|op| ecco::Op::from_op(op))
                     .collect();
                 let groups = model
                     .topology
@@ -71,7 +71,7 @@ pub fn seed_routing(model: &NetworkModel, state: &mut NetworkState) {
                     flooding: FloodingState { ops: flooding_ops },
                     flooding_sync: flooding_sync::State::from_ops(flooding_sync_ops),
                     noop: NoopState::default(),
-                    stig: stig::State::initialize(&node_model.routing.stig, stig_ops, groups),
+                    ecco: ecco::State::initialize(&node_model.routing.ecco, ecco_ops, groups),
                 };
                 Ok((n, ()))
             })

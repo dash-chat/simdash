@@ -16,7 +16,7 @@ simdash-model-chat = { workspace = true }
 simdash-model-node = { workspace = true }
 simdash-model-network = { workspace = true }
 simdash-types = { workspace = true }
-simdash-protocol-stig = { workspace = true }
+simdash-protocol-ecco = { workspace = true }
 simdash-routing-common = { workspace = true }
 simdash-routing-dispatch = { workspace = true }
 simdash-scenario = { workspace = true }

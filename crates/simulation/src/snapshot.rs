@@ -5,7 +5,7 @@ use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use simdash_model_network::{NetworkState, RoundRobinNodeScheduler};
 use simdash_model_node::BasicNodeBehavior;
-use simdash_routing_dispatch::BasicStigBehavior;
+use simdash_routing_dispatch::BasicEccoBehavior;
 use simdash_scenario::Scenario;
 use simdash_types::{GroupId, NodeId, OpId, Operation};
 
