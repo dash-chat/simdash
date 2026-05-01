@@ -101,6 +101,17 @@ impl polestar::Machine for Model {
                 WireData::Payload(payload) => {
                     let mut fx = vec![];
                     if payload.addressees.contains(&self.mesh_id) {
+                        // I've been asked to store and forward these ops, so I shall.
+
+                        // Store the ops.
+                        for op in payload.ops.iter() {
+                            // XXX: we shouldn't actually store the op in chat state, this is just so the visualizer can see it
+                            // (it doesn't have per-protocol op storage knowledge yet)
+                            fx.push(ProtocolFx::store_op(op.encrypted.clone()));
+                            state.store_op(self, op.clone());
+                        }
+
+                        // Forward the ops, if relevant.
                         let addressees = state
                             .routes
                             .targets(self, payload.ops.iter().map(|op| &op.metadata));
@@ -112,11 +123,14 @@ impl polestar::Machine for Model {
                         }
                     }
 
-                    fx.extend(payload.ops.into_iter().map(|op| {
-                        let encrypted = op.encrypted.clone();
-                        state.op_buffer.store_op(op);
-                        ProtocolFx::store_op(encrypted)
-                    }));
+                    // Store the op in chat state if I'm subscribed.
+                    for op in payload.ops {
+                        let subscribed = state.is_subscribed(self.mesh_id, op.metadata.topic_id);
+                        if subscribed {
+                            fx.push(ProtocolFx::store_op(op.encrypted));
+                        }
+                    }
+
                     (state, fx)
                 }
             },

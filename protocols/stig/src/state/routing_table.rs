@@ -99,8 +99,8 @@ impl<H: HopTracker> RoutingTable<H> {
                 result.extend(
                     topic_peers
                         .iter()
-                        .filter(|(author, fact)| {
-                            **author != model.mesh_id && !has_it(&fact.state_vector)
+                        .filter(|(_, fact)| {
+                            fact.relay != model.mesh_id && !has_it(&fact.state_vector)
                         })
                         .map(|(_, fact)| fact.relay),
                 );
@@ -272,12 +272,12 @@ mod tests {
     fn test_targets() {
         let mut table = RoutingTable::<HopCount>::default();
 
-        let me = SourceId::from(0);
+        let sally = SourceId::from(0);
         let alice = SourceId::from(1);
         let bobbi = SourceId::from(2);
         let chuck = SourceId::from(3);
 
-        let model = Model::new(me, 3.into());
+        let model = Model::new(sally, 3.into());
 
         let a = Announce::new(alice, statevec(0, [(1, 3), (2, 3)]));
         let b = Announce::new(bobbi, statevec(0, [(1, 3), (2, 5)]));

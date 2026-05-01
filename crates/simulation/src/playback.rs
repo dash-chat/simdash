@@ -1,7 +1,5 @@
 mod server;
 use server::*;
-use simdash_model_network::NetworkModel;
-use simdash_types::Behavior;
 
 use crate::sim::Simulation;
 use std::sync::Arc;

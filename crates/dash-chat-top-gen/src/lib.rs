@@ -132,7 +132,7 @@ impl ChatStateGenerator {
     pub fn generate(&self, seed: u64, topology: NetTopology) -> ChatTopology {
         let mut rng = StdRng::seed_from_u64(seed);
         let mut states: BTreeMap<NodeId, ChatState> = BTreeMap::new();
-        let mut group_counter: u64 = 0;
+        let mut group_counter: u32 = 0;
         let mut op_counter: u32 = 0;
 
         // Initialize every node with storage capacity.
@@ -174,7 +174,7 @@ impl ChatStateGenerator {
                     };
 
                     for _ in 0..spec.group_amount {
-                        let group_id: GroupId = group_counter;
+                        let group_id = TopicId::from(group_counter);
                         group_counter += 1;
 
                         let target_size =
@@ -227,7 +227,7 @@ impl ChatStateGenerator {
                                 author,
                                 payload_size,
                                 seq: Seq::from(*seq as u32),
-                                topic_id: TopicId::from(group_id as u32),
+                                topic_id: group_id,
                             };
                             let op = Operation {
                                 id: op_id,
@@ -318,10 +318,12 @@ impl ChatStateGenerator {
                     for &node in &nodes {
                         // Groups: pick a random subset from the group id range.
                         let gpn = spec.groups_per_node.sample(&mut rng).min(num_groups) as usize;
-                        let groups: BTreeSet<GroupId> = (group_counter..group_counter + num_groups)
+                        let groups: BTreeSet<GroupId> = (group_counter
+                            ..group_counter + num_groups as u32)
                             .collect::<Vec<_>>()
                             .choose_multiple(&mut rng, gpn)
                             .copied()
+                            .map(TopicId::from)
                             .collect();
 
                         // Contacts: pick from other nodes.
@@ -351,12 +353,13 @@ impl ChatStateGenerator {
                                     author: node,
                                     payload_size,
                                     seq: Seq::from(*seq as u32),
-                                    topic_id: TopicId::from(gid as u32),
+                                    topic_id: gid,
                                 };
                                 *seq += 1;
                                 (header, Body::GroupMessage { group_id: gid })
                             } else {
-                                let seq = seqs.entry((node, 0)).or_insert(0);
+                                let zero = 0.into();
+                                let seq = seqs.entry((node, zero)).or_insert(0);
                                 let recipient = contacts
                                     .iter()
                                     .collect::<Vec<_>>()
@@ -368,7 +371,7 @@ impl ChatStateGenerator {
                                     author: node,
                                     payload_size,
                                     seq: Seq::from(*seq as u32),
-                                    topic_id: 0.into(),
+                                    topic_id: zero,
                                 };
                                 *seq += 1;
                                 (header, Body::DirectMessage { recipient })
@@ -386,7 +389,7 @@ impl ChatStateGenerator {
                         state.groups.extend(groups);
                     }
 
-                    group_counter += num_groups;
+                    group_counter += num_groups as u32;
                 }
             }
         }

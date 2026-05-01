@@ -4,7 +4,6 @@
 //! Start frontend: cd web && npm run dev -- --open
 
 use std::net::SocketAddr;
-use std::sync::Arc;
 
 use named_id::{Nameable, Rename};
 
@@ -47,6 +46,16 @@ async fn main() {
             node.chat
                 .store_op(op.encrypted.decrypt(&simdash_types::EncryptionKey))
                 .unwrap();
+            node.chat.groups.insert(topic);
+            Ok((node, ()))
+        })
+        .unwrap();
+
+    state
+        .graph
+        .update_node(omega, |mut node| {
+            node.routing.stig.subscribe(omega_model, topic);
+            node.chat.groups.insert(topic);
             Ok((node, ()))
         })
         .unwrap();
@@ -63,7 +72,7 @@ async fn main() {
     let behavior = NetworkBehavior::new(RoundRobinNodeScheduler::new(BasicNodeBehavior::new(
         BasicStigBehavior,
     )));
-    let scenario = Scenario::initial(model, state.clone(), behavior);
+    let scenario = Scenario::initial(model, state.clone(), behavior).pretty_output();
     let sim = Simulation::new(scenario, state, true).expect("failed to create simulation");
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
 

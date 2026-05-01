@@ -9,7 +9,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use simdash_model_network::NetworkState;
-use simdash_types::{Body, GetRoutingOpInfo, NodeId, Operation, RoutingOpInfo};
+use simdash_types::{Body, GetRoutingOpInfo, GroupId, NodeId, Operation, RoutingOpInfo};
 use tokio::sync::Mutex;
 
 use crate::sim::{OpSnapshot, Simulation};
@@ -345,7 +345,7 @@ pub struct NodeInfo {
     pub id: u32,
     pub ops: Vec<OpInfo>,
     pub contacts: Vec<u32>,
-    pub groups: Vec<u64>,
+    pub groups: Vec<GroupId>,
     pub routing_ops: Vec<RoutingOpInfo>,
     pub neighbors: Vec<u32>,
     pub storage_capacity: Option<u64>,
@@ -363,7 +363,7 @@ pub struct OpInfo {
 #[derive(Serialize, Clone)]
 #[serde(tag = "type")]
 pub enum OpBody {
-    GroupMessage { group_id: u64 },
+    GroupMessage { group_id: GroupId },
     DirectMessage { recipient: u32 },
 }
 

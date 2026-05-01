@@ -47,8 +47,6 @@ pub fn group_op(author: impl Into<NodeId>, topic_id: impl Into<TopicId>) -> Oper
             seq,
             topic_id,
         },
-        body: Body::GroupMessage {
-            group_id: *topic_id as u64,
-        },
+        body: Body::GroupMessage { group_id: topic_id },
     }
 }

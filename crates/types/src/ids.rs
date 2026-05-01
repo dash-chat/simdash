@@ -1,6 +1,6 @@
 use super::*;
 
-pub type GroupId = u64;
+pub type GroupId = TopicId;
 
 #[derive(
     Serialize,

@@ -7,6 +7,8 @@ use polestar::{
     Machine,
     mapping::{ActionOf, FxOf, StateOf},
 };
+use rainbow_brackets::BracketPair;
+use simdash_model_network::NetworkModel;
 use simdash_types::Behavior;
 
 /// A Scenario takes an initial model State and a Behavior,
@@ -144,5 +146,49 @@ where
     /// Get the number of steps taken by the Scenario so far.
     pub fn steps(&self) -> usize {
         self.steps
+    }
+}
+
+impl<B> Scenario<B>
+where
+    B: Behavior<Model = NetworkModel>,
+{
+    /// Print some super helpful output to the console for NetworkModel scenarios.
+    pub fn pretty_output(self) -> Self {
+        use rainbow_brackets::{BracketPair, RainbowBrackets, RainbowBracketsConfig};
+        use simdash_model_network::NetworkAction;
+        use simdash_types::Rename;
+
+        let mut rb = {
+            RainbowBracketsConfig::default()
+            // .colors(vec![
+            //     rainbow_brackets::Color::Cyan,
+            //     rainbow_brackets::Color::Magenta,
+            //     rainbow_brackets::Color::Yellow,
+            //     rainbow_brackets::Color::Black,
+            // ])
+            // .mode(rainbow_brackets::Mode::OuterText)
+        };
+        rb.brackets.push(BracketPair::new('⟪', '⟫'));
+        let rb2 = rb.clone();
+
+        self.on_step(|s| {
+            println!();
+            println!("========= STEP {} =========", s.steps());
+            println!();
+        })
+        .on_action("actions", move |action| match action {
+            NetworkAction::Trace(message) => {
+                println!("\n{:?}", message);
+            }
+            action => {
+                println!("⟵ {}", action.renamed_ref().rainbow_brackets_with(&rb));
+            }
+        })
+        .on_fx("fx", move |fx| {
+            if fx.len() > 0 {
+                println!("  ⤷ {}\n", fx.renamed_ref().rainbow_brackets_with(&rb2));
+            }
+        })
     }
 }

@@ -7,7 +7,7 @@ use derive_more::{Deref, From};
 use serde::{Deserialize, Serialize};
 use simdash_types::*;
 
-use crate::{Model, Op, StateVector, state::routing_table::RoutingTable};
+use crate::{Model, Op, SourceId, StateVector, state::routing_table::RoutingTable};
 
 /// The Stig protocol's state simply tracks the number of ticks since the last time it was triggered.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -23,12 +23,30 @@ impl State {
         self.routes.record_local_topic_update(model, topic_id, None);
     }
 
+    pub fn is_subscribed(&self, source_id: SourceId, topic_id: TopicId) -> bool {
+        self.routes
+            .facts
+            .get(&topic_id)
+            .and_then(|facts| facts.get(&source_id))
+            .is_some()
+    }
+
     pub fn store_op(&mut self, model: &Model, op: Op) {
         let op = StoredOp::new(op);
         self.routes.record_local_topic_update(
             model,
             op.metadata.topic_id,
             Some((op.metadata.log_id, LogHeight::from_seq(op.metadata.seq))),
+        );
+        println!(
+            "### STORED: me={}, sv={:?}",
+            model.mesh_id.renamed(),
+            self.routes
+                .facts
+                .get(&op.metadata.topic_id)
+                .and_then(|facts| facts.get(&model.mesh_id))
+                .map(|fact| fact.state_vector.renamed_ref()),
+            // self.op_buffer.state_vector(op.metadata.topic_id).renamed()
         );
         self.op_buffer.store_op(op);
     }

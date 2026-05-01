@@ -7,7 +7,7 @@ use simdash_model_network::{NetworkState, RoundRobinNodeScheduler};
 use simdash_model_node::BasicNodeBehavior;
 use simdash_routing_dispatch::BasicStigBehavior;
 use simdash_scenario::Scenario;
-use simdash_types::{NodeId, OpId, Operation};
+use simdash_types::{GroupId, NodeId, OpId, Operation};
 
 use crate::sim::{NetworkBehavior, Simulation};
 
@@ -28,7 +28,7 @@ pub struct NodeSnapshot {
     pub id: NodeId,
     pub ops_count: usize,
     pub contacts: Vec<NodeId>,
-    pub groups: Vec<u64>,
+    pub groups: Vec<GroupId>,
     pub neighbors: Vec<NodeId>,
     pub storage_capacity: Option<u64>,
     pub stored_size: u64,

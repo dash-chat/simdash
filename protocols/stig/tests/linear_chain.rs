@@ -6,7 +6,7 @@ use simdash_model_node::BasicNodeBehavior;
 use simdash_protocol_stig::{StateVector, util::make_stig_op};
 use simdash_routing_dispatch::BasicStigBehavior;
 use simdash_scenario::Scenario;
-use simdash_types::{LogId, NodeId, Seq, Ticks, TopicId};
+use simdash_types::{NodeId, Ticks, TopicId};
 
 use named_id::{Nameable, Rename};
 
