@@ -9,9 +9,12 @@ simdash-routing-common = { workspace = true }
 simdash-protocol-flooding = { workspace = true }
 simdash-protocol-flooding-sync = { workspace = true }
 simdash-protocol-noop = { workspace = true }
+simdash-protocol-ecco = { workspace = true }
 
 anyhow = { workspace = true }
+derive_more = { workspace = true }
 maplit = { workspace = true }
+named-id = { workspace = true }
 polestar = { workspace = true }
 serde = { workspace = true }
 

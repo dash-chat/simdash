@@ -1,5 +1,7 @@
 //! Behaviors for the network level.
 
+use std::sync::Arc;
+
 use simdash_model_chat::ChatAction;
 use simdash_model_node::NodeAction;
 use simdash_model_node::NodeModel;
@@ -15,38 +17,87 @@ use crate::{NetworkAction, NetworkFx, NetworkModel, NetworkState};
 ///
 /// This models a uniform flow of time with nodes that are perfectly identical to each other
 /// in the rate that they take actions.
-pub struct RoundRobinNodeScheduler<B: Behavior<NodeModel>> {
+pub struct RoundRobinNodeScheduler<B: Behavior<Model = NodeModel>> {
     node_behavior: B,
     pending_actions: Vec<NetworkAction>,
+    sorted: bool,
 }
 
-impl<B: Behavior<NodeModel>> RoundRobinNodeScheduler<B> {
+impl<B: Behavior<Model = NodeModel>> RoundRobinNodeScheduler<B> {
     /// Constructor
     pub fn new(node_behavior: B) -> Self {
         Self {
             node_behavior,
             pending_actions: Vec::new(),
+            sorted: false,
         }
+    }
+
+    /// Sort the actions by node ID.
+    ///
+    /// This is NOT wise to use in in general, only if:
+    /// - the Node actions are guaranteed to be independent of each other
+    /// - the non-Node actions come after the Node actions
+    #[cfg(any(test, feature = "testing"))]
+    pub fn sorted(mut self) -> Self {
+        self.sorted = true;
+        self
     }
 }
 
-impl<B: Behavior<NodeModel>> Behavior<NetworkModel> for RoundRobinNodeScheduler<B> {
+impl<B: Behavior<Model = NodeModel>> Behavior for RoundRobinNodeScheduler<B> {
+    type Model = NetworkModel;
+
     fn next_tick(&mut self, state: &NetworkState) -> anyhow::Result<Vec<NetworkAction>> {
         // TODO: add propagation delay here.
-        let consequences = self.pending_actions.drain(..);
+        let mut consequences = self.pending_actions.drain(..).collect::<Vec<_>>();
+        if self.sorted {
+            consequences.sort_by_key(|action| match action {
+                NetworkAction::Node(node_id, _) => *node_id,
+                _ => NodeId::from(u32::MAX),
+            });
+        }
 
-        let generated = state.graph.nodes.iter().flat_map(|(node_id, node_state)| {
-            let actions = self
-                .node_behavior
-                .next_tick(node_state)
-                .expect("todo, what to do on errors?");
-            actions
-                .into_iter()
-                .map(|action| NetworkAction::Node(*node_id, action))
-        });
+        let mut generated = state
+            .graph
+            .nodes
+            .iter()
+            .flat_map(|(node_id, node_state)| {
+                let actions = self
+                    .node_behavior
+                    .next_tick(node_state)
+                    .expect("todo, what to do on errors?");
+                actions
+                    .into_iter()
+                    .map(|action| NetworkAction::Node(*node_id, action))
+            })
+            .collect::<Vec<_>>();
 
-        Ok(consequences
-            .chain(generated)
+        if self.sorted {
+            generated.sort_by_key(|action| match action {
+                NetworkAction::Node(node_id, _) => *node_id,
+                _ => NodeId::from(u32::MAX),
+            });
+        }
+
+        // let consequences = consequences.collect::<Vec<_>>();
+        // let generated = generated.collect::<Vec<_>>();
+
+        // println!("consequences ({}):", consequences.len());
+        // for c in consequences.iter() {
+        //     println!("  {:?}", c);
+        // }
+        // println!("generated: {:?}", generated.len());
+
+        Ok(std::iter::empty()
+            .chain([NetworkAction::trace(
+                "---------------- CONSEQUENCES ----------------",
+            )])
+            .chain(consequences.into_iter())
+            .chain([NetworkAction::trace(
+                "----------------- GENERATED ------------------",
+            )])
+            .chain(generated.into_iter())
             .chain([NetworkAction::Tick, NetworkAction::EvolveTopology])
             .collect())
     }
@@ -76,7 +127,7 @@ fn handle_single_fx(
     let mut actions = Vec::new();
     match fx {
         RoutingDispatchFx::Network(send) => match send {
-            SendFx::BroadcastData { data } => {
+            SendFx::Broadcast { data } => {
                 let neighbors = state.neighborhood(node_id).collect::<Vec<_>>();
                 for neighbor in neighbors {
                     let node_action = NodeAction::Routing(RoutingDispatchAction::Network(
@@ -85,7 +136,7 @@ fn handle_single_fx(
                     actions.push(NetworkAction::node(neighbor, node_action));
                 }
             }
-            SendFx::UnicastData { to, data } => {
+            SendFx::Unicast { to, data } => {
                 let node_action = NodeAction::Routing(RoutingDispatchAction::Network(
                     ProtocolNetworkAction::Receive { data },
                 ));

@@ -10,6 +10,9 @@ polestar = { workspace = true }
 tracing = { workspace = true }
 simdash-types = { workspace = true }
 
+rainbow-brackets = { workspace = true }
+simdash-model-network = { workspace = true }
+
 
 [lints]
 workspace = true

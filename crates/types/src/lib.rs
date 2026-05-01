@@ -1,9 +1,13 @@
+#![feature(step_trait)]
+
 mod behavior;
 mod ids;
 mod operation;
 pub use behavior::*;
 pub use ids::*;
 pub use operation::*;
+
+pub use named_id::{Rename, RenameAll, RenameNone};
 
 pub mod util;
 

@@ -4,14 +4,12 @@ use serde::Deserialize;
 use simdash_types::NodeId;
 
 pub mod link;
-pub mod net_topology;
 pub mod node;
 pub mod tag;
 
 pub use link::{Count, LinkSpec};
-pub use net_topology::NetTopology;
-pub use net_topology::{Destination, DestinationSpec, Ordinality, Selection};
 pub use node::NodeSpec;
+pub use simdash_model_network::net_topology::NetTopology;
 pub use tag::NodeTagSpec;
 
 /// Shared mutable state threaded through rule application.

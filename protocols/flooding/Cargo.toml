@@ -8,7 +8,9 @@ simdash-types = { workspace = true }
 simdash-routing-common = { workspace = true }
 
 anyhow = { workspace = true }
+derive_more = { workspace = true }
 maplit = { workspace = true }
+named-id = { workspace = true }
 polestar = { workspace = true }
 serde = { workspace = true }
 tracing = { workspace = true }

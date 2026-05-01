@@ -18,13 +18,15 @@ mod macros;
 
 pub use behavior::*;
 
+use derive_more::Debug;
 use polestar::Machine;
 use simdash_routing_common::{ProtocolNetworkAction, RoutingAction, RoutingFx, SendFx};
-use simdash_types::{GetRoutingOpInfo, RoutingOpInfo, Ticks};
+use simdash_types::{GetRoutingOpInfo, NodeId, RoutingOpInfo, Ticks};
 
 pub use simdash_protocol_flooding as flooding;
 pub use simdash_protocol_flooding_sync as flooding_sync;
 pub use simdash_protocol_noop as noop;
+pub use simdash_protocol_ecco as ecco;
 
 crate::routing_dispatch! {
     Flooding / flooding => {
@@ -40,6 +42,13 @@ crate::routing_dispatch! {
         action: flooding_sync::Action,
         fx:     flooding_sync::Fx,
         data:   flooding_sync::WireData,
+    },
+    Ecco / ecco => {
+        model:  ecco::Model,
+        state:  ecco::State,
+        action: ecco::Action,
+        fx:     ecco::Fx,
+        data:   ecco::WireData,
     },
     Noop / noop => {
         model:  noop::NoopModel,
@@ -84,13 +93,13 @@ pub fn lift_fx<F, D: Eq + std::hash::Hash>(
     wrap_fx: impl Fn(F) -> AnyRoutingFx,
 ) -> RoutingDispatchFx {
     match fx {
-        RoutingFx::Network(SendFx::BroadcastData { data }) => {
-            RoutingDispatchFx::Network(SendFx::BroadcastData {
+        RoutingFx::Network(SendFx::Broadcast { data }) => {
+            RoutingDispatchFx::Network(SendFx::Broadcast {
                 data: wrap_data(data),
             })
         }
-        RoutingFx::Network(SendFx::UnicastData { to, data }) => {
-            RoutingDispatchFx::Network(SendFx::UnicastData {
+        RoutingFx::Network(SendFx::Unicast { to, data }) => {
+            RoutingDispatchFx::Network(SendFx::Unicast {
                 to,
                 data: wrap_data(data),
             })
@@ -102,15 +111,14 @@ pub fn lift_fx<F, D: Eq + std::hash::Hash>(
 
 impl RoutingDispatchModel {
     /// Create a "standard" RoutingDispatchModel with default parameters.
-    pub fn standard(interval: Ticks) -> Self {
+    pub fn standard(node_id: NodeId, interval: Ticks) -> Self {
         Self {
             flooding: simdash_protocol_flooding::FloodingModel {
                 broadcast_interval: interval,
             },
-            flooding_sync: flooding_sync::Model {
-                sync_interval: interval,
-            },
+            flooding_sync: flooding_sync::Model::new(interval),
             noop: simdash_protocol_noop::NoopModel,
+            ecco: simdash_protocol_ecco::Model::new(node_id.into(), interval),
         }
     }
 }

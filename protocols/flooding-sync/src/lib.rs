@@ -18,7 +18,7 @@ pub use state::*;
 
 use simdash_routing_common::{RoutingAction, RoutingFx};
 
-/// The action type for the Noop protocol (including network-level actions)
+/// The action type for the FloodingSync protocol (including network-level actions)
 pub type ProtocolAction = RoutingAction<Action, WireData>;
-/// The effect type for the Noop protocol (including network- and node-level effects)
+/// The effect type for the FloodingSync protocol (including network- and node-level effects)
 pub type ProtocolFx = RoutingFx<Fx, WireData>;

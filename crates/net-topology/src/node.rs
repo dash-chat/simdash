@@ -1,7 +1,8 @@
 use serde::Deserialize;
+use simdash_model_network::net_topology::NodeTopology;
 use simdash_types::NodeId;
 
-use crate::{ApplyRule, BuildState, Rule, net_topology::NodeTopology};
+use crate::{ApplyRule, BuildState, Rule};
 
 fn default_strategy() -> String {
     "default".to_string()

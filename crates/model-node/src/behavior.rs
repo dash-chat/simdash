@@ -7,18 +7,20 @@ use crate::{NodeAction, NodeModel, NodeState};
 
 /// A basic node behavior that simply generates Routing actions (no Chat actions).
 #[derive(Default)]
-pub struct BasicNodeBehavior<B: Behavior<RoutingDispatchModel>> {
+pub struct BasicNodeBehavior<B: Behavior<Model = RoutingDispatchModel>> {
     routing_behavior: B,
 }
 
-impl<B: Behavior<RoutingDispatchModel>> BasicNodeBehavior<B> {
+impl<B: Behavior<Model = RoutingDispatchModel>> BasicNodeBehavior<B> {
     /// Constructor
     pub fn new(routing_behavior: B) -> Self {
         Self { routing_behavior }
     }
 }
 
-impl<B: Behavior<RoutingDispatchModel>> Behavior<NodeModel> for BasicNodeBehavior<B> {
+impl<B: Behavior<Model = RoutingDispatchModel>> Behavior for BasicNodeBehavior<B> {
+    type Model = NodeModel;
+
     fn next_tick(&mut self, state: &NodeState) -> anyhow::Result<Vec<NodeAction>> {
         Ok(self
             .routing_behavior

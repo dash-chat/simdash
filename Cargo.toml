@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/*", "protocols/*"]
+members = ["crates/*", "protocols/*", "simulations"]
 default-members = ["crates/runner"]
 
 [workspace.lints.rust]
@@ -8,13 +8,20 @@ missing_docs = "warn"
 
 [workspace.dependencies]
 anyhow = "1"
+axum = "0.8"
 derive_more = { version = "2", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
 maplit = { version = "1" }
+named-id = { git = "https://github.com/maackle/named-id.git" }
+owo-colors = { version = "4.3.0" }
 pretty_assertions = { version = "1" }
 petgraph = { version = "0.8", features = ["serde-1"] }
 postcard = { version = "1", features = ["use-std"] }
+rainbow-brackets = { git = "https://github.com/maackle/rainbow-brackets.git" }
+rand = "0.9"
+tokio = { version = "1", features = ["full"] }
 tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 simdash-types = { path = "crates/types" }
 simdash-model-chat = { path = "crates/model-chat" }
@@ -32,8 +39,12 @@ dash-chat-top-gen = { path = "crates/dash-chat-top-gen" }
 simdash-protocol-flooding = { path = "protocols/flooding" }
 simdash-protocol-flooding-sync = { path = "protocols/flooding-sync" }
 simdash-protocol-noop = { path = "protocols/noop" }
+simdash-protocol-ecco = { path = "protocols/ecco" }
 
 polestar = { git = "https://github.com/maackle/polestar-rs.git", branch = "main" }
 
 [patch."https://github.com/maackle/polestar-rs.git"]
 polestar = { path = "/home/michael/proj/polestar-rs/polestar" }
+
+[patch."https://github.com/maackle/rainbow-brackets.git"]
+rainbow-brackets = { path = "/home/michael/proj/rainbow-brackets" }

@@ -5,7 +5,9 @@ use crate::{Action, Model, ProtocolAction, ProtocolFx, State};
 /// A behavior that never triggers any actions
 pub struct StandardBehavior;
 
-impl Behavior<Model> for StandardBehavior {
+impl Behavior for StandardBehavior {
+    type Model = Model;
+
     fn next_tick(&mut self, _: &State) -> anyhow::Result<Vec<ProtocolAction>> {
         Ok(vec![ProtocolAction::protocol(Action::TriggerSync)])
     }

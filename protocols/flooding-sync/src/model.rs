@@ -1,19 +1,43 @@
+use std::sync::atomic::AtomicU32;
+
+use derive_more::{Deref, From};
+use serde::{Deserialize, Serialize};
+
 use simdash_routing_common::{ProtocolNetworkAction, RoutingAction};
 use simdash_types::Ticks;
 
 use crate::{ProtocolAction, ProtocolFx, WireData, action::Action, state::State};
 
+#[derive(
+    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, From, Deref,
+)]
+pub struct MeshId(u32);
+
+static NEXT_ID: AtomicU32 = AtomicU32::new(0);
+
+impl MeshId {
+    pub fn new() -> Self {
+        Self(NEXT_ID.fetch_add(1, std::sync::atomic::Ordering::Relaxed))
+    }
+}
+
 /// The FloodingSync model implements the flooding-sync protocol.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct Model {
     /// Ticks to wait between sync rounds
     pub sync_interval: Ticks,
+
+    /// Identifier used only in this protocol
+    pub mesh_id: MeshId,
 }
 
 impl Model {
     /// Constructor
     pub fn new(sync_interval: Ticks) -> Self {
-        Self { sync_interval }
+        Self {
+            sync_interval,
+            mesh_id: MeshId::new(),
+        }
     }
 }
 

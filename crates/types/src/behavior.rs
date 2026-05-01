@@ -1,4 +1,7 @@
-use polestar::{Machine, TransitionResult};
+use polestar::{
+    Machine, TransitionResult,
+    mapping::{ActionOf, FxOf, StateOf},
+};
 
 /// A "behavior" is some logic which helps "drive" a model.
 /// Different behaviors can be used to drive the same model in different ways,
@@ -9,13 +12,15 @@ use polestar::{Machine, TransitionResult};
 /// The behavior itself is driven by the Simulation containing it in a loop:
 /// - use `next_actions` to produce actions to perform state transitions
 /// - use `handle_fx` to consume the resulting effects and update the behavior state
-pub trait Behavior<M>
-where
-    M: Machine<Error = anyhow::Error>,
-{
+pub trait Behavior {
+    type Model: Machine<Error = anyhow::Error>;
+
     /// Produces a list of actions to apply to the model.
     /// This generally corresponds to a single "tick" of the simulation.
-    fn next_tick(&mut self, state: &M::State) -> anyhow::Result<Vec<M::Action>>;
+    fn next_tick(
+        &mut self,
+        state: &StateOf<Self::Model>,
+    ) -> anyhow::Result<Vec<ActionOf<Self::Model>>>;
 
     /// Optionally consume the effects and update the behavior state.
     /// By default, effects are not handled and simply bubbled up to the higher level.
@@ -31,26 +36,28 @@ where
     ///
     /// If the behavior does not handle the effect, it should pass it back along in the return value,
     /// so that the effect "bubbles up" to the next level.
-    fn handle_fx(&mut self, _state: &M::State, fx: M::Fx) -> anyhow::Result<Option<M::Fx>> {
+    fn handle_fx(
+        &mut self,
+        _state: &StateOf<Self::Model>,
+        fx: FxOf<Self::Model>,
+    ) -> anyhow::Result<Option<FxOf<Self::Model>>> {
         Ok(Some(fx))
     }
 }
 
-pub struct BehaviorModel<B, M>
+pub struct BehaviorModel<B>
 where
-    B: Behavior<M>,
-    M: Machine<Error = anyhow::Error>,
+    B: Behavior,
 {
-    model: M,
-    _behavior: std::marker::PhantomData<B>,
+    model: B::Model,
+    // _behavior: std::marker::PhantomData<B>,
 }
 
-impl<B, M> Machine for BehaviorModel<B, M>
+impl<B> Machine for BehaviorModel<B>
 where
-    B: Behavior<M> + Clone + std::fmt::Debug + Send + Sync + 'static,
-    M: Machine<Error = anyhow::Error>,
+    B: Behavior + Clone + std::fmt::Debug + Send + Sync + 'static,
 {
-    type State = (B, M::State);
+    type State = (B, StateOf<B::Model>);
     type Action = ();
     type Fx = ();
     type Error = anyhow::Error;
@@ -68,5 +75,27 @@ where
         }
 
         Ok(((behavior, state), ()))
+    }
+}
+
+impl<B> Behavior for Box<B>
+where
+    B: Behavior + 'static,
+{
+    type Model = B::Model;
+
+    fn next_tick(
+        &mut self,
+        state: &StateOf<Self::Model>,
+    ) -> anyhow::Result<Vec<ActionOf<Self::Model>>> {
+        self.as_mut().next_tick(state)
+    }
+
+    fn handle_fx(
+        &mut self,
+        state: &StateOf<Self::Model>,
+        fx: FxOf<Self::Model>,
+    ) -> anyhow::Result<Option<FxOf<Self::Model>>> {
+        self.as_mut().handle_fx(state, fx)
     }
 }

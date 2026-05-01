@@ -1,7 +1,10 @@
+#![allow(missing_docs)]
+
 use std::collections::BTreeMap;
 
+use crate::state::Graph;
 use serde::Deserialize;
-use simdash_model_node::{EdgeState, Graph};
+use simdash_model_node::EdgeState;
 use simdash_types::NodeId;
 
 /// How link destinations are chosen.

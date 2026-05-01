@@ -1,6 +1,6 @@
 use super::*;
 
-pub type GroupId = u64;
+pub type GroupId = TopicId;
 
 #[derive(
     Serialize,
@@ -17,8 +17,37 @@ pub type GroupId = u64;
     From,
     Deref,
 )]
-#[display("N({})", _0)]
-pub struct NodeId(u32);
+pub struct NodeId(pub u32);
+
+impl named_id::Nameable for NodeId {
+    fn shortener(&self) -> Option<named_id::Shortener> {
+        Some(named_id::Shortener {
+            length: 3,
+            prefix: "N",
+        })
+    }
+}
+
+impl std::iter::Step for NodeId {
+    fn steps_between(start: &Self, end: &Self) -> (usize, Option<usize>) {
+        if start.0 > end.0 {
+            return (0, None);
+        } else {
+            (
+                end.0 as usize - start.0 as usize,
+                Some(end.0 as usize - start.0 as usize),
+            )
+        }
+    }
+
+    fn forward_checked(start: Self, count: usize) -> Option<Self> {
+        Some(Self(start.0.checked_add(count as u32)?))
+    }
+
+    fn backward_checked(start: Self, count: usize) -> Option<Self> {
+        Some(Self(start.0.checked_sub(count as u32)?))
+    }
+}
 
 #[derive(
     Serialize,
@@ -38,6 +67,14 @@ pub struct NodeId(u32);
 #[display("op{}", _0)]
 pub struct OpId(u32);
 
+impl named_id::Nameable for OpId {
+    fn shortener(&self) -> Option<named_id::Shortener> {
+        Some(named_id::Shortener {
+            length: 3,
+            prefix: "op",
+        })
+    }
+}
 #[derive(
     Serialize, Deserialize, PartialOrd, Ord, Debug, Clone, Copy, PartialEq, Eq, Hash, From, Deref,
 )]
@@ -76,9 +113,44 @@ pub struct Size(u64);
     From,
     Deref,
 )]
-#[display("L{}", _0)]
-pub struct LogId(u32);
+pub struct TopicId(pub u32);
 
+impl named_id::Nameable for TopicId {
+    fn shortener(&self) -> Option<named_id::Shortener> {
+        Some(named_id::Shortener {
+            length: 3,
+            prefix: "T",
+        })
+    }
+}
+
+pub type LogId = NodeId;
+
+// #[derive(
+//     Debug,
+//     Display,
+//     Clone,
+//     Copy,
+//     PartialEq,
+//     Eq,
+//     Hash,
+//     Ord,
+//     PartialOrd,
+//     Serialize,
+//     Deserialize,
+//     From,
+//     Deref,
+// )]
+// pub struct LogId(pub u32);
+
+// impl named_id::Nameable for LogId {
+//     fn shortener(&self) -> Option<named_id::Shortener> {
+//         Some(named_id::Shortener {
+//             length: 3,
+//             prefix: "L",
+//         })
+//     }
+// }
 #[derive(
     Debug,
     Clone,
@@ -96,12 +168,42 @@ pub struct LogId(u32);
     Add,
     Display,
 )]
+#[display("{}", _0)]
 pub struct LogHeight(u32);
 
+impl named_id::Nameable for LogHeight {
+    fn shortener(&self) -> Option<named_id::Shortener> {
+        Some(named_id::Shortener {
+            length: 3,
+            prefix: "H",
+        })
+    }
+}
+
+impl LogHeight {
+    pub fn from_seq(seq: Seq) -> LogHeight {
+        LogHeight::from(seq.0 + 1)
+    }
+}
+
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize, From, Deref,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    Ord,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+    From,
+    Deref,
+    RenameNone,
+    derive_more::Add,
+    derive_more::AddAssign,
 )]
-pub struct Seq(u32);
+pub struct Seq(pub u32);
 
 /// A number of ticks (a duration).
 #[derive(
@@ -119,9 +221,45 @@ pub struct Seq(u32);
     From,
     Deref,
     derive_more::Add,
+    derive_more::AddAssign,
     derive_more::Sub,
+    derive_more::SubAssign,
+    RenameNone,
 )]
-pub struct Ticks(u32);
+pub struct Ticks(pub u32);
+
+/// A number of hops that a message has traveled.
+#[derive(
+    Serialize,
+    Deserialize,
+    Debug,
+    Clone,
+    Default,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Hash,
+    From,
+    Deref,
+    derive_more::Add,
+    derive_more::AddAssign,
+    Display,
+)]
+pub struct Hops(pub u32);
+
+// impl From<NodeId> for LogId {
+//     fn from(id: NodeId) -> LogId {
+//         LogId::from(id.0)
+//     }
+// }
+
+// impl From<LogId> for NodeId {
+//     fn from(id: LogId) -> NodeId {
+//         NodeId::from(id.0)
+//     }
+// }
 
 impl From<NodeId> for petgraph::graph::NodeIndex {
     fn from(id: NodeId) -> petgraph::graph::NodeIndex {

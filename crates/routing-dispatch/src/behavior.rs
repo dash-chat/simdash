@@ -5,7 +5,9 @@ use crate::*;
 /// A routing behavior that only generates actions for the naive Flooding protocol.
 pub struct NaiveFloodingBehavior;
 
-impl Behavior<RoutingDispatchModel> for NaiveFloodingBehavior {
+impl Behavior for NaiveFloodingBehavior {
+    type Model = RoutingDispatchModel;
+
     fn next_tick(
         &mut self,
         state: &RoutingDispatchState,
@@ -31,7 +33,9 @@ impl Behavior<RoutingDispatchModel> for NaiveFloodingBehavior {
 /// A routing behavior that only generates actions for the FloodingSync protocol.
 pub struct BasicFloodingSyncBehavior;
 
-impl Behavior<RoutingDispatchModel> for BasicFloodingSyncBehavior {
+impl Behavior for BasicFloodingSyncBehavior {
+    type Model = RoutingDispatchModel;
+
     fn next_tick(
         &mut self,
         state: &RoutingDispatchState,
@@ -52,11 +56,33 @@ impl Behavior<RoutingDispatchModel> for BasicFloodingSyncBehavior {
     }
 }
 
+/// A routing behavior that only generates actions for the FloodingSync protocol.
+pub struct BasicEccoBehavior;
+
+impl Behavior for BasicEccoBehavior {
+    type Model = RoutingDispatchModel;
+
+    fn next_tick(
+        &mut self,
+        state: &RoutingDispatchState,
+    ) -> anyhow::Result<Vec<RoutingDispatchAction>> {
+        let mut b = crate::ecco::StandardBehavior::default();
+        let actions = b
+            .next_tick(&state.ecco)?
+            .into_iter()
+            .map(|a| crate::lift_action(a, AnyRoutingData::Ecco, AnyRoutingAction::Ecco))
+            .collect();
+        Ok(actions)
+    }
+}
+
 /// A no-op routing behavior that never triggers any routing actions.
 /// Useful as a baseline to observe the initial state without propagation.
 pub struct NoOpRoutingBehavior;
 
-impl Behavior<RoutingDispatchModel> for NoOpRoutingBehavior {
+impl Behavior for NoOpRoutingBehavior {
+    type Model = RoutingDispatchModel;
+
     fn next_tick(
         &mut self,
         _: &RoutingDispatchState,

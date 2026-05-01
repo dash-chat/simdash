@@ -1,12 +1,15 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use derive_more::{Debug, Deref, From};
+use derive_more::{Debug, Deref, Display, From};
 
+use named_id::RenameAll;
 use serde::{Deserialize, Serialize};
-use simdash_types::{EncryptedOp, LogHeight, LogId, Seq};
+use simdash_types::{EncryptedOp, LogHeight, LogId, Seq, TopicId};
 
 /// The data sent over the wire between nodes using the flooding-sync protocol.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+#[derive(
+    Debug, Display, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, RenameAll,
+)]
 pub enum WireData {
     /// An announcement of the state vector
     Announce(
@@ -14,6 +17,7 @@ pub enum WireData {
         StateVector,
     ),
     /// A list of operations in response to an announcement
+    #[display("Ops({:?})", ops)]
     Ops {
         /// The operations
         ops: BTreeSet<Op>,
@@ -21,8 +25,9 @@ pub enum WireData {
 }
 
 /// Metadata needed for flooding.
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize, RenameAll)]
 pub struct Metadata {
+    pub topic_id: TopicId,
     pub log_id: LogId,
     pub seq: Seq,
 }
@@ -32,13 +37,14 @@ impl Metadata {
     /// Get the metadata from an operation
     pub fn from_op(op: &simdash_types::Operation) -> Self {
         Self {
-            log_id: op.header.log_id,
+            topic_id: op.header.topic_id,
+            log_id: op.header.author.into(),
             seq: op.header.seq,
         }
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize, RenameAll)]
 #[debug("Op({:?})", metadata)]
 pub struct Op {
     pub metadata: Metadata,
@@ -55,7 +61,19 @@ impl Op {
 }
 
 #[derive(
-    Debug, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize, From, Deref,
+    Debug,
+    Display,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    Ord,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+    From,
+    Deref,
+    RenameAll,
 )]
-#[debug("StateVector({:?})", _0.iter().map(|(log_id, log_height)| format!("{}:{}", log_id, log_height)).collect::<Vec<String>>().join(", "))]
+#[display("StateVector({:?})", _0.iter().map(|(log_id, log_height)| format!("{}:{}", log_id, log_height)).collect::<Vec<String>>().join(", "))]
 pub struct StateVector(BTreeMap<LogId, LogHeight>);

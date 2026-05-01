@@ -1,9 +1,9 @@
 use rand::seq::IndexedRandom;
 use serde::Deserialize;
 
-use crate::{
-    ApplyRule, BuildState,
-    net_topology::{Destination, DestinationSpec, EdgeTopology, Ordinality, Selection},
+use crate::{ApplyRule, BuildState};
+use simdash_model_network::net_topology::{
+    Destination, DestinationSpec, EdgeTopology, Ordinality, Selection,
 };
 
 /// How many links to create for a rule.

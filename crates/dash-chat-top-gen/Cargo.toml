@@ -12,5 +12,6 @@ serde_json = "1"
 simdash-distribution = { workspace = true }
 simdash-types = { workspace = true }
 simdash-model-chat = { workspace = true }
+simdash-model-network = { workspace = true }
 simdash-model-node = { workspace = true }
 net-topology = { workspace = true }

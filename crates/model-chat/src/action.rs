@@ -1,7 +1,9 @@
+use derive_more::{Debug, Display};
+use named_id::RenameAll;
 use simdash_types::{GroupId, NodeId, Operation};
 
 /// Actions for the chat model.
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Display, Clone, PartialEq, Eq, Hash, RenameAll)]
 pub enum ChatAction {
     /// Store an operation in the chat state.
     StoreOp(Operation),

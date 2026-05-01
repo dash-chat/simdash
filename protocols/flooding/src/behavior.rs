@@ -5,7 +5,9 @@ use crate::{FloodingAction, FloodingModel, FloodingState, ProtocolAction, Protoc
 /// A behavior that just triggers flooding as often as possible
 pub struct EagerFloodingBehavior;
 
-impl Behavior<FloodingModel> for EagerFloodingBehavior {
+impl Behavior for EagerFloodingBehavior {
+    type Model = FloodingModel;
+
     fn next_tick(&mut self, _: &FloodingState) -> anyhow::Result<Vec<ProtocolAction>> {
         Ok(vec![FloodingAction::TriggerBroadcast.into()])
     }

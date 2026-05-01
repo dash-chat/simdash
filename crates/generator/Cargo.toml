@@ -10,6 +10,7 @@ dash-chat-top-gen = { path = "../dash-chat-top-gen" }
 net-topology = { path = "../net-topology" }
 clap = { version = "4", features = ["derive"] }
 postcard = { workspace = true }
+rand = { workspace = true }
 serde_json = "1"
 serde_yml = "0.0.12"
 simdash-model-node = { workspace = true }
