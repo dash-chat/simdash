@@ -106,7 +106,7 @@ impl polestar::Machine for Model {
                         // Store the ops.
                         for op in payload.ops.iter() {
                             // XXX: we shouldn't actually store the op in chat state, this is just so the visualizer can see it
-                            // (it doesn't have per-protocol op storage knowledge yet)
+                            // (the visualizer doesn't have per-protocol op storage knowledge yet)
                             fx.push(ProtocolFx::store_op(op.encrypted.clone()));
                             state.store_op(self, op.clone());
                         }

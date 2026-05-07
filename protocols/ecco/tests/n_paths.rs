@@ -20,7 +20,7 @@ use named_id::{Nameable, Rename};
 #[test]
 fn n_paths_scenario() {
     const SYNC_INTERVAL: Ticks = Ticks(10);
-    const STEPS: usize = 10;
+    const STEPS: usize = 20;
 
     let (graph, (alpha, omega), paths) = simdash_model_network::generate::n_paths([2, 3, 4]);
     let (model, mut state) =
@@ -56,44 +56,8 @@ fn n_paths_scenario() {
         })
         .unwrap();
 
-    let mut scenario = Scenario::initial(model, state, behavior)
-        .on_step(|s| {
-            println!();
-            println!(
-                "######################## STEP {} ########################",
-                s.steps()
-            );
-            println!();
-        })
-        .on_action("actions", |action| {
-            let rb = RainbowBracketsConfig::default()
-                .colors(vec![
-                    rainbow_brackets::Color::Blue,
-                    // rainbow_brackets::Color::Cyan,
-                    rainbow_brackets::Color::White,
-                ])
-                .mode(rainbow_brackets::Mode::OuterText);
-            match action {
-                NetworkAction::Trace(message) => {
-                    println!("{:?}", message);
-                }
-                action => {
-                    println!("⟵ {}", action.renamed_ref().rainbow_brackets_with(&rb));
-                }
-            }
-        })
-        .on_fx("fx", |fx| {
-            let rb = RainbowBracketsConfig::default()
-                .colors(vec![
-                    rainbow_brackets::Color::Blue,
-                    // rainbow_brackets::Color::Cyan,
-                    rainbow_brackets::Color::White,
-                ])
-                .mode(rainbow_brackets::Mode::OuterText);
-            if fx.len() > 0 {
-                println!("  ⤷ {}\n", fx.renamed_ref().rainbow_brackets_with(&rb));
-            }
-        });
+    let mut scenario = Scenario::initial(model, state, behavior);
+    // .pretty_output();
 
     // Advance the network; each tick every node broadcasts its Ecco state
     // and effects from the previous tick are dispatched as consequences
@@ -120,7 +84,7 @@ fn n_paths_scenario() {
         "node N-1 should have received the op from node 0"
     );
 
-    let op_counts = (alpha..omega)
+    let op_counts = (alpha..=omega)
         .map(|node| {
             scenario
                 .state()
@@ -132,14 +96,14 @@ fn n_paths_scenario() {
                 .op_buffer
                 .ops
                 .get(&topic)
-                .unwrap()
-                .len()
+                .map(|m| m.len())
+                .unwrap_or(0)
         })
         .collect::<Vec<_>>();
 
     let mut expected_op_counts = vec![0; op_counts.len()];
     expected_op_counts[*alpha as usize] = 1;
-    expected_op_counts[*omega as usize - 1] = 1;
+    expected_op_counts[*omega as usize] = 1;
     for path in &paths[0] {
         expected_op_counts[**path as usize] = 1;
     }

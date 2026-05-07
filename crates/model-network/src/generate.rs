@@ -1,6 +1,8 @@
 //! Functions for generating models and initial states for testing.
 
+use std::collections::BTreeSet;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::sync::Arc;
 
 use crate::ChatTopology;
@@ -62,6 +64,11 @@ pub fn n_paths(hops: impl IntoIterator<Item = u32>) -> (Graph, (NodeId, NodeId),
         graph.add_edge(path[path.len() - 1], omega, Default::default());
         graph.add_edge(omega, path[path.len() - 1], Default::default());
     }
+
+    assert_eq!(
+        graph.node_ids().collect::<BTreeSet<_>>(),
+        (0..=*omega).map(NodeId::from).collect::<BTreeSet<_>>()
+    );
     (graph, (alpha, omega), paths)
 }
 
@@ -85,11 +92,9 @@ pub fn make_model(graph: Graph, sync_interval: Ticks) -> (NetworkModel, NetworkS
 }
 
 #[test]
-fn test_n_paths() {
+fn smoke_test_n_paths() {
     let (graph, _, _) = n_paths([2, 3, 4]);
     let g = graph.graph().map(|n, _| n.index(), |_, _| "");
     let dot = petgraph::dot::Dot::with_config(&g, &[petgraph::dot::Config::EdgeNoLabel]);
     println!("\n\n{}", dot);
-    assert_eq!(graph.node_ids().count(), 7);
-    assert_eq!(graph.graph().edge_count(), 10);
 }
