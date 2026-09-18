@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
-use polestar::mapping::{ActionOf, FxOf, StateOf};
+use polestar::{ActionOf, FxOf, StateOf};
 use simdash_model_network::{NetworkModel, NetworkState, RoundRobinNodeScheduler};
 use simdash_model_node::BasicNodeBehavior;
 use simdash_routing_dispatch::{

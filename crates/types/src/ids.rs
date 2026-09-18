@@ -47,6 +47,18 @@ impl std::iter::Step for NodeId {
     fn backward_checked(start: Self, count: usize) -> Option<Self> {
         Some(Self(start.0.checked_sub(count as u32)?))
     }
+
+    fn forward_overflowing(start: Self, count: usize) -> (Self, bool) {
+        let wrapped = start.0.wrapping_add(count as u32);
+        let overflow = count > u32::MAX as usize || wrapped < start.0;
+        (Self(wrapped), overflow)
+    }
+
+    fn backward_overflowing(start: Self, count: usize) -> (Self, bool) {
+        let wrapped = start.0.wrapping_sub(count as u32);
+        let overflow = count > u32::MAX as usize || wrapped > start.0;
+        (Self(wrapped), overflow)
+    }
 }
 
 #[derive(

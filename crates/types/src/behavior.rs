@@ -1,6 +1,6 @@
 use polestar::{
     Machine, TransitionResult,
-    mapping::{ActionOf, FxOf, StateOf},
+    ActionOf, FxOf, StateOf
 };
 
 /// A "behavior" is some logic which helps "drive" a model.

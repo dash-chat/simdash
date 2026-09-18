@@ -5,7 +5,7 @@
 
 use polestar::{
     Machine,
-    mapping::{ActionOf, FxOf, StateOf},
+    ActionOf, FxOf, StateOf,
 };
 use rainbow_brackets::BracketPair;
 use simdash_model_network::NetworkModel;
