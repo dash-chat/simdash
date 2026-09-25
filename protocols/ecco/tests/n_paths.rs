@@ -5,7 +5,7 @@ use simdash_model_network::{NetworkAction, RoundRobinNodeScheduler};
 use simdash_model_node::BasicNodeBehavior;
 use simdash_protocol_ecco::{StateVector, util::make_ecco_op};
 use simdash_routing_dispatch::BasicEccoBehavior;
-use simdash_scenario::Scenario;
+use polestar_sim::Scenario;
 use simdash_types::{LogId, Seq, Ticks, TopicId};
 
 use named_id::{Nameable, Rename};
@@ -56,7 +56,7 @@ fn n_paths_scenario() {
         })
         .unwrap();
 
-    let mut scenario = Scenario::initial(model, state, behavior);
+    let mut scenario = Scenario::initial(polestar::StateMachine::new(model, state), behavior);
     // .pretty_output();
 
     // Advance the network; each tick every node broadcasts its Ecco state

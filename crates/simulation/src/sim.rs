@@ -2,12 +2,12 @@ use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use polestar::{ActionOf, FxOf, StateOf};
+use polestar_sim::Scenario;
 use simdash_model_network::{NetworkModel, NetworkState, RoundRobinNodeScheduler};
 use simdash_model_node::BasicNodeBehavior;
 use simdash_routing_dispatch::{
     BasicEccoBehavior, BasicFloodingSyncBehavior, NaiveFloodingBehavior,
 };
-use simdash_scenario::Scenario;
 use simdash_types::Behavior;
 
 use crate::scenarios::sim_scenario::sim_scenario as make_sim_scenario;

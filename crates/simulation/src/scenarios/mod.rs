@@ -7,7 +7,8 @@ use simdash_model_network::{NetworkAction, NetworkModel};
 use simdash_routing_dispatch::{
     BasicFloodingSyncBehavior, BasicEccoBehavior, NaiveFloodingBehavior,
 };
-use simdash_scenario::Scenario;
+use polestar_sim::Scenario;
+use simdash_types::Behavior;
 
 use self::no_routing::NoRoutingBehaviorType;
 use self::sim_scenario::SimBehaviorType;
@@ -34,30 +35,12 @@ impl AnyScenario {
         }
     }
 
-    pub fn model(&self) -> &NetworkModel {
-        match self {
-            AnyScenario::NaiveFlooding(s) => s.model(),
-            AnyScenario::BasicFloodingSync(s) => s.model(),
-            AnyScenario::Ecco(s) => s.model(),
-            AnyScenario::NoRouting(s) => s.model(),
-        }
-    }
-
     pub fn advance(&mut self) -> anyhow::Result<Vec<NetworkAction>> {
         match self {
             AnyScenario::NaiveFlooding(s) => s.advance(),
             AnyScenario::BasicFloodingSync(s) => s.advance(),
             AnyScenario::Ecco(s) => s.advance(),
             AnyScenario::NoRouting(s) => s.advance(),
-        }
-    }
-
-    pub fn topology(&self) -> &simdash_model_network::ChatTopology {
-        match self {
-            AnyScenario::NaiveFlooding(s) => &s.model().topology,
-            AnyScenario::BasicFloodingSync(s) => &s.model().topology,
-            AnyScenario::Ecco(s) => &s.model().topology,
-            AnyScenario::NoRouting(s) => &s.model().topology,
         }
     }
 }
@@ -68,3 +51,42 @@ pub const AVAILABLE_BEHAVIORS: &[&str] = &[
     "ecco",
     "no-routing",
 ];
+
+/// Console output helpers for NetworkModel scenarios.
+pub trait PrettyOutput {
+    /// Print some super helpful output to the console for NetworkModel scenarios.
+    fn pretty_output(self) -> Self;
+}
+
+impl<B> PrettyOutput for Scenario<B>
+where
+    B: Behavior<Model = NetworkModel>,
+{
+    fn pretty_output(self) -> Self {
+        use rainbow_brackets::{BracketPair, RainbowBrackets, RainbowBracketsConfig};
+        use simdash_types::Rename;
+
+        let mut rb = RainbowBracketsConfig::default();
+        rb.brackets.push(BracketPair::new('⟪', '⟫'));
+        let rb2 = rb.clone();
+
+        self.on_step(|s| {
+            println!();
+            println!("========= STEP {} =========", s.steps());
+            println!();
+        })
+        .on_action("actions", move |action| match action {
+            NetworkAction::Trace(message) => {
+                println!("\n{:?}", message);
+            }
+            action => {
+                println!("⟵ {}", action.renamed_ref().rainbow_brackets_with(&rb));
+            }
+        })
+        .on_fx("fx", move |fx| {
+            if fx.len() > 0 {
+                println!("  ⤷ {}\n", fx.renamed_ref().rainbow_brackets_with(&rb2));
+            }
+        })
+    }
+}

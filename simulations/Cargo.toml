@@ -9,6 +9,7 @@ derive_more = { workspace = true }
 maplit = { workspace = true }
 named-id = { workspace = true }
 polestar = { workspace = true }
+polestar-sim = { workspace = true }
 pretty_assertions = { workspace = true }
 rainbow-brackets = { workspace = true }
 serde = { workspace = true }
@@ -19,7 +20,6 @@ simdash-types = { workspace = true }
 simdash-protocol-ecco = { workspace = true }
 simdash-routing-common = { workspace = true }
 simdash-routing-dispatch = { workspace = true }
-simdash-scenario = { workspace = true }
 simdash-simulation = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }

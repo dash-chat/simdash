@@ -11,6 +11,7 @@ net-topology = { path = "../net-topology" }
 simdash-generator = { path = "../generator" }
 petgraph = { workspace = true }
 polestar = { workspace = true }
+polestar-sim = { workspace = true }
 postcard = { workspace = true }
 rainbow-brackets = { workspace = true }
 serde = { workspace = true }
@@ -20,7 +21,6 @@ simdash-types = { workspace = true }
 simdash-model-chat = { workspace = true }
 simdash-model-node = { workspace = true }
 simdash-model-network = { workspace = true }
-simdash-scenario = { workspace = true }
 simdash-routing-dispatch = { workspace = true }
 tokio = { workspace = true }
 tower-http = { version = "0.6", features = ["cors"] }

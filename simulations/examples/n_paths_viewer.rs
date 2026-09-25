@@ -11,7 +11,9 @@ use simdash_model_network::RoundRobinNodeScheduler;
 use simdash_model_node::BasicNodeBehavior;
 use simdash_protocol_ecco::util::make_ecco_op;
 use simdash_routing_dispatch::BasicEccoBehavior;
-use simdash_scenario::Scenario;
+use polestar::StateMachine;
+use polestar_sim::Scenario;
+use simdash_simulation::scenarios::PrettyOutput;
 use simdash_simulation::sim::{NetworkBehavior, Simulation};
 use simdash_types::{Ticks, TopicId};
 #[tokio::main]
@@ -72,7 +74,7 @@ async fn main() {
     let behavior = NetworkBehavior::new(RoundRobinNodeScheduler::new(BasicNodeBehavior::new(
         BasicEccoBehavior,
     )));
-    let scenario = Scenario::initial(model, state.clone(), behavior).pretty_output();
+    let scenario = Scenario::initial(StateMachine::new(model, state.clone()), behavior).pretty_output();
     let sim = Simulation::new(scenario, state, true).expect("failed to create simulation");
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
 

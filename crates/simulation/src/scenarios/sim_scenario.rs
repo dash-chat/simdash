@@ -8,7 +8,8 @@ use simdash_model_node::{BasicNodeBehavior, NodeModel};
 use simdash_routing_dispatch::flooding::{FloodingOp, FloodingState};
 use simdash_routing_dispatch::{ecco, flooding_sync};
 use simdash_routing_dispatch::{noop::NoopState, RoutingDispatchModel, RoutingDispatchState};
-use simdash_scenario::Scenario;
+use polestar::StateMachine;
+use polestar_sim::Scenario;
 use simdash_types::{Behavior, NodeId, Ticks};
 
 pub type SimBehaviorType<B> = RoundRobinNodeScheduler<BasicNodeBehavior<B>>;
@@ -86,5 +87,5 @@ pub fn sim_scenario<In: Behavior<Model = RoutingDispatchModel>>(
     behavior: In,
 ) -> Scenario<RoundRobinNodeScheduler<BasicNodeBehavior<In>>> {
     let behavior = RoundRobinNodeScheduler::new(BasicNodeBehavior::new(behavior));
-    Scenario::initial(model, initial_state, behavior)
+    Scenario::initial(StateMachine::new(model, initial_state), behavior)
 }
