@@ -51,8 +51,6 @@ impl Behavior for NetworkBehavior {
 
 pub struct Simulation {
     scenario: Scenario<NetworkBehavior>,
-    initial_state: NetworkState,
-    verbose: bool,
 }
 
 impl Simulation {
@@ -60,16 +58,8 @@ impl Simulation {
     ///
     /// `initial_state` should already have routing state seeded if needed
     /// (use `sim_scenario::seed_routing` for config-based setups).
-    pub fn new(
-        scenario: Scenario<NetworkBehavior>,
-        initial_state: NetworkState,
-        verbose: bool,
-    ) -> anyhow::Result<Self> {
-        Ok(Self {
-            scenario,
-            initial_state,
-            verbose,
-        })
+    pub fn new(scenario: Scenario<NetworkBehavior>) -> anyhow::Result<Self> {
+        Ok(Self { scenario })
     }
 
     pub fn current_state(&self) -> &NetworkState {

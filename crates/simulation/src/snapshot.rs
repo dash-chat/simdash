@@ -2,12 +2,12 @@ use std::collections::HashSet;
 use std::path::Path;
 
 use anyhow::Context;
+use polestar::StateMachine;
+use polestar_sim::Scenario;
 use serde::{Deserialize, Serialize};
 use simdash_model_network::{NetworkState, RoundRobinNodeScheduler};
 use simdash_model_node::BasicNodeBehavior;
 use simdash_routing_dispatch::BasicEccoBehavior;
-use polestar::StateMachine;
-use polestar_sim::Scenario;
 use simdash_types::{GroupId, NodeId, OpId, Operation};
 
 use crate::sim::{NetworkBehavior, Simulation};
@@ -167,7 +167,7 @@ pub fn setup_from_json(json: serde_json::Value) -> anyhow::Result<SimSetup> {
         let (model, initial_state) = build_model_and_state(&dash_topology, seed);
         let behavior = NetworkBehavior::standard();
         let scenario = Scenario::initial(StateMachine::new(model, initial_state.clone()), behavior);
-        let mut sim = Simulation::new(scenario, initial_state, false)?;
+        let mut sim = Simulation::new(scenario)?;
         sim.jump_to(prev.ticks)?;
         Ok(SimSetup {
             sim,
@@ -187,7 +187,7 @@ pub fn setup_from_json(json: serde_json::Value) -> anyhow::Result<SimSetup> {
         let (model, initial_state) = build_model_and_state(&dash_topology, seed);
         let behavior = NetworkBehavior::standard();
         let scenario = Scenario::initial(StateMachine::new(model, initial_state.clone()), behavior);
-        let sim = Simulation::new(scenario, initial_state, false)?;
+        let sim = Simulation::new(scenario)?;
         Ok(SimSetup {
             sim,
             config: json,
