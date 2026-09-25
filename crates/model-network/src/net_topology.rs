@@ -2,25 +2,28 @@
 
 use std::collections::BTreeMap;
 
-use crate::state::Graph;
-use serde::Deserialize;
+use crate::state::{Graph, NetworkState, NetworkTopologyState};
+use serde::{Deserialize, Serialize};
 use simdash_model_node::EdgeState;
 use simdash_types::NodeId;
 
 /// How link destinations are chosen.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Selection {
     Random,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DestinationSpec {
     pub selection: Selection,
     #[serde(default)]
     pub subnet: Option<String>,
 }
 
+/// Config-only form of a destination: either a bare selection or a full spec.
+/// Resolved to a `DestinationSpec` before it is stored on an `EdgeTopology`,
+/// because untagged enums cannot be deserialized from postcard.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(untagged)]
 pub enum Destination {
@@ -44,7 +47,7 @@ impl NodeTopology {
 }
 
 /// Whether a link produces a reverse edge in addition to the forward edge.
-#[derive(Debug, Clone, Default, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Ordinality {
     #[default]
@@ -52,11 +55,11 @@ pub enum Ordinality {
     Bidirectional,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EdgeTopology {
     pub id: u32,
     pub from: NodeId,
-    pub destination: Destination,
+    pub destination: DestinationSpec,
     pub ordinality: Ordinality,
     /// Number of ticks the link persists for. 0 means permanent.
     pub longevity: u32,
@@ -65,6 +68,21 @@ pub struct EdgeTopology {
 }
 
 impl EdgeTopology {
+    /// The subnet this edge's destination is restricted to, if any.
+    pub fn destination_subnet(&self) -> Option<&str> {
+        self.destination.subnet.as_deref()
+    }
+
+    /// Returns the candidate destination nodes for this edge, drawn from `graph`,
+    /// excluding the `from` node itself.
+    pub fn destination_candidates(&self, graph: &Graph) -> Vec<NodeId> {
+        let pool: Vec<NodeId> = match self.destination_subnet() {
+            Some(name) => graph.subnet_node_ids(name).unwrap_or_default().to_vec(),
+            None => graph.node_ids().collect(),
+        };
+        pool.into_iter().filter(|&id| id != self.from).collect()
+    }
+
     /// Returns true if this edge should be spawned, based on its spawn_chance.
     pub fn should_spawn(&self, rng: &mut impl rand::Rng) -> bool {
         match self.spawn_chance {
@@ -102,14 +120,24 @@ impl NetTopology {
     /// Returns the candidate destination nodes for a given edge topology entry,
     /// excluding the `from` node itself.
     pub fn destination_candidates(&self, edge: &EdgeTopology) -> Vec<NodeId> {
-        let all_node_ids: Vec<NodeId> = self.nodes.iter().map(|n| n.id).collect();
-        let pool: Vec<NodeId> = match &edge.destination {
-            Destination::Spec(DestinationSpec {
-                subnet: Some(name), ..
-            }) => self.subnets.get(name).cloned().unwrap_or_default(),
-            _ => all_node_ids,
+        let pool: Vec<NodeId> = match edge.destination_subnet() {
+            Some(name) => self.subnets.get(name).cloned().unwrap_or_default(),
+            None => self.nodes.iter().map(|n| n.id).collect(),
         };
         pool.into_iter().filter(|&id| id != edge.from).collect()
+    }
+
+    /// Build the initial `NetworkState` from this topology.
+    ///
+    /// Everything a transition needs later (the graph, and the edge specs used by
+    /// `EvolveTopology`) is moved into the state; the rest of the topology is dropped.
+    pub fn into_network_state(self, seed: u64) -> NetworkState {
+        let edges = self.edges.clone();
+        let graph = self.into_graph(seed);
+        NetworkState {
+            graph,
+            topology: NetworkTopologyState::new(seed, edges),
+        }
     }
 
     pub fn into_graph(self, seed: u64) -> Graph {

@@ -5,7 +5,6 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::sync::Arc;
 
-use crate::ChatTopology;
 use crate::NetworkModel;
 use crate::NetworkState;
 use crate::state::Graph;
@@ -83,7 +82,7 @@ pub fn make_model(graph: Graph, sync_interval: Ticks) -> (NetworkModel, NetworkS
             )
         })
         .collect();
-    let model = NetworkModel::new(models, ChatTopology::empty());
+    let model = NetworkModel::new(models);
     let state = NetworkState {
         graph,
         topology: Default::default(),

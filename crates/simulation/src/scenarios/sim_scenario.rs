@@ -1,25 +1,20 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use simdash_model_network::ChatTopology;
+use polestar::StateMachine;
+use polestar_sim::Scenario;
 use simdash_model_network::NetworkState;
 use simdash_model_network::{NetworkModel, RoundRobinNodeScheduler};
 use simdash_model_node::{BasicNodeBehavior, NodeModel};
 use simdash_routing_dispatch::flooding::{FloodingOp, FloodingState};
 use simdash_routing_dispatch::{ecco, flooding_sync};
 use simdash_routing_dispatch::{noop::NoopState, RoutingDispatchModel, RoutingDispatchState};
-use polestar::StateMachine;
-use polestar_sim::Scenario;
 use simdash_types::{Behavior, NodeId, Ticks};
 
 pub type SimBehaviorType<B> = RoundRobinNodeScheduler<BasicNodeBehavior<B>>;
 
-/// Build a `NetworkModel` from the node IDs in `state`, using `broadcast_interval` and `topology`.
-pub fn create_model(
-    state: &NetworkState,
-    broadcast_interval: Ticks,
-    topology: ChatTopology,
-) -> NetworkModel {
+/// Build a `NetworkModel` from the node IDs in `state`, using `broadcast_interval`.
+pub fn create_model(state: &NetworkState, broadcast_interval: Ticks) -> NetworkModel {
     let nodes: HashMap<NodeId, NodeModel> = state
         .graph
         .node_ids()
@@ -30,7 +25,7 @@ pub fn create_model(
             )
         })
         .collect();
-    NetworkModel::new(nodes, topology)
+    NetworkModel::new(nodes)
 }
 
 /// Seed each node's routing state from its `chat.op_store`.
@@ -62,12 +57,7 @@ pub fn seed_routing(model: &NetworkModel, state: &mut NetworkState) {
                     .values()
                     .map(|op| ecco::Op::from_op(op))
                     .collect();
-                let groups = model
-                    .topology
-                    .chat_states
-                    .get(&node_id)
-                    .map(|s| s.groups.clone())
-                    .unwrap_or_default();
+                let groups = n.chat.groups.clone();
                 n.routing = RoutingDispatchState {
                     flooding: FloodingState { ops: flooding_ops },
                     flooding_sync: flooding_sync::State::from_ops(flooding_sync_ops),

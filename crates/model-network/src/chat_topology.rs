@@ -3,7 +3,7 @@
 use std::collections::BTreeMap;
 
 use crate::net_topology::NetTopology;
-use crate::state::Graph;
+use crate::state::{Graph, NetworkState, NetworkTopologyState};
 use simdash_model_chat::ChatState;
 use simdash_types::NodeId;
 
@@ -15,10 +15,13 @@ pub struct ChatTopology {
 }
 
 impl ChatTopology {
-    pub fn empty() -> Self {
-        Self {
-            net: NetTopology::new(),
-            chat_states: BTreeMap::new(),
+    /// Build the initial `NetworkState`, consuming this generator output.
+    pub fn into_network_state(self, seed: u64) -> NetworkState {
+        let edges = self.net.edges.clone();
+        let graph = self.into_graph(seed);
+        NetworkState {
+            graph,
+            topology: NetworkTopologyState::new(seed, edges),
         }
     }
 

@@ -43,10 +43,10 @@ impl ApplyRule for LinkSpec {
             Destination::Spec(spec) => (&spec.selection, spec.subnet.as_ref()),
         };
 
-        let destination_record = Destination::Spec(DestinationSpec {
+        let destination_record = DestinationSpec {
             selection: selection.clone(),
             subnet: subnet.cloned(),
-        });
+        };
 
         match self.strategy.as_str() {
             "per_node" => {

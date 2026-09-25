@@ -1,7 +1,10 @@
 mod graph;
 pub use graph::*;
 
+use std::collections::HashSet;
 use std::path::Path;
+
+use crate::net_topology::EdgeTopology;
 
 use rand::{SeedableRng, rngs::StdRng};
 use serde::{Deserialize, Serialize};
@@ -9,21 +12,36 @@ use simdash_types::NodeId;
 
 // ── NetworkTopologyState ───────────────────────────────────────────────────
 
-/// Seeded RNG for topology evolution operations.
-/// Stores seed + call count so the full state is serializable.
+/// Everything `EvolveTopology` needs: the edge specs that may (re)spawn, and a
+/// seeded RNG stored as seed + call count so the full state is serializable.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct NetworkTopologyState {
     seed: u64,
     call_count: u64,
+    /// Edge specs from the generator. Only those with a `spawn_chance` are ever
+    /// consulted after initial graph construction.
+    #[serde(default)]
+    pub edges: Vec<EdgeTopology>,
 }
 
 impl NetworkTopologyState {
-    /// Create a new NetworkTopologyState with the given random seed.
-    pub fn new(seed: u64) -> Self {
+    /// Create a new NetworkTopologyState with the given random seed and edge specs.
+    pub fn new(seed: u64, edges: Vec<EdgeTopology>) -> Self {
         Self {
             seed,
             call_count: 0,
+            edges,
         }
+    }
+
+    /// Edge specs that can spawn dynamically and are not currently present in the graph.
+    pub fn unspawned_edges<'a>(
+        &'a self,
+        existing_ids: &'a HashSet<u32>,
+    ) -> impl Iterator<Item = &'a EdgeTopology> {
+        self.edges
+            .iter()
+            .filter(|e| e.spawn_chance.is_some() && !existing_ids.contains(&e.id))
     }
 
     /// Returns a fresh seeded RNG for one topology operation and advances the counter.

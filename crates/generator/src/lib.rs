@@ -6,7 +6,7 @@ use net_topology::{TopologyConfig, TopologyGenerator};
 use serde::Deserialize;
 use simdash_model_network::ChatTopology;
 pub use simdash_model_network::Graph;
-use simdash_model_network::{NetworkState, NetworkTopologyState};
+use simdash_model_network::NetworkState;
 
 /// Top-level config struct that mirrors the full config file format.
 #[derive(Debug, Deserialize)]
@@ -66,11 +66,5 @@ pub fn generate_graph(config_path: &Path) -> Result<Graph> {
 
 pub fn generate_network_state(config_path: &Path) -> Result<NetworkState> {
     let (topology, seed) = generate_topology(&config_path)?;
-
-    let graph = topology.into_graph(seed);
-
-    Ok(NetworkState {
-        graph,
-        topology: NetworkTopologyState::new(seed),
-    })
+    Ok(topology.into_network_state(seed))
 }

@@ -4,7 +4,6 @@
 
 use std::collections::{HashMap, HashSet};
 
-use crate::ChatTopology;
 use rand::seq::IndexedRandom;
 use simdash_model_node::{NodeAction, NodeModel};
 use simdash_types::NodeId;
@@ -14,17 +13,18 @@ use crate::{NetworkAction, NetworkFx, NetworkState};
 /// The Network model manages the network-level state:
 /// - the state of each Node
 /// - the network topology (edges between nodes)
+///
+/// The model holds only transition rules. All data, including the edge specs
+/// consulted by `EvolveTopology`, lives in `NetworkState`.
 pub struct NetworkModel {
-    /// The state of each node
+    /// The model of each node
     pub nodes: HashMap<NodeId, NodeModel>,
-    /// The network topology
-    pub topology: ChatTopology,
 }
 
 impl NetworkModel {
     /// Constructor
-    pub fn new(nodes: HashMap<NodeId, NodeModel>, topology: ChatTopology) -> Self {
-        Self { nodes, topology }
+    pub fn new(nodes: HashMap<NodeId, NodeModel>) -> Self {
+        Self { nodes }
     }
 }
 
@@ -62,26 +62,26 @@ impl polestar::Machine for NetworkModel {
             }
 
             NetworkAction::EvolveTopology => {
-                state
-                    .graph
+                let NetworkState { graph, topology } = &mut state;
+
+                graph
                     .graph_mut()
                     .retain_edges(|g, idx| g[idx].remaining_ticks != Some(0));
 
-                let existing_ids: HashSet<u32> = state
-                    .graph
+                let existing_ids: HashSet<u32> = graph
                     .graph()
                     .edge_weights()
                     .map(|e| e.topology_id)
                     .collect();
 
-                for edge_topo in self.unspawned_edge_topos(&existing_ids) {
-                    let mut rng = state.topology.rng();
+                let mut rng = topology.rng();
+                for edge_topo in topology.unspawned_edges(&existing_ids) {
                     if !edge_topo.should_spawn(&mut rng) {
                         continue;
                     }
-                    let candidates = self.topology.net.destination_candidates(edge_topo);
+                    let candidates = edge_topo.destination_candidates(graph);
                     if let Some(&to) = candidates.choose(&mut rng) {
-                        edge_topo.add_to_graph(&mut state.graph, to);
+                        edge_topo.add_to_graph(graph, to);
                     }
                 }
 
@@ -118,15 +118,90 @@ impl polestar::Machine for NetworkModel {
     }
 }
 
-impl NetworkModel {
-    fn unspawned_edge_topos<'a>(
-        &'a self,
-        existing_ids: &'a HashSet<u32>,
-    ) -> impl Iterator<Item = &'a crate::net_topology::EdgeTopology> {
-        self.topology
-            .net
-            .edges
-            .iter()
-            .filter(|e| e.spawn_chance.is_some() && !existing_ids.contains(&e.id))
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::NetworkTopologyState;
+    use crate::net_topology::{
+        DestinationSpec, EdgeTopology, NetTopology, NodeTopology, Ordinality, Selection,
+    };
+    use polestar::Machine;
+    use simdash_routing_dispatch::RoutingDispatchModel;
+
+    /// Two nodes, one short-lived edge that always respawns.
+    fn make_state() -> NetworkState {
+        let mut topo = NetTopology::new();
+        topo.nodes.push(NodeTopology::new(0.into()));
+        topo.nodes.push(NodeTopology::new(1.into()));
+        topo.edges.push(EdgeTopology {
+            id: 0,
+            from: 0.into(),
+            destination: DestinationSpec {
+                selection: Selection::Random,
+                subnet: None,
+            },
+            ordinality: Ordinality::Unidirectional,
+            longevity: 1,
+            spawn_chance: Some(1.0),
+        });
+        topo.into_network_state(7)
+    }
+
+    fn make_model(state: &NetworkState) -> NetworkModel {
+        NetworkModel::new(
+            state
+                .graph
+                .node_ids()
+                .map(|id| {
+                    (
+                        id,
+                        NodeModel::new(RoutingDispatchModel::standard(id, 1.into())),
+                    )
+                })
+                .collect(),
+        )
+    }
+
+    #[test]
+    fn evolve_topology_respawns_edge_from_state_alone() {
+        let state = make_state();
+        let model = make_model(&state);
+        assert_eq!(state.graph.graph().edge_count(), 1);
+
+        // Tick expires the edge, evolve removes it and respawns it.
+        let (state, _) = model.transition(state, NetworkAction::Tick).unwrap();
+        let (state, _) = model
+            .transition(state, NetworkAction::EvolveTopology)
+            .unwrap();
+        assert_eq!(state.graph.graph().edge_count(), 1);
+        let edge = state.graph.graph().edge_weights().next().unwrap();
+        assert_eq!(edge.remaining_ticks, Some(1));
+    }
+
+    #[test]
+    fn evolve_topology_survives_serialization_round_trip() {
+        let state = make_state();
+        let bytes = postcard::to_stdvec(&state).unwrap();
+        let state: NetworkState = postcard::from_bytes(&bytes).unwrap();
+        assert_eq!(state.topology.edges.len(), 1);
+
+        let model = make_model(&state);
+        let (state, _) = model.transition(state, NetworkAction::Tick).unwrap();
+        let (state, _) = model
+            .transition(state, NetworkAction::EvolveTopology)
+            .unwrap();
+        assert_eq!(state.graph.graph().edge_count(), 1);
+    }
+
+    #[test]
+    fn state_without_edge_specs_never_spawns() {
+        let mut state = make_state();
+        state.topology = NetworkTopologyState::new(7, vec![]);
+        let model = make_model(&state);
+        let (state, _) = model.transition(state, NetworkAction::Tick).unwrap();
+        let (state, _) = model
+            .transition(state, NetworkAction::EvolveTopology)
+            .unwrap();
+        assert_eq!(state.graph.graph().edge_count(), 0);
     }
 }

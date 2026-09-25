@@ -205,14 +205,9 @@ fn build_model_and_state(
     simdash_model_network::NetworkState,
 ) {
     use crate::scenarios::sim_scenario::{create_model, seed_routing};
-    use simdash_model_network::NetworkTopologyState;
 
-    let graph = topology.clone().into_graph(seed);
-    let mut state = simdash_model_network::NetworkState {
-        graph,
-        topology: NetworkTopologyState::new(seed),
-    };
-    let model = create_model(&state, 10u32.into(), topology.clone());
+    let mut state = topology.clone().into_network_state(seed);
+    let model = create_model(&state, 10u32.into());
     seed_routing(&model, &mut state);
     (model, state)
 }

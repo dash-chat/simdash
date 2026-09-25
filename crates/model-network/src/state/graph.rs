@@ -16,7 +16,6 @@ pub struct Graph<R = RoutingDispatchState, E = EdgeState> {
     /// The nodes in the graph
     pub nodes: HashMap<NodeId, NodeState<R>>,
     /// The subnets in the graph
-    #[serde(skip, default)]
     subnets: HashMap<String, Vec<NodeId>>,
 }
 
