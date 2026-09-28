@@ -57,3 +57,8 @@ export interface Frame {
 	selected: NodeId | null;
 	events: VizEvent[];
 }
+
+/** Frames for steps 0..=n, produced by `Viewer::record` on the Rust side. */
+export interface Recording {
+	frames: Frame[];
+}

@@ -42,7 +42,7 @@ pub fn spawn_playback_frontend(open: bool) -> tokio::task::JoinHandle<()> {
             .arg("dev")
             .arg("--")
             .arg(if open { "--open" } else { "" })
-            .current_dir("web")
+            .current_dir("web-old")
             .stdout(if output {
                 Stdio::inherit()
             } else {

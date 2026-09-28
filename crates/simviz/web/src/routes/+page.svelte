@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { getFrame, send } from '$lib/api';
+	import { backendFromLocation, type Backend } from '$lib/backend';
 	import { applyEvents, emptyDecorations } from '$lib/decorations';
 	import type { Command, Frame, NodeId, UiAction } from '$lib/types';
 	import Controls from '$lib/components/Controls.svelte';
 	import GraphView from '$lib/components/GraphView.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 
+	let backend: Backend | null = null;
 	let frame: Frame | null = $state(null);
 	let loading = $state(false);
 	let error: string | null = $state(null);
@@ -19,16 +20,18 @@
 
 	onMount(async () => {
 		try {
-			frame = await getFrame();
+			backend = await backendFromLocation(window.location.search);
+			frame = await backend.frame();
 		} catch (e) {
-			error = `Failed to connect to server: ${e}`;
+			error = `Failed to load: ${e}`;
 		}
 	});
 
 	async function dispatch(command: Command) {
+		if (!backend) return;
 		loading = true;
 		try {
-			frame = await send(command);
+			frame = await backend.send(command);
 			error = null;
 		} catch (e) {
 			error = `${e}`;

@@ -7,9 +7,14 @@
 //! [`Presenter`], which turns model state into [`VizEvent`]s (node colours,
 //! edge styles, sidebar fields) and interprets [`UiAction`]s coming back
 //! from the frontend.
+//!
+//! [`serve`] runs the interactive viewer with the embedded frontend.
+//! [`Viewer::record`] produces a [`Recording`] the frontend can replay from a
+//! static file instead.
 
 mod event;
 mod presenter;
+mod recording;
 mod server;
 mod simulation;
 mod topology;
@@ -17,6 +22,7 @@ mod viewer;
 
 pub use event::{Command, EdgeStyle, Field, FieldValue, Frame, NodeStyle, UiAction, VizEvent};
 pub use presenter::{FnPresenter, Presenter};
+pub use recording::Recording;
 pub use server::{router, serve};
 pub use simulation::Simulation;
 pub use topology::{Edge, NodeId, Topology};
