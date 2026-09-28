@@ -79,6 +79,10 @@ pub struct MoonStyle {
     /// Fill colour, any CSS colour string.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub color: Option<String>,
+    /// Disc colour behind the pie wedge when `ratio` is set; defaults to
+    /// `border_color`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub background: Option<String>,
     /// Border colour.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub border_color: Option<String>,

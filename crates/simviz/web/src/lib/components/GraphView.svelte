@@ -196,13 +196,14 @@
 				moon.style('height', radius * 2);
 				moon.style('font-size', Math.max(4, Math.round(radius * 1.4)));
 				// A ratio turns the moon into a pie: the wedge in the moon's
-				// colour over a border-coloured disc, so the rest looks hollow.
+				// colour over a `background` disc (the border colour when
+				// unset, so the rest looks hollow).
 				if (s.ratio === undefined) {
 					moon.style('background-color', s.color);
 					moon.style('pie-1-background-size', 0);
 				} else {
 					const wedge = Math.min(1, Math.max(0, s.ratio)) * 100;
-					moon.style('background-color', s.border_color);
+					moon.style('background-color', s.background ?? s.border_color);
 					moon.style('pie-1-background-color', s.color);
 					moon.style('pie-1-background-size', wedge);
 				}

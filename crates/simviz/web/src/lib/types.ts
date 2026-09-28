@@ -33,6 +33,8 @@ export interface NodeStyle {
 export interface MoonStyle {
 	visible?: boolean;
 	color?: string;
+	/** Disc colour behind a pie wedge (ratio < 1); defaults to `border_color`. */
+	background?: string;
 	border_color?: string;
 	opacity?: number;
 	label?: string;
