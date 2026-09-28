@@ -1,10 +1,8 @@
-use std::sync::Arc;
-
+use polestar::StateMachine;
+use polestar_sim::Scenario;
 use simdash_model_network::{NetworkModel, NetworkState, RoundRobinNodeScheduler};
 use simdash_model_node::BasicNodeBehavior;
 use simdash_routing_dispatch::NoOpRoutingBehavior;
-use polestar::StateMachine;
-use polestar_sim::Scenario;
 
 pub type NoRoutingBehaviorType = RoundRobinNodeScheduler<BasicNodeBehavior<NoOpRoutingBehavior>>;
 

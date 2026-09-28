@@ -1,14 +1,13 @@
 //! Integration test of data propagation across a small contrived network
 
-use rainbow_brackets::{RainbowBrackets, RainbowBracketsConfig};
-use simdash_model_network::{NetworkAction, RoundRobinNodeScheduler};
+use simdash_model_network::{ RoundRobinNodeScheduler};
 use simdash_model_node::BasicNodeBehavior;
 use simdash_protocol_ecco::{StateVector, util::make_ecco_op};
 use simdash_routing_dispatch::BasicEccoBehavior;
 use polestar_sim::Scenario;
-use simdash_types::{LogId, Seq, Ticks, TopicId};
+use simdash_types::{Ticks, TopicId};
 
-use named_id::{Nameable, Rename};
+use named_id::{Nameable};
 
 /// Node 0 and node 9 share topic 0, but they are only connected through a chain of
 /// intermediate nodes that are not subscribed to any topic.  The test plants an op

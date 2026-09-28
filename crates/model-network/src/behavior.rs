@@ -1,7 +1,5 @@
 //! Behaviors for the network level.
 
-use std::sync::Arc;
-
 use simdash_model_chat::ChatAction;
 use simdash_model_node::NodeAction;
 use simdash_model_node::NodeModel;

@@ -5,9 +5,7 @@ use anyhow::Context;
 use polestar::StateMachine;
 use polestar_sim::Scenario;
 use serde::{Deserialize, Serialize};
-use simdash_model_network::{NetworkState, RoundRobinNodeScheduler};
-use simdash_model_node::BasicNodeBehavior;
-use simdash_routing_dispatch::BasicEccoBehavior;
+use simdash_model_network::NetworkState;
 use simdash_types::{GroupId, NodeId, OpId, Operation};
 
 use crate::sim::{NetworkBehavior, Simulation};

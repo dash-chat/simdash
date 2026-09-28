@@ -1,7 +1,7 @@
 mod routing_table;
 pub use routing_table::PeerLogFact;
 
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap};
 
 use derive_more::{Deref, From};
 use serde::{Deserialize, Serialize};

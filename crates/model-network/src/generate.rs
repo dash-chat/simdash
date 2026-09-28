@@ -2,8 +2,6 @@
 
 use std::collections::BTreeSet;
 use std::collections::HashMap;
-use std::collections::HashSet;
-use std::sync::Arc;
 
 use crate::NetworkModel;
 use crate::NetworkState;

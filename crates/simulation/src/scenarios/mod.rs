@@ -1,13 +1,11 @@
 pub mod no_routing;
 pub mod sim_scenario;
 
-use std::sync::Arc;
-
+use polestar_sim::Scenario;
 use simdash_model_network::{NetworkAction, NetworkModel};
 use simdash_routing_dispatch::{
-    BasicFloodingSyncBehavior, BasicEccoBehavior, NaiveFloodingBehavior,
+    BasicEccoBehavior, BasicFloodingSyncBehavior, NaiveFloodingBehavior,
 };
-use polestar_sim::Scenario;
 use simdash_types::Behavior;
 
 use self::no_routing::NoRoutingBehaviorType;

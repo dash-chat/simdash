@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::sync::Arc;
 
 use polestar::StateMachine;
 use polestar_sim::Scenario;

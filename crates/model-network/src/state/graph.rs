@@ -11,15 +11,15 @@ use simdash_types::NodeId;
 
 /// A network graph.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Graph<R = RoutingDispatchState, E = EdgeState> {
+pub struct Graph<N = NodeState<RoutingDispatchState>, E = EdgeState> {
     graph: PetGraph<(), E>,
     /// The nodes in the graph
-    pub nodes: HashMap<NodeId, NodeState<R>>,
+    pub nodes: HashMap<NodeId, N>,
     /// The subnets in the graph
     subnets: HashMap<String, Vec<NodeId>>,
 }
 
-impl<R, E> Default for Graph<R, E> {
+impl<N, E> Default for Graph<N, E> {
     fn default() -> Self {
         Self {
             graph: PetGraph::new(),
@@ -29,7 +29,7 @@ impl<R, E> Default for Graph<R, E> {
     }
 }
 
-impl<R: Clone, E> Graph<R, E> {
+impl<N: Clone, E> Graph<N, E> {
     /// Create a new Graph.
     pub fn new() -> Self {
         Self::default()
@@ -59,12 +59,12 @@ impl<R: Clone, E> Graph<R, E> {
     }
 
     /// Get a reference to the state of a node.
-    pub fn node_state(&self, node_id: NodeId) -> Option<&NodeState<R>> {
+    pub fn node_state(&self, node_id: NodeId) -> Option<&N> {
         self.nodes.get(&node_id)
     }
 
     /// Get a mutable reference to the state of a node.
-    pub fn node_state_mut(&mut self, node_id: NodeId) -> Option<&mut NodeState<R>> {
+    pub fn node_state_mut(&mut self, node_id: NodeId) -> Option<&mut N> {
         self.nodes.get_mut(&node_id)
     }
 
@@ -78,7 +78,7 @@ impl<R: Clone, E> Graph<R, E> {
     pub fn update_node<O>(
         &mut self,
         node_id: NodeId,
-        action: impl FnOnce(NodeState<R>) -> anyhow::Result<(NodeState<R>, O)>,
+        action: impl FnOnce(N) -> anyhow::Result<(N, O)>,
     ) -> anyhow::Result<O> {
         // TODO: PERF: use owned_update instead of cloned_update, but this
         //       requires never triggering an error during state transition.
@@ -89,7 +89,7 @@ impl<R: Clone, E> Graph<R, E> {
     }
 
     /// Add a node to the graph.
-    pub fn add_node(&mut self, node_id: NodeId, state: NodeState<R>) {
+    pub fn add_node(&mut self, node_id: NodeId, state: N) {
         let expected_idx = node_id.into();
         let idx = self.graph.add_node(());
         assert_eq!(

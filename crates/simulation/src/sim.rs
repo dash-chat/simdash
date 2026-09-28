@@ -1,17 +1,11 @@
 use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
 
 use polestar::{ActionOf, FxOf, StateOf};
 use polestar_sim::Scenario;
 use simdash_model_network::{NetworkModel, NetworkState, RoundRobinNodeScheduler};
 use simdash_model_node::BasicNodeBehavior;
-use simdash_routing_dispatch::{
-    BasicEccoBehavior, BasicFloodingSyncBehavior, NaiveFloodingBehavior,
-};
+use simdash_routing_dispatch::BasicEccoBehavior;
 use simdash_types::Behavior;
-
-use crate::scenarios::sim_scenario::sim_scenario as make_sim_scenario;
-use crate::scenarios::{no_routing, AnyScenario, AVAILABLE_BEHAVIORS};
 
 /// Snapshot of op IDs per node, used to compute deltas.
 pub type OpSnapshot = HashMap<u32, HashSet<u32>>;
