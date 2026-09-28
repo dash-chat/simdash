@@ -185,7 +185,10 @@ mod tests {
         let f = v.handle(Command::StepForward).unwrap();
         assert!(matches!(
             f.events[0],
-            VizEvent::NodeStyle { node: NodeId(0), .. }
+            VizEvent::NodeStyle {
+                node: NodeId(0),
+                ..
+            }
         ));
         let VizEvent::Sidebar { fields, .. } = &f.events[1] else {
             panic!("expected sidebar");

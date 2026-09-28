@@ -5,7 +5,7 @@
 //! forward, back and reset, and that at any step the model state can be
 //! rendered as a [`Topology`]. Everything model-specific goes through a
 //! [`Presenter`], which turns model state into [`VizEvent`]s (node colours,
-//! edge styles, sidebar fields) and interprets [`UiAction`]s coming back
+//! edge styles, moons around nodes, sidebar fields) and interprets [`UiAction`]s coming back
 //! from the frontend.
 //!
 //! [`serve`] runs the interactive viewer with the embedded frontend.
@@ -20,7 +20,10 @@ mod simulation;
 mod topology;
 mod viewer;
 
-pub use event::{Command, EdgeStyle, Field, FieldValue, Frame, NodeStyle, UiAction, VizEvent};
+pub use event::{
+    Command, EdgeStyle, Field, FieldValue, Frame, MOON_RADIUS_MAX, MOON_RADIUS_MIN, MOON_SLOTS,
+    MoonStyle, NodeStyle, UiAction, VizEvent,
+};
 pub use presenter::{FnPresenter, Presenter};
 pub use recording::Recording;
 pub use server::{router, serve};

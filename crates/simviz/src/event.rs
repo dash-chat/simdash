@@ -59,6 +59,46 @@ pub struct NodeStyle {
     pub label: Option<String>,
 }
 
+/// Number of moon slots around each node. See [`VizEvent::MoonStyle`].
+pub const MOON_SLOTS: u8 = 6;
+/// Smallest [`MoonStyle::radius`], as a fraction of the node's radius.
+pub const MOON_RADIUS_MIN: f32 = 0.1;
+/// Largest [`MoonStyle::radius`], as a fraction of the node's radius.
+pub const MOON_RADIUS_MAX: f32 = 0.75;
+
+/// Style of one moon: a small dot in a fixed slot around its node. `None`
+/// fields keep the default. A moon is drawn only in frames that style it,
+/// so a presenter shows a moon by emitting the event and hides it by not
+/// emitting it; `visible: Some(false)` hides one that an earlier event in
+/// the same frame showed.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+pub struct MoonStyle {
+    /// Whether to draw the moon; `None` means yes.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub visible: Option<bool>,
+    /// Fill colour, any CSS colour string.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub color: Option<String>,
+    /// Border colour.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub border_color: Option<String>,
+    /// Opacity in `0.0..=1.0`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub opacity: Option<f32>,
+    /// Short text drawn on the moon; room for a few characters.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub label: Option<String>,
+    /// Moon radius as a fraction of the node's radius, clamped by the
+    /// frontend to `MOON_RADIUS_MIN..=MOON_RADIUS_MAX`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub radius: Option<f32>,
+    /// Draw the moon as a pie: a wedge of this fraction (`0.0..=1.0`,
+    /// clamped by the frontend) in `color`, from twelve o'clock clockwise,
+    /// the rest in `border_color`. `None` draws a solid disc.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ratio: Option<f32>,
+}
+
 /// Visual style overrides for an edge. `None` fields keep the default.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct EdgeStyle {
@@ -125,6 +165,17 @@ pub enum VizEvent {
         /// The style.
         style: EdgeStyle,
     },
+    /// Style one of a node's moons: the small dots arranged radially
+    /// around it, slot 0 at the top and the rest clockwise. Slots run
+    /// `0..MOON_SLOTS`; the frontend ignores any other.
+    MoonStyle {
+        /// The node the moon orbits.
+        node: NodeId,
+        /// Which slot, `0..MOON_SLOTS`.
+        slot: u8,
+        /// The style.
+        style: MoonStyle,
+    },
     /// Replace the sidebar contents.
     Sidebar {
         /// Optional heading; the frontend falls back to the selected node.
@@ -185,6 +236,27 @@ mod tests {
         let json = serde_json::to_string(&cmd).unwrap();
         assert!(json.contains("\"op\":7"));
         assert_eq!(serde_json::from_str::<Command>(&json).unwrap(), cmd);
+    }
+
+    #[test]
+    fn moon_style_json_shape() {
+        let ev = VizEvent::MoonStyle {
+            node: NodeId(4),
+            slot: 1,
+            style: MoonStyle {
+                color: Some("#0f0".into()),
+                label: Some("12".into()),
+                ratio: Some(0.25),
+                ..Default::default()
+            },
+        };
+        assert_eq!(
+            serde_json::to_value(&ev).unwrap(),
+            serde_json::json!({
+                "type": "MoonStyle", "node": 4, "slot": 1,
+                "style": { "color": "#0f0", "label": "12", "ratio": 0.25 }
+            })
+        );
     }
 
     #[test]

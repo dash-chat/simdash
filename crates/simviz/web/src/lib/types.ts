@@ -30,6 +30,18 @@ export interface NodeStyle {
 	label?: string;
 }
 
+export interface MoonStyle {
+	visible?: boolean;
+	color?: string;
+	border_color?: string;
+	opacity?: number;
+	label?: string;
+	/** Fraction of the node's radius, clamped to MOON_RADIUS_MIN..=MOON_RADIUS_MAX. */
+	radius?: number;
+	/** Pie wedge filled with `color`, 0..=1 from twelve o'clock clockwise; absent draws a solid disc. */
+	ratio?: number;
+}
+
 export interface EdgeStyle {
 	color?: string;
 	width?: number;
@@ -49,6 +61,7 @@ export interface Field {
 export type VizEvent =
 	| { type: 'NodeStyle'; node: NodeId; style: NodeStyle }
 	| { type: 'EdgeStyle'; source: NodeId; target: NodeId; style: EdgeStyle }
+	| { type: 'MoonStyle'; node: NodeId; slot: number; style: MoonStyle }
 	| { type: 'Sidebar'; title: string | null; fields: Field[] };
 
 export interface Frame {

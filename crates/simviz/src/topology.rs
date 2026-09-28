@@ -138,8 +138,14 @@ mod tests {
         assert_eq!(
             t.edges(),
             vec![
-                Edge { source: n(0), target: n(1) },
-                Edge { source: n(2), target: n(0) }
+                Edge {
+                    source: n(0),
+                    target: n(1)
+                },
+                Edge {
+                    source: n(2),
+                    target: n(0)
+                }
             ]
         );
     }

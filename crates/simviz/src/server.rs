@@ -140,7 +140,8 @@ mod tests {
             .get(header::CONTENT_TYPE)
             .map(|v| v.to_str().unwrap().to_string())
             .unwrap_or_default();
-        let body = String::from_utf8_lossy(&res.into_body().collect().await.unwrap().to_bytes()).to_string();
+        let body = String::from_utf8_lossy(&res.into_body().collect().await.unwrap().to_bytes())
+            .to_string();
         (status, ctype, body)
     }
 

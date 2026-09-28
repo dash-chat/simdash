@@ -42,7 +42,8 @@ mod tests {
     use crate::simulation::toy::{Ring, ring_simulation};
     use crate::{Command, FnPresenter, NodeId, Topology, UiAction};
 
-    fn viewer() -> Viewer<crate::simulation::toy::RingBehavior, FnPresenter<Ring, fn(&Ring) -> Topology>> {
+    fn viewer()
+    -> Viewer<crate::simulation::toy::RingBehavior, FnPresenter<Ring, fn(&Ring) -> Topology>> {
         Viewer::new(ring_simulation(4), FnPresenter::new(Ring::topology))
     }
 
@@ -55,7 +56,10 @@ mod tests {
             vec![0, 1, 2, 3]
         );
         assert_eq!(
-            rec.frames.iter().map(|f| f.topology.edges().len()).collect::<Vec<_>>(),
+            rec.frames
+                .iter()
+                .map(|f| f.topology.edges().len())
+                .collect::<Vec<_>>(),
             vec![0, 1, 2, 3]
         );
     }
@@ -85,6 +89,9 @@ mod tests {
 
     #[test]
     fn model_error_during_recording_surfaces() {
-        assert!(viewer().record(10).is_err(), "ring of 4 completes at step 4");
+        assert!(
+            viewer().record(10).is_err(),
+            "ring of 4 completes at step 4"
+        );
     }
 }
