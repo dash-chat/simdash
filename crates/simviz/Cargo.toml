@@ -1,0 +1,20 @@
+[package]
+name = "simviz"
+version = "0.1.0"
+edition = "2024"
+description = "Generic visualization seam for replayable simulations of a changing graph of nodes"
+
+[dependencies]
+anyhow = { workspace = true }
+axum = { workspace = true }
+petgraph = { workspace = true }
+polestar = { workspace = true }
+polestar-sim = { workspace = true }
+serde = { workspace = true }
+serde_json = "1"
+tokio = { workspace = true }
+tower-http = { version = "0.6", features = ["cors"] }
+tracing = { workspace = true }
+
+[lints]
+workspace = true

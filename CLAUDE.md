@@ -79,6 +79,12 @@ model
 - **Tick-based time**: `Ticks` is the time unit. `NetworkAction::Tick` advances all nodes. Flooding uses `since_last_send` with a `broadcast_interval` to rate-limit rebroadcasts.
 - **Serialization**: State uses `postcard` (binary) for fixtures and `serde_json` for config. The `fixtures/` directory contains a pre-generated topology used by integration tests.
 
+### simviz: the generic visualization seam (parallel track)
+
+`crates/simviz` is a model-agnostic viewer library: a `Simulation<B: Behavior>` (polestar `Scenario` with step forward/back/reset via replay), a `Topology` (petgraph digraph of `NodeId`s), and a `Presenter` trait that is the only place a model touches the viz. `Presenter::topology` is required; `on_action`/`render` default to noop. `render` returns `VizEvent`s (node/edge styles, sidebar fields, links that send `UiAction`s back). `Viewer` pairs a simulation with a presenter and serves `GET /api/frame` and `POST /api/command`.
+
+`crates/simviz-simdash` is the simdash adapter: `SimdashPresenter` (topology only for now) plus a CLI on port 3001. `web2/` is the generic SvelteKit frontend; it interprets events in `src/lib/decorations.ts` and knows nothing about ops, groups or routing. Run with `just viewer2`. Design notes: `docs/superpowers/specs/2026-09-28-simviz-seam-design.md`. The older `web/` + `simdash-simulation::playback` path is unchanged.
+
 ### Config Format
 
 `config.json` at the repo root:

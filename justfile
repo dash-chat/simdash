@@ -18,3 +18,9 @@ viewer config="config.yaml":
         --names "backend,frontend" \
         "RUST_LOG=info cargo run --release -p simdash-server-runner -- {{ config }}" \
         "cd web && npm run dev -- --open"
+
+viewer2 config="config.yaml":
+    mprocs \
+        --names "backend,frontend" \
+        "RUST_LOG=info cargo run --release -p simviz-simdash -- {{ config }}" \
+        "cd web2 && npm run dev -- --open"

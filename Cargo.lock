@@ -1486,6 +1486,41 @@ dependencies = [
 ]
 
 [[package]]
+name = "simviz"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "petgraph",
+ "polestar",
+ "polestar-sim",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tower-http",
+ "tracing",
+]
+
+[[package]]
+name = "simviz-simdash"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "polestar",
+ "polestar-sim",
+ "serde_json",
+ "serde_yml",
+ "simdash-generator",
+ "simdash-model-network",
+ "simdash-simulation",
+ "simdash-types",
+ "simviz",
+ "tokio",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "sized-chunks"
 version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
