@@ -13,7 +13,6 @@ const config = {
 		adapter: adapter({
 			pages: process.env.SIMVIZ_UI_OUT ?? 'build',
 			assets: process.env.SIMVIZ_UI_OUT ?? 'build',
-			fallback: 'index.html',
 			strict: true
 		})
 	}

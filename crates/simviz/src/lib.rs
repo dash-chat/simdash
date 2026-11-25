@@ -10,7 +10,7 @@
 //!
 //! [`serve`] runs the interactive viewer with the embedded frontend.
 //! [`Viewer::record`] produces a [`Recording`] the frontend can replay from a
-//! static file instead.
+//! static file instead, with [`export_ui`] writing that frontend out to host it.
 
 mod event;
 mod presenter;
@@ -26,7 +26,7 @@ pub use event::{
 };
 pub use presenter::{FnPresenter, Presenter};
 pub use recording::Recording;
-pub use server::{router, serve};
+pub use server::{export_ui, router, serve};
 pub use simulation::Simulation;
 pub use topology::{Edge, NodeId, Topology};
 pub use viewer::Viewer;

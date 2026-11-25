@@ -9,6 +9,7 @@
 //! the whole viz from its own binary with no node toolchain at runtime.
 
 use std::net::SocketAddr;
+use std::path::Path;
 use std::sync::Arc;
 
 use axum::{
@@ -29,6 +30,13 @@ type Shared<B, P> = Arc<Mutex<Viewer<B, P>>>;
 
 /// The frontend, baked in at compile time. `SIMVIZ_UI_DIR` is set by `build.rs`.
 static UI: Dir<'static> = include_dir!("$SIMVIZ_UI_DIR");
+
+/// Write the embedded frontend to `dir`, for hosting it statically next to a
+/// [`Recording`](crate::Recording): open `index.html?recording=<url>`.
+pub fn export_ui(dir: &Path) -> std::io::Result<()> {
+    std::fs::create_dir_all(dir)?;
+    UI.extract(dir)
+}
 
 /// Build the router for a viewer.
 pub fn router<B, P>(viewer: Viewer<B, P>) -> Router
